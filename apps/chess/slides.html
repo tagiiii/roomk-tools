@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>説明スライド | チェス | あそびのたな</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Symbols+2&text=%E2%99%9A%E2%99%9B%E2%99%9C%E2%99%9D%E2%99%9E%E2%99%9F&display=block" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,500,1,0" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#434343; --ink-soft:#6B6B6B; --paper:#FAFAFA; --white:#FFFFFF;
+    --line:#E6E6E6; --muted:#9A9A9A;
+    --teal:#00A77F; --coral:#E06666; --blue:#3C78D8; --blue-soft:#6D9EEB;
+    --red:#E0574F; --neutral:#C2B69E; --trap:#3A3A3A;
+    --acc:var(--teal); --acc-tint:#E3F4EF;
+    --font:"Zen Kaku Gothic New", -apple-system, "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; }
+  body{ font-family:var(--font); color:var(--ink); background:#E9ECEF; overflow:hidden; -webkit-font-smoothing:antialiased; }
+  .material-symbols-rounded{ font-family:"Material Symbols Rounded"; line-height:1; }
+
+  /* accent themes（スライドごとに切替） */
+  .accent-teal { --acc:var(--teal); --acc-tint:#E2F4EF; }
+  .accent-coral{ --acc:var(--coral);--acc-tint:#FBEBEB; }
+  .accent-blue { --acc:var(--blue); --acc-tint:#E7EEFB; }
+
+  /* ===================== 発表（デッキ） ===================== */
+  #deck{ position:fixed; inset:0; }
+  #stage{
+    position:absolute; top:50%; left:50%; width:1280px; height:720px;
+    transform-origin:center center; background:var(--paper);
+    border-radius:18px; box-shadow:0 28px 70px rgba(0,0,0,.35); overflow:hidden;
+  }
+  .slide{
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    padding:56px 72px 76px; opacity:0; visibility:hidden;
+    transition:opacity .3s ease, transform .3s ease; transform:translateY(10px);
+  }
+  .slide.active{ opacity:1; visibility:visible; transform:none; }
+
+  /* セクションヘッダー（日本語＋小さな英語キャプション） */
+  .sec{ display:flex; align-items:baseline; gap:14px; }
+  .sec__jp{ font-size:30px; font-weight:900; color:var(--ink); letter-spacing:.01em; }
+  .sec__en{ font-size:18px; font-weight:700; color:var(--acc); letter-spacing:.12em; }
+  .sec__num{ display:inline-flex; align-items:center; justify-content:center; min-width:30px; height:30px; padding:0 8px;
+    border-radius:8px; background:var(--acc); color:#fff; font-size:18px; font-weight:900; margin-right:2px; }
+
+  .headline{ font-size:46px; font-weight:900; color:var(--ink); line-height:1.32; margin-top:22px; letter-spacing:.005em; }
+  .headline .hl{ color:var(--acc); }
+  .headline .ul{ background:linear-gradient(transparent 62%, var(--acc-tint) 62%); padding:0 2px; }
+  .body{ margin-top:30px; flex:1; min-height:0; }
+
+  /* 役割カード／チーム */
+  .cols{ display:grid; grid-template-columns:1fr 1fr; gap:24px; height:100%; }
+  .panel{ background:var(--white); border:1.5px solid var(--line); border-radius:18px; padding:26px 28px; display:flex; flex-direction:column; gap:14px; }
+  .panel--red{ border-color:#F0CFCB; background:linear-gradient(180deg,#FDF1F0,#fff); }
+  .panel--blue{ border-color:#CBDAF4; background:linear-gradient(180deg,#EEF3FD,#fff); }
+  .team-head{ display:flex; align-items:center; gap:14px; }
+  .team-ic{ width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; }
+  .team-ic .material-symbols-rounded{ font-size:34px; }
+  .red-bg{ background:var(--red); } .blue-bg{ background:var(--blue); } .teal-bg{ background:var(--teal); } .coral-bg{ background:var(--coral); } .gray-bg{ background:var(--neutral); } .trap-bg{ background:var(--trap); }
+  .team-name{ font-size:28px; font-weight:900; color:var(--ink); }
+  .role-row{ display:flex; gap:12px; align-items:flex-start; }
+  .role-row .material-symbols-rounded{ font-size:26px; color:var(--acc); flex:none; margin-top:3px; }
+  .role-row b{ font-size:23px; font-weight:900; color:var(--ink); }
+  .role-row .d{ font-size:19px; color:var(--ink-soft); display:block; margin-top:2px; line-height:1.5; }
+
+  /* 箇条書き行 */
+  .rows{ display:flex; flex-direction:column; gap:16px; }
+  .row{ display:flex; gap:18px; align-items:flex-start; background:var(--white); border:1.5px solid var(--line); border-radius:16px; padding:20px 24px; }
+  .row__ic{ flex:none; width:48px; height:48px; border-radius:12px; background:var(--acc-tint); color:var(--acc); display:flex; align-items:center; justify-content:center; }
+  .row__ic .material-symbols-rounded{ font-size:28px; }
+  .row__t{ font-size:25px; font-weight:900; color:var(--ink); line-height:1.4; }
+  .row__d{ font-size:20px; color:var(--ink-soft); margin-top:3px; line-height:1.5; }
+
+  /* 盤の見本 */
+  .boards{ display:flex; align-items:center; justify-content:center; gap:34px; }
+  .bfig{ display:flex; flex-direction:column; align-items:center; gap:12px; }
+  .bfig__cap{ font-size:22px; font-weight:900; color:var(--ink); text-align:center; line-height:1.4; }
+  .bfig__cap span{ color:var(--acc); }
+  .barrow .material-symbols-rounded{ font-size:56px; color:var(--acc); }
+  .cb{ display:grid; grid-template-columns:22px repeat(var(--n), var(--c)); grid-template-rows:repeat(var(--r), var(--c)) 22px; --c:52px;
+    background:#6B4423; border-radius:10px; padding:8px 10px 2px 2px; }
+  .cb.small{ --c:34px; } .cb.m38{ --c:38px; } .cb.mid{ --c:44px; } .cb.big{ --c:56px; }
+  .cb__lab{ display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:900; color:#F5E6CC; }
+  .cb__lab.on{ color:#FFD54F; font-size:18px; }
+  .cb__cell{ position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .cb__cell.lt{ background:#F0D9B5; } .cb__cell.dk{ background:#B58863; }
+  .cb__cell.ring::after{ content:''; position:absolute; inset:2px; border:4px solid var(--coral); border-radius:4px; }
+  .cb__cell.hint::after{ content:''; position:absolute; inset:2px; border:4px solid #2E8B57; border-radius:4px; box-shadow:0 0 0 2px #fff; }
+  .cb__cell.check{ background:radial-gradient(circle, rgba(220,30,30,.85) 0%, rgba(220,30,30,.45) 55%, rgba(220,30,30,0) 80%), #B58863; }
+  .cb__cell.check.lt{ background:radial-gradient(circle, rgba(220,30,30,.85) 0%, rgba(220,30,30,.45) 55%, rgba(220,30,30,0) 80%), #F0D9B5; }
+  .cb__cell.last{ box-shadow:inset 0 0 0 999px rgba(255,214,10,.45); }
+  .cp{ position:relative; z-index:1; font-family:"Noto Sans Symbols 2", "Segoe UI Symbol", sans-serif; line-height:1; font-size:calc(var(--c) * .78); paint-order:stroke fill; }
+  .cp.w{ color:#fff; -webkit-text-stroke:1.5px #222; text-shadow:0 1px 1px rgba(0,0,0,.35); }
+  .cp.b{ color:#222; -webkit-text-stroke:1px #fff; text-shadow:0 1px 1px rgba(0,0,0,.25); }
+  .cb.names .cp{ font-size:calc(var(--c) * .6); margin-top:-6%; }
+  .cn{ position:relative; z-index:1; font-size:calc(var(--c) * .19); font-weight:900; line-height:1.1; white-space:nowrap; padding:0 3px; border-radius:4px; background:rgba(255,255,255,.88); color:#222; letter-spacing:-.04em; }
+  .cb__dot{ position:absolute; width:28%; height:28%; border-radius:50%; background:#1C5A6E; opacity:.8; box-shadow:0 0 0 2px rgba(255,255,255,.7); z-index:2; }
+  .cb__dot.take{ width:86%; height:86%; background:none; border:4px solid #1C5A6E; }
+  .cb__dot.line{ opacity:.45; }
+  .cb__dot.jump{ background:#3FAE5A; opacity:1; }
+  /* 駒の動きの図 */
+  .moves{ display:grid; grid-template-columns:repeat(var(--k), 1fr); gap:18px; }
+  .mv{ background:var(--white); border:1.5px solid var(--line); border-radius:16px; padding:14px 10px 12px; display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .mv .cb{ --c:44px; padding:0; background:transparent; grid-template-columns:repeat(5, var(--c)); grid-template-rows:repeat(5, var(--c)); border-radius:6px; overflow:hidden; }
+  .mv__name{ font-size:24px; font-weight:900; color:var(--ink); }
+  .mv__d{ font-size:16px; color:var(--ink-soft); text-align:center; line-height:1.45; }
+  .demo-cap{ font-size:22px; color:var(--ink-soft); line-height:1.6; text-align:center; margin-top:18px; }
+  .demo-cap b{ color:var(--acc); font-weight:900; }
+  .side{ display:grid; grid-template-columns:auto 1fr; gap:40px; align-items:center; height:100%; }
+  .rows.tight{ gap:12px; } .rows.tight .row{ padding:14px 20px; } .rows.tight .row__t{ font-size:22px; } .rows.tight .row__d{ font-size:18px; }
+
+  /* Q&A */
+  .qa{ display:flex; flex-direction:column; gap:16px; }
+  .qa__item{ background:var(--white); border:1.5px solid var(--line); border-radius:16px; padding:18px 24px; }
+  .qa__q{ display:flex; gap:13px; align-items:flex-start; font-size:23px; font-weight:900; color:var(--ink); }
+  .qa__a{ display:flex; gap:13px; align-items:flex-start; font-size:21px; color:var(--ink-soft); margin-top:8px; line-height:1.5; }
+  .qa__badge{ flex:none; width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:900; font-size:19px; }
+  .qa__badge.q{ background:var(--blue); } .qa__badge.a{ background:var(--coral); }
+
+  /* タイトルスライド */
+  .title-slide{ align-items:center; justify-content:center; text-align:center; padding-bottom:76px; }
+  .title-ic{ width:118px; height:118px; border-radius:32px; background:var(--teal); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 16px 34px rgba(0,167,127,.32); }
+  .title-ic .material-symbols-rounded{ font-size:72px; }
+  .title-jp{ font-size:74px; font-weight:900; color:var(--ink); margin-top:24px; letter-spacing:.02em; }
+  .title-en{ font-size:22px; font-weight:700; color:var(--teal); letter-spacing:.34em; margin-top:6px; text-transform:lowercase; }
+  .title-tag{ font-size:26px; font-weight:700; color:var(--ink-soft); margin-top:22px; }
+  .title-meta{ display:flex; gap:12px; margin-top:26px; }
+  .title-meta .m{ display:inline-flex; align-items:center; gap:7px; background:var(--white); border:1.5px solid var(--line); border-radius:999px; padding:9px 18px; font-size:18px; font-weight:700; color:var(--ink); }
+  .title-meta .material-symbols-rounded{ font-size:20px; color:var(--teal); }
+
+  /* セクション区切り（divider） */
+  .divider{ align-items:center; justify-content:center; text-align:center; padding-bottom:76px; background:var(--acc-tint); }
+  .divider .d-ic{ width:104px; height:104px; border-radius:50%; background:var(--acc); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 14px 30px rgba(0,0,0,.14); }
+  .divider .d-ic .material-symbols-rounded{ font-size:62px; }
+  .divider .d-jp{ font-size:72px; font-weight:900; color:var(--ink); margin-top:26px; letter-spacing:.03em; }
+  .divider .d-en{ font-size:21px; font-weight:700; color:var(--acc); letter-spacing:.28em; margin-top:8px; text-transform:lowercase; }
+  .divider .d-sub{ font-size:24px; font-weight:700; color:var(--ink-soft); margin-top:20px; }
+  /* 強調（ゲームスタート等） */
+  .divider.solid{ background:var(--acc); }
+  .divider.solid .d-ic{ background:rgba(255,255,255,.16); }
+  .divider.solid .d-jp,.divider.solid .d-sub{ color:#fff; }
+  .divider.solid .d-en{ color:rgba(255,255,255,.85); }
+
+  /* フッター */
+  .footer{ position:absolute; left:0; right:0; bottom:0; height:56px; display:flex; align-items:center; justify-content:space-between;
+    padding:0 30px; background:rgba(255,255,255,.7); border-top:1px solid var(--line); }
+  .brand{ display:flex; align-items:center; gap:9px; font-weight:900; color:var(--ink); font-size:19px; }
+  .brand .material-symbols-rounded{ color:var(--teal); font-size:24px; }
+  .dots{ display:flex; gap:7px; flex-wrap:wrap; max-width:620px; justify-content:center; }
+  .dot{ width:9px; height:9px; border-radius:50%; background:var(--line); transition:.2s; }
+  .dot.on{ background:var(--teal); transform:scale(1.3); }
+  .counter{ font-size:18px; font-weight:900; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .divider .footer,.divider.solid .footer{ background:rgba(255,255,255,.55); }
+
+  /* ナビ矢印 */
+  .nav{ position:absolute; top:50%; transform:translateY(-50%); z-index:5; width:54px; height:54px; border-radius:50%; border:none; cursor:pointer;
+    background:rgba(67,67,67,.1); color:var(--ink); display:flex; align-items:center; justify-content:center; transition:.2s; opacity:0; }
+  #stage:hover .nav{ opacity:.5; } .nav:hover{ opacity:1 !important; background:rgba(67,67,67,.2); }
+  .nav .material-symbols-rounded{ font-size:32px; } .nav.prev{ left:16px; } .nav.next{ right:16px; }
+
+  /* ツールバー */
+  .toolbar{ position:fixed; top:14px; right:16px; z-index:50; display:flex; gap:8px; opacity:.16; transition:.2s; }
+  .toolbar:hover{ opacity:1; }
+  .tbtn{ display:inline-flex; align-items:center; gap:7px; cursor:pointer; background:rgba(255,255,255,.95); color:var(--ink); border:1px solid var(--line);
+    border-radius:999px; padding:9px 15px; font-family:var(--font); font-weight:700; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,.18); }
+  .tbtn:hover{ background:#fff; } .tbtn .material-symbols-rounded{ font-size:19px; color:var(--teal); }
+  .hint-help{ position:fixed; bottom:12px; left:16px; z-index:50; color:rgba(255,255,255,.5); font-size:13px; }
+  .hint-help kbd{ background:rgba(0,0,0,.18); border-radius:5px; padding:1px 7px; font-family:var(--font); }
+
+  /* ===================== 発表者ビュー ===================== */
+  body.presenter{ background:#EEF1F4; overflow:auto; }
+  #presenter{ max-width:680px; margin:0 auto; padding:18px 20px 40px; }
+  .pv-warn{ background:#FBEBEB; border:1px solid #EFC4C4; color:#B3463F; border-radius:12px; padding:12px 16px; font-size:14px; font-weight:700; display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+  .pv-warn .material-symbols-rounded{ font-size:22px; }
+  .pv-count{ font-size:14px; font-weight:900; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .pv-title{ font-size:26px; font-weight:900; color:var(--ink); line-height:1.3; margin-top:4px; }
+  .pv-lead{ font-size:15px; color:var(--teal); font-weight:700; margin-top:4px; letter-spacing:.04em; }
+  .pv-card{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:18px; margin-top:18px; box-shadow:0 4px 14px rgba(0,0,0,.05); }
+  .pv-card h3{ font-size:14px; font-weight:900; color:var(--teal); display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+  .pv-card h3 .material-symbols-rounded{ font-size:18px; }
+  #pvNote{ width:100%; min-height:175px; resize:vertical; border:1px solid var(--line); border-radius:12px; padding:14px 16px; font-family:var(--font); font-size:17px; line-height:1.7; color:var(--ink); background:#FBFCFD; }
+  #pvNote:focus{ outline:none; border-color:var(--teal); box-shadow:0 0 0 3px rgba(0,167,127,.15); }
+  .pv-actions{ display:flex; gap:10px; margin-top:14px; align-items:center; }
+  .pv-copy{ flex:1; cursor:pointer; border:none; border-radius:12px; padding:15px; font-family:var(--font); font-size:18px; font-weight:900; color:#fff; background:var(--teal); display:flex; align-items:center; justify-content:center; gap:10px; box-shadow:0 6px 16px rgba(0,167,127,.28); transition:.15s; }
+  .pv-copy:active{ transform:translateY(1px); } .pv-copy.done{ background:#1F8F6E; }
+  .pv-copy .material-symbols-rounded{ font-size:22px; }
+  .pv-reset{ cursor:pointer; border:1px solid var(--line); background:#fff; color:var(--muted); border-radius:12px; padding:15px 16px; font-family:var(--font); font-weight:700; font-size:14px; }
+  .pv-reset:hover{ background:#F5F7F9; }
+  .pv-nav{ display:flex; gap:10px; margin-top:18px; }
+  .pv-nav button{ flex:1; cursor:pointer; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:12px; padding:14px; font-family:var(--font); font-weight:900; font-size:16px; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .pv-nav button:hover{ background:#F5F7F9; } .pv-nav button:disabled{ opacity:.4; cursor:default; }
+  .pv-nav .material-symbols-rounded{ font-size:20px; }
+  .pv-next{ margin-top:16px; font-size:14px; color:var(--muted); padding:0 4px; } .pv-next b{ color:var(--ink); }
+  .pv-conn{ margin-top:14px; font-size:12px; color:var(--muted); text-align:center; }
+</style>
+</head>
+<body>
+
+<div id="deck">
+  <div id="stage">
+    <button class="nav prev" id="navPrev" aria-label="前へ"><span class="material-symbols-rounded">chevron_left</span></button>
+    <button class="nav next" id="navNext" aria-label="次へ"><span class="material-symbols-rounded">chevron_right</span></button>
+    <div id="slides"></div>
+    <div class="footer">
+      <div class="brand"><span class="material-symbols-rounded">chess_knight</span>チェス</div>
+      <div class="dots" id="dots"></div>
+      <div class="counter" id="counter">1 / 1</div>
+    </div>
+  </div>
+</div>
+
+<div class="toolbar" id="toolbar">
+  <button class="tbtn" id="btnPresenter"><span class="material-symbols-rounded">co_present</span>発表者ノート</button>
+  <button class="tbtn" id="btnFull"><span class="material-symbols-rounded">fullscreen</span>全画面</button>
+</div>
+<div class="hint-help">操作: <kbd>←</kbd> <kbd>→</kbd> めくる ・ <kbd>F</kbd> 全画面 ・ <kbd>P</kbd> 発表者ノート</div>
+
+<div id="presenter" style="display:none">
+  <div class="pv-warn"><span class="material-symbols-rounded">visibility_off</span>この画面は<strong>共有しないで</strong>ください（あなた専用のメモ）</div>
+  <div class="pv-count" id="pvCount">1 / 1</div>
+  <div class="pv-title" id="pvTitle"></div>
+  <div class="pv-lead" id="pvLead"></div>
+  <div class="pv-card">
+    <h3><span class="material-symbols-rounded">chat</span>Metalife チャット用メッセージ</h3>
+    <textarea id="pvNote" spellcheck="false"></textarea>
+    <div class="pv-actions">
+      <button class="pv-copy" id="pvCopy"><span class="material-symbols-rounded">content_copy</span>チャットにコピー</button>
+      <button class="pv-reset" id="pvReset">元に戻す</button>
+    </div>
+  </div>
+  <div class="pv-nav">
+    <button id="pvPrev"><span class="material-symbols-rounded">chevron_left</span>前のスライド</button>
+    <button id="pvNext">次のスライド<span class="material-symbols-rounded">chevron_right</span></button>
+  </div>
+  <div class="pv-next" id="pvNextTitle"></div>
+  <div class="pv-conn" id="pvConn">スライド画面と接続中…</div>
+</div>
+
+<script>
+/* ===== 盤の見本 ===== */
+// rows: 8段目から1段目まで、1行8文字（'.' 空き・白は大文字・黒は小文字）。場所は 'e4' のように書く
+const GL = { K:'♚', Q:'♛', R:'♜', B:'♝', N:'♞', P:'♟' };
+const NM = { K:'キング', Q:'クイーン', R:'ルーク', B:'ビショップ', N:'ナイト', P:'ポーン' };
+function piece(ch, names){
+  const T = ch.toUpperCase();
+  return '<span class="cp ' + (ch === T ? 'w' : 'b') + '">' + GL[T] + '︎</span>' + (names ? '<span class="cn">' + NM[T] + '</span>' : '');
+}
+function cboard(rows, o){
+  o = o || {};
+  const key = (sq) => (8 - Number(sq[1])) + ',' + 'abcdefgh'.indexOf(sq[0]);
+  const marks = {}; (o.dots || []).forEach((sq) => { marks[key(sq)] = ''; }); (o.takes || []).forEach((sq) => { marks[key(sq)] = 'take'; });
+  const one = (list) => new Set((list || []).map(key));
+  const ring = one(o.ring), hint = one(o.hint), check = one(o.check ? [o.check] : []), last = one(o.last);
+  const ringRC = (o.ring && o.ring[0]) ? key(o.ring[0]).split(',') : null;
+  let h = '<div class="cb ' + (o.size || '') + (o.names ? ' names' : '') + '" style="--n:8;--r:8">';
+  for (let r = 0; r < 8; r++) {
+    h += '<span class="cb__lab' + (o.coords && ringRC && ringRC[0] == r ? ' on' : '') + '">' + (8 - r) + '</span>';
+    for (let c = 0; c < 8; c++) {
+      const k = r + ',' + c, t = rows[r][c];
+      let cls = 'cb__cell ' + ((r + c) % 2 ? 'dk' : 'lt');
+      if (ring.has(k)) cls += ' ring';
+      if (hint.has(k)) cls += ' hint';
+      if (check.has(k)) cls += ' check';
+      if (last.has(k)) cls += ' last';
+      let inner = t !== '.' ? piece(t, o.names) : '';
+      if (k in marks) inner += '<span class="cb__dot' + (marks[k] ? ' ' + marks[k] : '') + '"></span>';
+      h += '<span class="' + cls + '">' + inner + '</span>';
+    }
+  }
+  h += '<span></span>';
+  for (let c = 0; c < 8; c++) h += '<span class="cb__lab' + (o.coords && ringRC && ringRC[1] == c ? ' on' : '') + '">' + 'abcdefgh'[c] + '</span>';
+  return h + '</div>';
+}
+// 駒の動きの図（白の向き。点＝そこへ動ける、うすい点の列＝どこまでも進める、緑＝跳ぶ、輪＝取るときだけ）
+const ORTH = [[-1,0],[1,0],[0,-1],[0,1]], DIAG = [[-1,-1],[-1,1],[1,-1],[1,1]];
+const KNIGHT = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+function mvFig(kind, d){
+  const marks = {};
+  const set = (dr, dc, v) => { marks[(2 + dr) + ',' + (2 + dc)] = v; };
+  if (kind === 'K') ORTH.concat(DIAG).forEach(([a, b]) => set(a, b, ''));
+  if (kind === 'N') KNIGHT.forEach(([a, b]) => set(a, b, 'jump'));
+  const lines = kind === 'Q' ? ORTH.concat(DIAG) : kind === 'R' ? ORTH : kind === 'B' ? DIAG : [];
+  lines.forEach(([a, b]) => { set(a, b, ''); set(a * 2, b * 2, 'line'); });
+  if (kind === 'P') { set(-1, 0, ''); set(-2, 0, 'line'); set(-1, -1, 'take'); set(-1, 1, 'take'); }
+  let h = '<div class="mv"><div class="cb">';
+  for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) {
+    const k = r + ',' + c;
+    let inner = r === 2 && c === 2 ? piece(kind) : '';
+    if (kind === 'P' && r > 2) inner = '';
+    if (k in marks) inner += '<span class="cb__dot' + (marks[k] ? ' ' + marks[k] : '') + '"></span>';
+    h += '<span class="cb__cell ' + ((r + c) % 2 ? 'dk' : 'lt') + '">' + inner + '</span>';
+  }
+  return h + '</div><div class="mv__name">' + NM[kind] + '</div><div class="mv__d">' + d + '</div></div>';
+}
+const START = ['rnbqkbnr', 'pppppppp', '........', '........', '........', '........', 'PPPPPPPP', 'RNBQKBNR'];
+const CASTLE_BEFORE = ['r...k..r', 'pppp.ppp', '..n..n..', '....p...', '..B.P...', '.....N..', 'PPPP.PPP', 'RNBQK..R'];
+const CASTLE_AFTER =  ['r...k..r', 'pppp.ppp', '..n..n..', '....p...', '..B.P...', '.....N..', 'PPPP.PPP', 'RNBQ.RK.'];
+const EP = ['........', '........', '........', '...pP...', '........', '........', '........', '........'];
+const PROMO = ['.......k', '.P......', '........', '........', '........', '........', '........', '....K...'];
+const MATE = ['R.....k.', '.....ppp', '........', '........', '........', '........', '.....PPP', '......K.'];
+const ASSIST = ['rnbqkbnr', 'pppp.ppp', '........', '....p...', '....P...', '........', 'PPPP.PPP', 'RNBQKBNR'];
+const COORD = ['........', '........', '........', '........', '....P...', '........', '........', '........'];
+
+const SLIDES = [
+  /* 1 */ { type:'divider', accent:'teal', icon:'waving_hand', jp:'チェックイン', en:'check-in',
+    sub:'今の気分を、ひとことどうぞ',
+    note:'まずはチェックインから！\n今の気分や、最近あったことを、ひとことチャットか声で教えてね\n（チェスの説明は、このあとすぐ！）' },
+
+  /* 2 */ { type:'title', note:'今日のゲームは「チェス」\n2人で白と黒に分かれて、交互に駒を動かすゲームだよ。相手のキングを追いつめたら勝ち。\nルールを知らなくても大丈夫。動ける所や駒の動き方を、画面が教えてくれるよ。' },
+
+  /* 3 */ { type:'content', accent:'teal', section:'ゲームについて', sectionEn:'summary',
+    headline:'駒を動かして、<br><span class="hl">相手のキングを追いつめよう</span>',
+    body:`<div class="rows">
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">swap_horiz</span></div><div><div class="row__t">白と黒で、交互に1手ずつ指す</div><div class="row__d">白から指すよ。自分の番に、自分の駒を1つ動かす</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">back_hand</span></div><div><div class="row__t">相手の駒がある所へ動くと、その駒を取れる</div><div class="row__d">取った駒は盤から外れて、もう使えない（将棋とちがうところ）</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">emoji_events</span></div><div><div class="row__t">相手のキングが、どう動いても取られる形にしたら勝ち</div><div class="row__d">これを「チェックメイト」というよ。対戦しない人も、自分の画面で見られる</div></div></div>
+    </div>`,
+    note:'チェスは、白と黒で交互に1手ずつ指すゲーム。白から指すよ。\n自分の番には、自分の駒を1つ動かす。\n相手の駒がある所へ動くと、その駒を取れる。取った駒は盤から外れて、もう使えないよ。\n相手のキングが、どう動いても取られてしまう形にしたら勝ち。これを「チェックメイト」というよ。' },
+
+  /* 4 */ { type:'content', accent:'blue', section:'はじめの並び', sectionEn:'set up',
+    headline:'駒は6種類、1人16個',
+    body:`<div class="side">
+      <div class="bfig">${cboard(START, { size:'mid', names:true })}</div>
+      <div class="rows tight">
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">chess</span></div><div><div class="row__t">キング・クイーン・ルーク・ビショップ・ナイト・ポーン</div><div class="row__d">いちばん大事なのはキング。取られたら負けになる駒だよ</div></div></div>
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">contrast</span></div><div><div class="row__t">下が白、上が黒</div><div class="row__d">黒の人の画面は、黒が手前に来るように盤が逆向き</div></div></div>
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">label</span></div><div><div class="row__t">画面では、駒の下に名前が出る</div><div class="row__d">「補助」で名前を出すようにしてあるよ</div></div></div>
+      </div>
+    </div>`,
+    note:'駒は6種類で、1人16個。キング、クイーン、ルーク、ビショップ、ナイト、ポーンだよ。\nいちばん大事なのはキング。キングが逃げられなくなったら負けだよ。\n下が白、上が黒。黒の人の画面は、黒が手前に来るように盤が逆向きになっているよ。\n画面では、駒の下に名前が出るから、覚えていなくても大丈夫。' },
+
+  /* 5 */ { type:'content', accent:'teal', section:'駒の動き', sectionEn:'how pieces move', num:'1',
+    headline:'うすい点の列は、<span class="hl">どこまでも</span>進める',
+    body:`<div class="moves" style="--k:3">
+      ${mvFig('K', 'まわりに1マス')}
+      ${mvFig('Q', 'たて・横・ななめに<br>どこまでも')}
+      ${mvFig('R', 'たて・横に<br>どこまでも')}
+    </div>
+    <div class="demo-cap">どこまでも進める駒も、ほかの駒を<b>跳びこえることはできない</b>よ。</div>`,
+    note:'駒の動きを見ていこう。点のある所へ動けるよ。うすい点の列は、どこまでも進める向き。\nキングは、まわりに1マスだけ。\nクイーンは、たて・横・ななめに、どこまでも。いちばん強い駒だよ。\nルークは、たて・横に、どこまでも。\nどこまでも進める駒も、ほかの駒を跳びこえることはできないよ。' },
+
+  /* 6 */ { type:'content', accent:'teal', section:'駒の動き', sectionEn:'how pieces move', num:'2',
+    headline:'ナイトは<span class="hl">跳ぶ</span>、ポーンは<span class="hl">前へ</span>',
+    body:`<div class="moves" style="--k:3">
+      ${mvFig('B', 'ななめに<br>どこまでも')}
+      ${mvFig('N', '「L」の形に跳ぶ（緑の点）<br>間の駒を跳びこえられる')}
+      ${mvFig('P', '前へ1マス（はじめは2マスも）<br>取るのは、ななめ前（輪）')}
+    </div>
+    <div class="demo-cap">図は白の向き。黒の駒は、反対の向きに動くよ。</div>`,
+    note:'ビショップは、ななめに、どこまでも。\nナイトは「L」の形に跳ぶよ。たてか横に2マス、そこから横かたてに1マス。ナイトだけは、間の駒を跳びこえられる。\nポーンは、前へ1マス。はじめの場所からなら2マスも進める。取るときだけは、ななめ前の駒を取るよ。\n図は白の向きで、黒の駒は反対の向きに動くよ。' },
+
+  /* 7 */ { type:'content', accent:'coral', section:'ポーンが奥まで', sectionEn:'promotion',
+    headline:'ポーンが奥まで進むと、<br><span class="hl">ほかの駒になれる</span>',
+    body:`<div class="side">
+      <div class="bfig">${cboard(PROMO, { size:'m38', ring:['b7'], dots:['b8'] })}<div class="bfig__cap">b8 まで進むと、<span>何になるか選べる</span></div></div>
+      <div class="rows tight">
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">upgrade</span></div><div><div class="row__t">クイーン・ルーク・ビショップ・ナイトから選ぶ</div><div class="row__d">「ポーンを何にする？」と聞かれる</div></div></div>
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">star</span></div><div><div class="row__t">迷ったらクイーン</div><div class="row__d">いちばん強い駒だよ</div></div></div>
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">block</span></div><div><div class="row__t">キングとポーンにはなれない</div><div class="row__d">「やめる」を押すと、指さないでもどれる</div></div></div>
+      </div>
+    </div>`,
+    note:'ポーンがいちばん奥まで進むと、ほかの駒になれるよ。\n「ポーンを何にする？」と聞かれるので、クイーン、ルーク、ビショップ、ナイトから選んでね。迷ったら、いちばん強いクイーンがおすすめ。\nキングとポーンにはなれないよ。' },
+
+  /* 8 */ { type:'content', accent:'blue', section:'特別な手', sectionEn:'special moves',
+    headline:'<span class="hl">キャスリング</span>と<span class="hl">アンパッサン</span>',
+    body:`<div class="boards">
+      <div class="bfig">${cboard(CASTLE_BEFORE, { size:'small', ring:['e1'], dots:['g1'] })}<div class="bfig__cap">キングを横に<span>2マス</span></div></div>
+      <div class="barrow"><span class="material-symbols-rounded">arrow_forward</span></div>
+      <div class="bfig">${cboard(CASTLE_AFTER, { size:'small', last:['g1','f1'] })}<div class="bfig__cap">ルークが<span>反対側へ</span></div></div>
+      <div class="bfig">${cboard(EP, { size:'small', ring:['e5'], takes:['d6'] })}<div class="bfig__cap">となりに来たポーンを<br><span>ななめに進んで取る</span></div></div>
+    </div>
+    <div class="demo-cap">どちらも、できるときは盤の下に<b>説明</b>が出るよ。</div>`,
+    note:'チェスには、特別な手が2つあるよ。\nキャスリング。キングとルークがまだ一度も動いていなければ、キングを横に2マス動かして、ルークをキングの反対側へ動かせる。1回の手で2つ動くよ。チェックされているときや、キングが通る所がねらわれているときはできない。\nアンパッサン。相手のポーンが2マス進んで、自分のポーンのとなりに来たら、すぐ次の手だけ、ななめ前へ進んでそのポーンを取れるよ。\nどちらも、できるときは盤の下に説明が出るから、覚えていなくても大丈夫。' },
+
+  /* 9 */ { type:'content', accent:'coral', section:'チェックとチェックメイト', sectionEn:'check & checkmate',
+    headline:'チェックされたら、<span class="hl">かならずよける</span>',
+    body:`<div class="side">
+      <div class="bfig">${cboard(MATE, { size:'mid', check:'g8', last:['a8'] })}<div class="bfig__cap">ルークが a8 へ。<span>チェックメイト</span></div></div>
+      <div class="rows tight">
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">warning</span></div><div><div class="row__t">キングがねらわれた形が「チェック」</div><div class="row__d">画面に「チェック」と出て、キングのマスが赤くなる</div></div></div>
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">directions_run</span></div><div><div class="row__t">チェックされたら、かならずよける</div><div class="row__d">キングが逃げる・ねらっている駒を取る・あいだに駒を置く。よけない手は指せない</div></div></div>
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">flag</span></div><div><div class="row__t">どうやってもよけられないのが「チェックメイト」</div><div class="row__d">図は、キングの前が自分のポーンでふさがっていて逃げられない</div></div></div>
+      </div>
+    </div>`,
+    note:'キングがねらわれた形を「チェック」というよ。画面に「チェック」と出て、キングのマスが赤くなる。\nチェックされたら、かならずよける。キングが逃げる、ねらっている駒を取る、あいだに駒を置く、のどれかだよ。よけない手は、押しても指せないようになっているよ。\nどうやってもよけられないのが「チェックメイト」。図は、ルークが一番奥に入って、黒のキングは前が自分のポーンでふさがっていて逃げられない。これで勝ちだよ。' },
+
+  /* 10 */ { type:'content', accent:'teal', section:'おわりかた', sectionEn:'how it ends',
+    headline:'勝ち負けのほかに、<span class="hl">引き分け</span>もあるよ',
+    body:`<div class="rows tight">
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">flag</span></div><div><div class="row__t">「投了する」で、負けを認めて終わりにできる</div><div class="row__d">相手の番でも押せるよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">pause_circle</span></div><div><div class="row__t">動かせる手がないのに、チェックされていない</div><div class="row__d">「ステイルメイト」といって、引き分け</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">repeat</span></div><div><div class="row__t">同じ形が3回・50手のあいだポーンが動かず駒も取られない・どちらも駒が足りない</div><div class="row__d">どれも引き分け。画面が自動で知らせるよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">timer</span></div><div><div class="row__t">持ち時間があるときは、時間が切れたら負け</div><div class="row__d">自分の番の時間だけ減る。なくなると秒読みになり、1手ごとにもとにもどるよ</div></div></div>
+    </div>`,
+    note:'チェックメイトのほかにも、おわりかたがあるよ。\n「投了する」を押すと、負けを認めて終わりにできる。相手の番でも押せるよ。\n動かせる手がないのに、チェックされていないときは「ステイルメイト」といって引き分け。チェックメイトのつもりで追いつめすぎると、引き分けになっちゃうこともあるよ。\nほかに、同じ形が3回出たとき、50手のあいだポーンが動かず駒も取られなかったとき、どちらも駒が足りずにチェックメイトにできないときも、引き分け。画面が自動で知らせてくれるよ。\n持ち時間があるときは、時間が切れたら負けだよ。' },
+
+  /* 11 */ { type:'content', accent:'coral', section:'補助', sectionEn:'assist', num:'1',
+    headline:'ルールを知らなくても<br><span class="ul">補助</span>があるから大丈夫',
+    body:`<div class="side">
+      <div class="bfig">${cboard(ASSIST, { size:'mid', names:true, ring:['g1'], dots:['f3','h3'] })}</div>
+      <div class="rows tight">
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">radio_button_checked</span></div><div><div class="row__t">動ける所を見せる</div><div class="row__d">駒を押すと、動ける所に点が出る。取れる所は輪</div></div></div>
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">label</span></div><div><div class="row__t">駒の名前と動き方</div><div class="row__d">駒の下に名前。押した駒の動き方が、盤の下に出る</div></div></div>
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">touch_app</span></div><div><div class="row__t">たとえば、ナイトを押すと</div><div class="row__d">「ナイト　「L」の形に跳ぶ。間の駒を跳びこえられる」と出る</div></div></div>
+      </div>
+    </div>`,
+    note:'ルールを知らなくても、「補助」があるから大丈夫。\n動ける所を見せる … 駒を押すと、動ける所に点が出る。相手の駒を取れる所は輪で出るよ。\n駒の名前と動き方 … 駒の下に名前が出ていて、押した駒の動き方が盤の下に出るよ。\nまずは駒を押して、点のある所に動かしてみよう。' },
+
+  /* 12 */ { type:'content', accent:'coral', section:'補助', sectionEn:'assist', num:'2',
+    headline:'迷ったら<span class="hl">「おすすめの手を見る」</span>',
+    body:`<div class="side">
+      <div class="bfig">${cboard(ASSIST, { size:'mid', hint:['g1','f3'] })}<div class="bfig__cap">おすすめの手が<span>緑の枠</span>で光る</div></div>
+      <div class="rows tight">
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">lightbulb</span></div><div><div class="row__t">自分の番に「おすすめの手を見る」を押す</div><div class="row__d">CPU が考えた手の2マスが光る。光っているマスを押すと指せる</div></div></div>
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">touch_app</span></div><div><div class="row__t">おすすめどおりでなくてもいい</div><div class="row__d">ほかの駒を押せば、自分で考えて指せるよ</div></div></div>
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">info</span></div><div><div class="row__t">動けない所を押すと、わけが出る</div><div class="row__d">「ナイトは、そこへは動けないよ」のように教えてくれる。駒は動かない</div></div></div>
+      </div>
+    </div>`,
+    note:'どこに指せばいいか迷ったら、「おすすめの手を見る」を押してみてね。CPU が考えた手のマスが緑の枠で光るよ。光っているマスを押すと、そのまま指せる。\nおすすめどおりでなくても大丈夫。ほかの駒を押せば、自分で考えて指せるよ。\n動けない所を押したときは、「ナイトは、そこへは動けないよ」のように、わけが出るよ。駒は動かないから安心してね。\n補助は、白の人だけ・黒の人だけにもできるよ。' },
+
+  /* 13 */ { type:'content', accent:'blue', section:'場所の言いかた', sectionEn:'where to move',
+    headline:'場所は「<span class="hl">e4</span>」のように言おう',
+    body:`<div class="side">
+      ${cboard(COORD, { size:'mid', ring:['e4'], coords:true })}
+      <div class="rows tight">
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">east</span></div><div><div class="row__t">横は、左から a〜h（盤の下の文字）</div></div></div>
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">north</span></div><div><div class="row__t">たては、下から 1〜8（盤の左の数字）</div></div></div>
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">screen_rotation</span></div><div><div class="row__t">黒の人の画面は、盤が逆向き</div><div class="row__d">自分の駒が手前に来るよ。「盤の向きを変える」でもどせる</div></div></div>
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">record_voice_over</span></div><div><div class="row__t">1台の画面で遊ぶときは、声かチャットで伝える</div><div class="row__d">「e2 のポーンを e4 へ」のように言うと、画面を動かす人が指すよ</div></div></div>
+      </div>
+    </div>`,
+    note:'場所は「e4」のように言うよ。\n横は左から a から h、盤の下の文字。たては下から 1 から 8、盤の左の数字だよ。\n黒の人の画面は、自分の駒が手前に来るように盤が逆向きになっているよ。\n1台の画面でみんなで遊ぶときは、「e2 のポーンを e4 へ」のように声かチャットで教えてね。画面を動かす人が指すよ。' },
+
+  /* 14 */ { type:'content', accent:'blue', section:'遊びかた', sectionEn:'vs CPU',
+    headline:'<span class="hl">CPU</span> とも対戦できる',
+    body:`<div class="rows">
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">devices</span></div><div><div class="row__t">「1台の画面であそぶ」で、対戦の相手を「CPU」にする</div><div class="row__d">自分が白か黒かも選べるよ。白が先に指す</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">groups</span></div><div><div class="row__t">ルームでは、ホストが席に「CPU」を選べる</div><div class="row__d">ほかの人は、CPU との対局を観戦できるよ</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">smart_toy</span></div><div><div class="row__t">CPU の強さは「よわい・ふつう・つよい」</div><div class="row__d">「1手もどす」で、CPU の手と自分の手をいっしょにもどせる</div></div></div>
+    </div>`,
+    note:'CPU とも対戦できるよ。\n1台の画面で遊ぶときは、「1台の画面であそぶ」で対戦の相手を「CPU」にしてね。自分が白か黒かも選べる。白が先に指すよ。\nルームでは、ホストが席に「CPU」を選べる。ほかの人は、CPU との対局を観戦できるよ。\nCPU の強さは、よわい・ふつう・つよいの3つ。はじめての人は、よわいからがおすすめ。「1手もどす」を押すと、CPU の手と、その前の自分の手をいっしょにもどせるよ。' },
+
+  /* 15 */ { type:'content', accent:'coral', section:'はじめかた', sectionEn:'how to join',
+    headline:'名前 → ルームコード →<br>「参加する」',
+    body:`<div class="rows">
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">login</span></div><div><div class="row__t">「ルームに参加する」を押す</div><div class="row__d">名前、ルームコード（6文字）の順に入れて「参加する」</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">link</span></div><div><div class="row__t">リンクから開いたときは、名前だけ</div><div class="row__d">ルームコードは入っているよ。スマホやタブレットは QR コードを読み取ってもOK</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">groups</span></div><div><div class="row__t">対戦するのは2人。ほかの人は観戦</div><div class="row__d">だれが白と黒になるかは、ホストが決めるよ。CPU と対戦することもできる</div></div></div>
+    </div>`,
+    note:'参加のしかただよ。\n「ルームに参加する」を押して、名前、ルームコード（6文字）の順に入れて「参加する」。\nチャットのリンクから開いたときは、ルームコードは入っているので名前だけ入れてね。スマホやタブレットの人は、QR コードを読み取ってもOK。\n対戦するのは2人で、ほかの人は自分の画面で対局を見られるよ。だれが白と黒になるかは、ホストが決めるよ。ホストが席に CPU を選ぶと、CPU と対戦できるよ。' },
+
+  /* 16 */ { type:'content', accent:'teal', section:'Q&A', sectionEn:'question & answer',
+    headline:'よくある質問',
+    body:`<div class="qa">
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>動かし方を忘れちゃったら？</div><div class="qa__a"><span class="qa__badge a">A</span>駒を押すと、動ける所に点が出て、盤の下に動き方が出るよ。</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>相手の番のときは？</div><div class="qa__a"><span class="qa__badge a">A</span>盤は押せないよ。相手がどこに指すか、いっしょに見ていてね。</div></div>
+      <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>まちがえて指しちゃったら？</div><div class="qa__a"><span class="qa__badge a">A</span>ホストに伝えてね。「1手もどす」でもどせるよ。</div></div>
+    </div>`,
+    note:'よくある質問だよ\nQ. 動かし方を忘れちゃったら？→ A. 駒を押すと、動ける所に点が出て、盤の下に動き方が出るよ。\nQ. 相手の番のときは？→ A. 盤は押せないよ。相手がどこに指すか見ていてね。\nQ. まちがえて指しちゃったら？→ A. ホストに伝えてね。「1手もどす」でもどせるよ。' },
+
+  /* 17 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
+    sub:'気になることはある？',
+    note:'ここまでで、質問がある人はいるかな？\nマイクON か チャットで教えてね！' },
+
+  /* 18 */ { type:'divider', accent:'coral', icon:'how_to_reg', jp:'参加確認', en:"let's check",
+    sub:'チャットで教えてね',
+    note:'対戦してみたい人〜？\n「①対戦したい」「②見ていたい」「③その他」を、チャットで教えてね！' },
+
+  /* 19 */ { type:'divider', accent:'teal', solid:true, icon:'rocket_launch', jp:'＼ ゲームスタート ／', en:'game start',
+    sub:'白から指そう！',
+    note:'それでは、チェススタート！\nルームに入る人は、まずはルームに参加してね。白の人から指そう。わからなくなったら、いつでも聞いてね' },
+
+  /* 20 */ { type:'divider', accent:'teal', solid:true, icon:'emoji_events', jp:'けっか', en:'result',
+    sub:'おつかれさま！',
+    note:'けっか発表！\nおつかれさま。最後にひとことずつ、ふりかえってみよう。' },
+];
+
+/* ===== ウィンドウ間同期 ===== */
+const channel = ('BroadcastChannel' in window) ? new BroadcastChannel('chess_deck') : null;
+function send(msg){ if(channel) channel.postMessage(msg); try{ localStorage.setItem('chs_msg', JSON.stringify({...msg,_t:Date.now()})); }catch(e){} }
+function onMsg(h){ if(channel) channel.onmessage=(e)=>h(e.data); window.addEventListener('storage',(e)=>{ if(e.key==='chs_msg'&&e.newValue){ try{ h(JSON.parse(e.newValue)); }catch(err){} } }); }
+const isPresenter = new URLSearchParams(location.search).get('view')==='presenter';
+
+/* ===== レンダリング ===== */
+function slideHTML(s){
+  const acc = s.accent ? `accent-${s.accent}` : 'accent-teal';
+  if(s.type==='title'){
+    return `<section class="slide title-slide accent-teal">
+      <div class="title-ic"><span class="material-symbols-rounded">chess_knight</span></div>
+      <div class="title-jp">チェス</div>
+      <div class="title-en">chess</div>
+      <div class="title-tag">〜 駒を動かして、相手のキングを追いつめよう 〜</div>
+      <div class="title-meta">
+        <span class="m"><span class="material-symbols-rounded">group</span>対戦は2人</span>
+        <span class="m"><span class="material-symbols-rounded">schedule</span>10〜40分</span>
+        <span class="m"><span class="material-symbols-rounded">visibility</span>観戦できる</span>
+      </div></section>`;
+  }
+  if(s.type==='divider'){
+    return `<section class="slide divider ${acc}${s.solid?' solid':''}">
+      <div class="d-ic"><span class="material-symbols-rounded">${s.icon}</span></div>
+      <div class="d-jp">${s.jp}</div>
+      <div class="d-en">${s.en}</div>
+      ${s.sub?`<div class="d-sub">${s.sub}</div>`:''}</section>`;
+  }
+  // content
+  return `<section class="slide ${acc}">
+    <div class="sec">${s.num?`<span class="sec__num">${s.num}</span>`:''}<span class="sec__jp">${s.section}</span><span class="sec__en">${s.sectionEn}</span></div>
+    <h1 class="headline">${s.headline}</h1>
+    <div class="body">${s.body||''}</div></section>`;
+}
+
+if(!isPresenter){
+  const slidesEl=document.getElementById('slides'), dotsEl=document.getElementById('dots'), counterEl=document.getElementById('counter');
+  let idx=0;
+  SLIDES.forEach((s)=>{ slidesEl.insertAdjacentHTML('beforeend', slideHTML(s)); const d=document.createElement('span'); d.className='dot'; dotsEl.appendChild(d); });
+  const slideEls=[...slidesEl.children], dotEls=[...dotsEl.children];
+  function render(){
+    slideEls.forEach((el,i)=>el.classList.toggle('active',i===idx));
+    dotEls.forEach((el,i)=>el.classList.toggle('on',i===idx));
+    counterEl.textContent=`${idx+1} / ${SLIDES.length}`;
+    document.getElementById('navPrev').style.visibility=idx===0?'hidden':'visible';
+    document.getElementById('navNext').style.visibility=idx===SLIDES.length-1?'hidden':'visible';
+  }
+  function goTo(n,b=true){ n=Math.max(0,Math.min(SLIDES.length-1,n)); if(n!==idx){ idx=n; render(); } if(b) send({t:'idx',i:idx}); }
+  const next=()=>goTo(idx+1), prev=()=>goTo(idx-1);
+  document.getElementById('navNext').onclick=next; document.getElementById('navPrev').onclick=prev;
+  document.addEventListener('keydown',(e)=>{
+    if(['ArrowRight','PageDown',' '].includes(e.key)){ e.preventDefault(); next(); }
+    else if(['ArrowLeft','PageUp'].includes(e.key)){ e.preventDefault(); prev(); }
+    else if(e.key==='Home'){ e.preventDefault(); goTo(0); }
+    else if(e.key==='End'){ e.preventDefault(); goTo(SLIDES.length-1); }
+    else if(e.key==='f'||e.key==='F'){ toggleFull(); }
+    else if(e.key==='p'||e.key==='P'){ openPresenter(); }
+  });
+  const stage=document.getElementById('stage');
+  function fit(){ const sc=Math.min(window.innerWidth/1280, window.innerHeight/720); stage.style.transform=`translate(-50%,-50%) scale(${sc})`; }
+  window.addEventListener('resize',fit); document.addEventListener('fullscreenchange',fit);
+  function toggleFull(){ if(!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); }
+  document.getElementById('btnFull').onclick=toggleFull;
+  function openPresenter(){ const url=new URL(location.href); url.searchParams.set('view','presenter'); url.hash=''; const w=window.open(url.toString(),'chs_presenter','width=620,height=800'); if(!w) alert('発表者ノートのウィンドウがブロックされました。\nブラウザのポップアップを許可してから、もう一度お試しください。'); }
+  document.getElementById('btnPresenter').onclick=openPresenter;
+  onMsg((m)=>{ if(m.t==='goto') goTo(m.i,false); else if(m.t==='hello') send({t:'idx',i:idx}); });
+  fit(); render();
+}
+
+if(isPresenter){
+  document.title = '発表者ノート | チェス | あそびのたな';
+  document.body.classList.add('presenter');
+  document.getElementById('deck').style.display='none';
+  document.getElementById('toolbar').style.display='none';
+  document.querySelector('.hint-help').style.display='none';
+  document.getElementById('presenter').style.display='block';
+  const $=(id)=>document.getElementById(id);
+  const elCount=$('pvCount'), elTitle=$('pvTitle'), elLead=$('pvLead'), elNote=$('pvNote'), elNext=$('pvNextTitle'), elConn=$('pvConn');
+  const btnCopy=$('pvCopy'), btnReset=$('pvReset'), btnPrev=$('pvPrev'), btnNext=$('pvNext');
+  let cur=0; const KEY=(i)=>'chs_note_'+i;
+  function label(s){
+    if(s.type==='title') return 'チェス（タイトル）';
+    if(s.type==='divider') return s.jp.replace(/[＼／]/g,'').trim()+'（区切り）';
+    return `${s.section}${s.num?' '+s.num:''} ／ ${s.sectionEn}`;
+  }
+  function plain(html){ const d=document.createElement('div'); d.innerHTML=html||''; d.querySelectorAll('rt').forEach(r=>r.remove()); return (d.textContent||'').replace(/\s+/g,' ').trim(); }
+  function titleOf(s){
+    if(s.type==='title') return 'チェス';
+    if(s.type==='divider') return s.jp;
+    return plain(s.headline);
+  }
+  function show(i){
+    cur=Math.max(0,Math.min(SLIDES.length-1,i));
+    const s=SLIDES[cur];
+    elCount.textContent=`${cur+1} / ${SLIDES.length}`;
+    elTitle.textContent=titleOf(s);
+    elLead.textContent=label(s);
+    const saved=localStorage.getItem(KEY(cur));
+    elNote.value=(saved!==null)?saved:s.note;
+    btnCopy.classList.remove('done');
+    btnCopy.innerHTML='<span class="material-symbols-rounded">content_copy</span>チャットにコピー';
+    elNext.innerHTML=cur<SLIDES.length-1?`次のスライド → <b>${titleOf(SLIDES[cur+1])}</b>`:'<b>最後のスライドです</b>';
+    btnPrev.disabled=cur===0; btnNext.disabled=cur===SLIDES.length-1;
+  }
+  elNote.addEventListener('input',()=>{ try{ localStorage.setItem(KEY(cur),elNote.value); }catch(e){} });
+  async function copyText(t){ try{ await navigator.clipboard.writeText(t); return true; }catch(e){ try{ const ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.focus(); ta.select(); const ok=document.execCommand('copy'); ta.remove(); return ok; }catch(e2){ return false; } } }
+  btnCopy.onclick=async()=>{
+    const ok=await copyText(elNote.value);
+    if(!ok){ elNote.focus(); elNote.select(); }
+    btnCopy.innerHTML=ok?'<span class="material-symbols-rounded">check</span>コピーしました！':'<span class="material-symbols-rounded">keyboard_command_key</span>選択したのでコピーしてください';
+    btnCopy.classList.toggle('done',ok);
+    setTimeout(()=>{ btnCopy.classList.remove('done'); btnCopy.innerHTML='<span class="material-symbols-rounded">content_copy</span>チャットにコピー'; },2200);
+  };
+  btnReset.onclick=()=>{ localStorage.removeItem(KEY(cur)); elNote.value=SLIDES[cur].note; };
+  function goto(i){ show(i); send({t:'goto',i:cur}); }
+  btnPrev.onclick=()=>goto(cur-1); btnNext.onclick=()=>goto(cur+1);
+  document.addEventListener('keydown',(e)=>{ if(e.target===elNote) return; if(e.key==='ArrowRight'||e.key===' '){ e.preventDefault(); goto(cur+1); } else if(e.key==='ArrowLeft'){ e.preventDefault(); goto(cur-1); } });
+  onMsg((m)=>{ if(m.t==='idx'){ elConn.textContent='スライド画面と接続中 ✓'; show(m.i); } });
+  show(0); send({t:'hello'}); setTimeout(()=>send({t:'hello'}),400);
+}
+</script>
+</body>
+</html>
