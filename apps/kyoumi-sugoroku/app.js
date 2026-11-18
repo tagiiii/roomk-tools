@@ -1841,7 +1841,7 @@ function renderRoomGame(room, game) {
     if (net.arrivedKey !== arrivedKey) { net.arrivedKey = arrivedKey; celebrate(); }
   }
 
-  if (L.isOldLife(game) && !goal) note.textContent = 'ツールが新しくなったよ。ホストの画面が待合室にもどすのを待ってね';
+  if (L.isOldLife(game) && !goal) note.textContent = 'このゲームは続けられなくなったよ。ホストの画面が待合室にもどすのを待ってね';
   $('btnRoomBack').hidden = net.offline || !(net.role === 'host' && !goal);
   $('btn-back').hidden = !net.offline;
 
@@ -2086,7 +2086,7 @@ async function hostTransaction(update, failMessage) {
 function hostWatchAbsent(room) {
   const game = L.gameOf(room);
   const playing = game && room.status === L.STATUS.PLAYING;
-  // 前の版が作った人生の道のゲームは、この版では進められない → 待合室にもどす
+  // 前の版が作った人生の道のゲーム・知らない段階のゲームは、この版では進められない → 待合室にもどす
   const old = playing && L.isOldLife(game);
   const actor = playing && (L.isRollStep(game) || L.isPickStep(game)) ? L.actorOf(game) : null;
   // サイコロを振る・進む目を選ぶ番の人がいないとき → 次の人へとばす
@@ -2112,9 +2112,15 @@ function hostWatchAbsent(room) {
       if (kind === 'p') return L.dropPick(r);
       return L.skipAbsent(r);
     }, '');
-    if (ok && kind === 'o') toast('ツールが新しくなったので、待合室にもどりました。「はじめる」でもう一度あそべます', false);
-    // 進めなかったら（処理中など）、次のルームの変化でまた見る
-    if (!ok && net.skipKey === key) net.skipKey = null;
+    if (ok && kind === 'o') toast('ゲームを続けられなくなったので、待合室にもどりました。「はじめる」でもう一度あそべます', false);
+    // 進めなかったら（ほかの操作の処理中など）、少し待ってもう一度見る（次のルームの変化を待たない）
+    if (!ok && net.skipKey === key) {
+      net.skipKey = null;
+      net.skipTimer = setTimeout(() => {
+        net.skipTimer = null;
+        if (net.role === 'host' && net.room && !net.offline) hostWatchAbsent(net.room);
+      }, 1000);
+    }
   }, kind === 'o' ? 500 : ABSENT_GRACE_MS);
 }
 

@@ -25,8 +25,9 @@ export const STEP = {
   LIFE_PICK: 'life2-pick', // サイコロを2つ振って、進む目を選んでいる
   LIFE_TALK: 'life2-talk',
 };
-// 前の版が作った人生の道のゲーム（この版では進められない。ホストの画面が待合室にもどす）
-const OLD_LIFE_STEPS = ['life-roll', 'life-talk', 'roll', 'talk'];
+// この版の人生の道の段階。これ以外（前の版が作ったゲームの life-roll / life-talk や、壊れた値）は、
+// この版では進められないので、ホストの画面が待合室にもどす
+const LIFE_STEPS = [STEP.LIFE_ROLL, STEP.LIFE_PICK, STEP.LIFE_TALK];
 
 /* ── 「人生の道」モード（2026-11-18） ──
    盤は4段で、1段が1つの場面。マスの種類で起きることが決まる。みんながゴールしたらおわり。
@@ -70,13 +71,13 @@ export function isLife(game) { return game?.mode === MODE.LIFE; }
 export function isRollStep(game) { return !!game && game.step === (isLife(game) ? STEP.LIFE_ROLL : STEP.ROLL); }
 export function isTalkStep(game) { return !!game && game.step === (isLife(game) ? STEP.LIFE_TALK : STEP.TALK); }
 export function isPickStep(game) { return isLife(game) && game.step === STEP.LIFE_PICK; }
-export function isOldLife(game) { return isLife(game) && OLD_LIFE_STEPS.includes(game.step); }
+export function isOldLife(game) { return isLife(game) && !LIFE_STEPS.includes(game.step); }
 // 進む目を選んでいるときの2つの目（ちがう 1〜6 の数が2つ）。壊れた値は null
 export function pickDice(game) {
   if (!isPickStep(game) || game.dice == null || typeof game.dice !== 'object') return null;
-  const a = Number(game.dice[0]);
-  const b = Number(game.dice[1]);
-  const ok = (n) => Number.isInteger(n) && n >= 1 && n <= 6;
+  const a = game.dice[0];
+  const b = game.dice[1];
+  const ok = (n) => typeof n === 'number' && Number.isInteger(n) && n >= 1 && n <= 6;
   return ok(a) && ok(b) && a !== b ? [a, b] : null;
 }
 // 進む目を選ぶ段階なのに、目が読めない（壊れた値）

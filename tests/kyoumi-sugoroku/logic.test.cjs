@@ -588,7 +588,7 @@ function test(name, fn) {
     const room = lifeRoom();
     assert.strictEqual(room.game.step, 'life2-roll');
     assert.strictEqual(L.isOldLife(room.game), false);
-    for (const step of ['life-roll', 'life-talk', 'roll', 'talk']) {
+    for (const step of ['life-roll', 'life-talk', 'roll', 'talk', 'zzz', '', null, 7]) { // 前の版の名前と、知らない値
       const old = { ...room, game: { ...room.game, step, rollNo: 1, q: { kind: 'hanasu', scene: 's0', idx: 2, n: 1 } } };
       assert.strictEqual(L.isOldLife(old.game), true);
       assert.strictEqual(L.isRollStep(old.game), false);
@@ -608,7 +608,7 @@ function test(name, fn) {
     const pick = (dice) => ({ ...base, game: { ...base.game, step: 'life2-pick', dice } });
     assert.deepStrictEqual(L.pickDice(pick([2, 5]).game), [2, 5]);
     assert.deepStrictEqual(L.pickDice(pick({ 0: 2, 1: 5 }).game), [2, 5]); // RTDB の数値キーの形
-    for (const bad of [null, undefined, [3], [3, 3], [0, 4], [2, 7], { 1: 5 }, 'x', [2, 'a']]) {
+    for (const bad of [null, undefined, [3], [3, 3], [0, 4], [2, 7], { 1: 5 }, 'x', [2, 'a'], [true, 2], ['3', 4]]) {
       const room = pick(bad);
       assert.strictEqual(L.pickDice(room.game), null);
       assert.strictEqual(L.pickBroken(room.game), true);

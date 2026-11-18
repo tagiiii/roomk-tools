@@ -286,7 +286,7 @@ const { check, sleep } = L;
   room = await L.roomWhen(code, (r) => r.status === 'waiting', 8000);
   check('I1 前の版のゲームは待合室にもどす', room.status === 'waiting' && !room.game, room);
   await L.waitScreen(A, 'waiting');
-  await L.waitToast(H, '新しくなった');
+  await L.waitToast(H, '続けられなくなった');
   check('I2 ホストに理由を知らせる', true);
   await H.page.click('#btnLeave');
   await L.waitScreen(A, 'top');
