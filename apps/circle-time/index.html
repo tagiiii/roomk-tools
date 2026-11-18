@@ -1448,18 +1448,28 @@ async function createRoom(form) {
 async function joinRoom(codeIn, nameIn, adult) {
   await authenticated();
   const name = validateName(nameIn), code = validateCode(codeIn);
-  const token = firebase.auth().currentUser.uid, id = crypto.randomUUID();
+  const token = firebase.auth().currentUser.uid, newId = crypto.randomUUID();
   const ref = db.ref(`${PREFIX}/${code}`), warm = await warmRoomCache(ref);
-  let reason = '';
+  let reason = '', id = newId;
   try {
     if (expired(warm.snap.val())) { await cleanup(ref); throw fail('このルームは終了しました。'); }
     const result = await transactRetry(ref, (room) => {
-      reason = '';
+      reason = ''; id = newId;
       if (!room || expired(room)) { reason = 'ルームが見つかりません。終了したようです。'; return; }
       if (room.players?.[id]?.uid === token) return room;
       if (room.status === 'finished') { reason = 'このルームは、おしまいになったよ。'; return; }
       const players = room.players || {};
-      if (Object.values(players).some((p) => p.name === name)) { reason = 'そのニックネームは使われているよ。別の名前にしてね。'; return; }
+      const same = Object.keys(players).find((k) => players[k]?.name === name);
+      if (same) {
+        // 接続が切れた人（タブを閉じた・別の端末に替えた）が同じ名前で入りなおすときは、その人として戻す（答えもそのまま）。
+        // 進行役・端末なしの人・いまつながっている人の名前は使えない
+        const sp = players[same];
+        const fixed = same === room.host || sp.isHost || sp.proxy;
+        if (fixed || (sp.uid !== token && Object.keys(sp.connections || {}).length)) { reason = `そのニックネームは使われているよ。別の名前にしてね。${fixed ? '' : '接続が切れたばかりなら、少し待ってからもう一度ためしてね。'}`; return; }
+        id = same;
+        room.players = { ...players, [same]: { ...sp, uid: token, adult: !!adult || !!sp.adult } };
+        return room;
+      }
       if (Object.keys(players).length >= MAX_PLAYERS) { reason = `このルームは${MAX_PLAYERS}人まで参加できるよ。`; return; }
       room.playerOrder = [...(Array.isArray(room.playerOrder) ? room.playerOrder : []).filter((x) => players[x]), id];
       room.players = { ...players, [id]: { name, uid: token, isHost: false, adult: !!adult } };
@@ -2421,7 +2431,7 @@ window.addEventListener('load', async () => {
 })();
 </script>
 <script>RoomkHowto.init({ title: 'つかいかた', lead: '午前と午後のサークルタイムを、ひとつのルームで進めるよ。画面を見ながら、ボタン・チャット・声のどれで答えてもいいよ。', sections: [
-  { heading: '参加する人', items: ['「ルームに参加する」でニックネーム、ルームコード（6文字）の順に入れて「参加する」。リンクからひらいたときは、ニックネームだけでいいよ。', '画面が変わったら、自分の端末でえらんで「送る」を押してね。選びなおして送りなおすことも、「パスする」もできるよ。', '心・体・ふりかえりでは、わけやひとことを書いて送れるよ（なくてもOK）。心・体で書いたことは、みんなの画面で名前を押すと出るよ。ふりかえりで書いたことも、みんなの画面で名前を押すと出るよ。ルームにいる人が自分の端末の「ルームにいる人・これまでの画面を見る」でも見られるよ。', 'チェックインでは、マイクで話す人は「話したい」、MetaLife のチャットに書いた人は「チャットに書いたよ」を押してね。', '自由タイムは自由にすごしてOK。ニュースやおしゃべりのお題が出たら、MetaLife のチャットで話そう。ニュースは「くわしく読む」で元の記事が開くよ。', 'みんなでゲームは、きょうあそぶゲームが出るよ。進行役がルームを作ると、自分の端末に「ゲームに入る」が出るよ。押して入ってね。', '「ルームにいる人・これまでの画面を見る」で、ルームにいる人と、ここまでの画面（心・体・ふりかえりのみんなの答えと書いたこと、選んだものなど）を自分の端末で見られるよ。', '端末がない人は、チャットに数字や言葉を書くか、声で言えばOK。進行役が代わりに入れるよ。'] },
+  { heading: '参加する人', items: ['「ルームに参加する」でニックネーム、ルームコード（6文字）の順に入れて「参加する」。リンクからひらいたときは、ニックネームだけでいいよ。', '画面が変わったら、自分の端末でえらんで「送る」を押してね。選びなおして送りなおすことも、「パスする」もできるよ。', '心・体・ふりかえりでは、わけやひとことを書いて送れるよ（なくてもOK）。心・体で書いたことは、みんなの画面で名前を押すと出るよ。ふりかえりで書いたことも、みんなの画面で名前を押すと出るよ。ルームにいる人が自分の端末の「ルームにいる人・これまでの画面を見る」でも見られるよ。', 'チェックインでは、マイクで話す人は「話したい」、MetaLife のチャットに書いた人は「チャットに書いたよ」を押してね。', '自由タイムは自由にすごしてOK。ニュースやおしゃべりのお題が出たら、MetaLife のチャットで話そう。ニュースは「くわしく読む」で元の記事が開くよ。', 'みんなでゲームは、きょうあそぶゲームが出るよ。進行役がルームを作ると、自分の端末に「ゲームに入る」が出るよ。押して入ってね。', '「ルームにいる人・これまでの画面を見る」で、ルームにいる人と、ここまでの画面（心・体・ふりかえりのみんなの答えと書いたこと、選んだものなど）を自分の端末で見られるよ。', '接続が切れたら、同じニックネームでもう一度入れば、続きから参加できるよ。', '端末がない人は、チャットに数字や言葉を書くか、声で言えばOK。進行役が代わりに入れるよ。'] },
   { heading: '進行役', items: ['「ルームを作る」を押して、「きょうやること」（午前は自由タイムのあそび、午後はチェックインのお題とみんなでゲーム）をえらんで「はじめる」。天気・今日は何の日・room-K ポータルのプログラム・ニュースは自動で入るよ。直したいときは「中身を確かめる・直す」。', '自由タイムのあそびは「自由タイムのあそびを変える」で変えられるよ。ニュースは「つぎのニュース」で次の話題へ。', 'みんなでゲームは、準備でえらんだゲームが出るよ。「○○のルームを作る（タブを開く）」でゲームのルームを作り、その画面を共有すれば、参加者は自分の端末の「ゲームに入る」から入れるよ。リンクを貼るのは、なくてもOK。子どもたちの声で変えたいときは「ゲームを変える」。', 'セクションごとに表紙が出るよ。「次へ」で表紙から中身に進む。', 'ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れるよ。スマホやタブレットで入る人には、「QRコードを出す」をカメラで読みとってもらってね。', '画面共有には「みんなにみせる画面を開く」でひらいた窓を使ってね。進行役の画面は共有しないよ。', '「次へ」「前へ」（矢印キー）で進める。答えを伏せる画面は「せーので見せる」（スペース）でいっせいに出るよ。', '流れの一覧から、好きな画面へ移る・飛ばす・並べかえる、ができるよ。「文を直す」「その場で聞く」で、その場で変えられるよ。', 'チャットや声で答えた人、端末のない人の分は「代わりに入れる」で名前の横を押してね（入れなくても進められるよ）。わけ・ひとことは参加者の一覧に出るよ。', '終わるときは「ルームを閉じる」。'] },
 ] });</script>
 </body>
