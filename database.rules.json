@@ -264,6 +264,12 @@
         ".write": "auth != null"
       }
     },
+    "gomoku_rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
     "shirushi_rooms": {
       "$roomId": {
         ".read": "auth != null",
