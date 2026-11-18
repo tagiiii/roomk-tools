@@ -1270,12 +1270,15 @@ async function fetchWeather() {
       const code = w.weatherCodes[0];
       const text = String(w.weathers?.[0] || '').split(/\s+/).slice(0, 3).join('').slice(0, 8);
       let max = null, min = null;
+      // 今日の最低気温は5時の発表にだけある。11時・17時の発表では、今日の T00:00 の欄に最高気温と同じ値が入る
+      // （朝の最低は過ぎているため）ので使わない。そのまま使うと「21°／21°」のように最高と最低が同じになる
+      const hasTodayMin = Number(String(d[0].reportDatetime || '').slice(11, 13)) < 11;
       const t = ts.find((x) => x.areas?.[0]?.temps);
       if (t) t.timeDefines.forEach((td, i) => {
         if (!td.startsWith(today)) return;
         const v = t.areas[0].temps[i];
         if (v === '' || v == null) return;
-        if (td.includes('T09:00')) max = Number(v); else if (td.includes('T00:00')) min = Number(v);
+        if (td.includes('T09:00')) max = Number(v); else if (td.includes('T00:00') && hasTodayMin) min = Number(v);
       });
       return { n: city.n, code: String(code), text, max, min };
     } catch { return { n: city.n, code: null, text: '', max: null, min: null }; }
@@ -1709,7 +1712,7 @@ function stageHtml(room, code) {
   }
   if (cur.type === 'scale' || cur.type === 'review') {
     const labels = cur.labels || LABELS.review;
-    const canOpen = (p) => cur.type === 'scale' && !!room.notes?.[cur.id]?.[p.id];
+    const canOpen = (p) => !!room.notes?.[cur.id]?.[p.id];
     const nchip = (p) => canOpen(p) ? `<button type="button" class="chip has-note${p.adult ? ' adult' : ''}${noteOpen === cur.id + '|' + p.id ? ' open' : ''}" data-note="${esc(p.id)}">${esc(p.name)}<span class="material-symbols-rounded">chat_bubble</span></button>` : chip(p);
     const rows = `<div class="rows">${labels.map((l, i) => { const v = 5 - i; return `<div class="row"><span class="n">${v}</span><span class="fc material-symbols-rounded">${FACES[i]}</span><span class="l">${esc(l)}</span><div class="who${byValue(v).length > 6 ? ' many' : ''}">${revealed ? byValue(v).map(nchip).join('') : ''}</div></div>`; }).join('')}</div>`;
     const op = noteOpen && noteOpen.startsWith(cur.id + '|') ? players.find((p) => p.id === noteOpen.slice(cur.id.length + 1)) : null;
@@ -1719,7 +1722,7 @@ function stageHtml(room, code) {
       if (!revealed) body += `<div class="ans-bar"><span class="cnt">${answeredPlayers.length}／${players.length}</span>人 答えたよ ${answeredPlayers.map((p) => chip(p)).join('')}<span class="note">${isClosed(room, cur) ? 'しめきりました' : 'そろったら、せーので見せます'}</span></div>`;
       return wrap(body, `<div class="how">端末・チャット（数字）・声、どれでもOK</div>${room.notes?.[cur.id] && Object.keys(room.notes[cur.id]).length ? '<div class="how"><span class="material-symbols-rounded" style="font-size:24px;color:var(--color-accent);vertical-align:-4px">chat_bubble</span> の名前を押すと、わけが出るよ</div>' : ''}`);
     }
-    return wrap(head('history', 'ふりかえり', cur.sub) + `<div class="scale">${rows.replace('<div class="rows">', '<div class="rows" style="grid-column:1/-1">')}</div>`, '<div class="how">端末・チャット（数字）・声、どれでもOK</div>');
+    return wrap(head('history', 'ふりかえり', cur.sub) + `<div class="scale">${rows.replace('<div class="rows">', '<div class="rows" style="grid-column:1/-1">')}</div>${pop}`, `<div class="how">端末・チャット（数字）・声、どれでもOK</div>${room.notes?.[cur.id] && Object.keys(room.notes[cur.id]).length ? '<div class="how"><span class="material-symbols-rounded" style="font-size:24px;color:var(--color-accent);vertical-align:-4px">chat_bubble</span> の名前を押すと、書いたことが出るよ</div>' : ''}`);
   }
   if (cur.type === 'choice') {
     const n = (cur.options || []).length, shown = !!room.answerShown?.[cur.id], all = cur.answer === 'all';
@@ -1896,7 +1899,7 @@ function renderPlayer(room) {
     html += h2(review ? 'history' : cur.key === 'karada' ? 'accessibility_new' : 'favorite', cur.title, cur.sub)
       + `<div class="opts">${(cur.labels || []).map((l, i) => `<button type="button" class="opt-btn" data-act="pick" data-v="${5 - i}" aria-pressed="${d.n === 5 - i}" ${closed ? 'disabled' : ''}><span class="n">${5 - i}</span><span class="fc material-symbols-rounded">${FACES[i]}</span>${esc(l)}<span class="material-symbols-rounded chk">check</span></button>`).join('')}</div>`
       + (review ? `<div class="p-sub">ひとこと（いくつでも・なくてもOK）</div><div class="p-words">${(cur.words || WORDS).map((t, i) => `<button type="button" data-act="pickw" data-v="${i}" aria-pressed="${!!d.w[i]}" ${closed ? 'disabled' : ''}>${WORD_ICONS[i] ? `<span class="material-symbols-rounded">${WORD_ICONS[i]}</span>` : ''}${esc(t)}</button>`).join('')}</div>` : '')
-      + (`<div class="p-sub">${review ? '自由に書いてもOK' : 'わけ・ひとこと（なくてもOK）'}</div>${review ? pnote('chat_bubble', '書いたことは、ルームにいる人も自分の端末で見られるよ') : pnote('chat_bubble', '書いたことは、みんなの画面で名前を押すと出るよ')}<textarea id="p-note" class="p-note" maxlength="${NOTE_MAX}" rows="2" placeholder="${review ? 'きょうのこと、なんでも' : '書きたいことがあれば'}" ${closed ? 'disabled' : ''}>${esc(d.t)}</textarea>`)
+      + (`<div class="p-sub">${review ? '自由に書いてもOK' : 'わけ・ひとこと（なくてもOK）'}</div>${review ? pnote('chat_bubble', '書いたことは、みんなの画面で名前を押すと出るよ。ルームにいる人も自分の端末で見られるよ') : pnote('chat_bubble', '書いたことは、みんなの画面で名前を押すと出るよ')}<textarea id="p-note" class="p-note" maxlength="${NOTE_MAX}" rows="2" placeholder="${review ? 'きょうのこと、なんでも' : '書きたいことがあれば'}" ${closed ? 'disabled' : ''}>${esc(d.t)}</textarea>`)
       + sendRow(room, cur, d, closed);
   } else if (cur.type === 'choice') {
     const shown = !!room.answerShown?.[cur.id];
@@ -1921,7 +1924,7 @@ function renderPlayer(room) {
   card.dataset.key = cur.id + '|' + (room.view || '');
 }
 // 参加者の「ルームにいる人・これまでの画面」: ルームにいる人と、ここまでの画面を、自分の端末で見るだけ（書き込まない）。
-// 心・体のわけは、みんなの画面で名前を押すと出るものと同じ。ふりかえりの自由に書いたことも出す（2026-11-18 オーナー。書く欄にもそう出す）
+// 心・体のわけ・ふりかえりの自由に書いたことは、みんなの画面で名前を押すと出るものと同じ（ふりかえりは 2026-11-18 オーナー）
 let lookOpen = false, lookInit = false;
 const lookShown = new Set();
 function lookStepHtml(room, s) {
@@ -2415,7 +2418,7 @@ window.addEventListener('load', async () => {
 })();
 </script>
 <script>RoomkHowto.init({ title: 'つかいかた', lead: '午前と午後のサークルタイムを、ひとつのルームで進めるよ。画面を見ながら、ボタン・チャット・声のどれで答えてもいいよ。', sections: [
-  { heading: '参加する人', items: ['「ルームに参加する」でニックネーム、ルームコード（6文字）の順に入れて「参加する」。リンクからひらいたときは、ニックネームだけでいいよ。', '画面が変わったら、自分の端末でえらんで「送る」を押してね。選びなおして送りなおすことも、「パスする」もできるよ。', '心・体・ふりかえりでは、わけやひとことを書いて送れるよ（なくてもOK）。心・体で書いたことは、みんなの画面で名前を押すと出るよ。ふりかえりで書いたことは、ルームにいる人が自分の端末の「ルームにいる人・これまでの画面を見る」で見られるよ。', 'チェックインでは、マイクで話す人は「話したい」、MetaLife のチャットに書いた人は「チャットに書いたよ」を押してね。', '自由タイムは自由にすごしてOK。ニュースやおしゃべりのお題が出たら、MetaLife のチャットで話そう。ニュースは「くわしく読む」で元の記事が開くよ。', 'みんなでゲームは、きょうあそぶゲームが出るよ。進行役がルームを作ると、自分の端末に「ゲームに入る」が出るよ。押して入ってね。', '「ルームにいる人・これまでの画面を見る」で、ルームにいる人と、ここまでの画面（心・体・ふりかえりのみんなの答えと書いたこと、選んだものなど）を自分の端末で見られるよ。', '端末がない人は、チャットに数字や言葉を書くか、声で言えばOK。進行役が代わりに入れるよ。'] },
+  { heading: '参加する人', items: ['「ルームに参加する」でニックネーム、ルームコード（6文字）の順に入れて「参加する」。リンクからひらいたときは、ニックネームだけでいいよ。', '画面が変わったら、自分の端末でえらんで「送る」を押してね。選びなおして送りなおすことも、「パスする」もできるよ。', '心・体・ふりかえりでは、わけやひとことを書いて送れるよ（なくてもOK）。心・体で書いたことは、みんなの画面で名前を押すと出るよ。ふりかえりで書いたことも、みんなの画面で名前を押すと出るよ。ルームにいる人が自分の端末の「ルームにいる人・これまでの画面を見る」でも見られるよ。', 'チェックインでは、マイクで話す人は「話したい」、MetaLife のチャットに書いた人は「チャットに書いたよ」を押してね。', '自由タイムは自由にすごしてOK。ニュースやおしゃべりのお題が出たら、MetaLife のチャットで話そう。ニュースは「くわしく読む」で元の記事が開くよ。', 'みんなでゲームは、きょうあそぶゲームが出るよ。進行役がルームを作ると、自分の端末に「ゲームに入る」が出るよ。押して入ってね。', '「ルームにいる人・これまでの画面を見る」で、ルームにいる人と、ここまでの画面（心・体・ふりかえりのみんなの答えと書いたこと、選んだものなど）を自分の端末で見られるよ。', '端末がない人は、チャットに数字や言葉を書くか、声で言えばOK。進行役が代わりに入れるよ。'] },
   { heading: '進行役', items: ['「ルームを作る」を押して、「きょうやること」（午前は自由タイムのあそび、午後はチェックインのお題とみんなでゲーム）をえらんで「はじめる」。天気・今日は何の日・room-K ポータルのプログラム・ニュースは自動で入るよ。直したいときは「中身を確かめる・直す」。', '自由タイムのあそびは「自由タイムのあそびを変える」で変えられるよ。ニュースは「つぎのニュース」で次の話題へ。', 'みんなでゲームは、準備でえらんだゲームが出るよ。「○○のルームを作る（タブを開く）」でゲームのルームを作り、その画面を共有すれば、参加者は自分の端末の「ゲームに入る」から入れるよ。リンクを貼るのは、なくてもOK。子どもたちの声で変えたいときは「ゲームを変える」。', 'セクションごとに表紙が出るよ。「次へ」で表紙から中身に進む。', 'ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れるよ。スマホやタブレットで入る人には、「QRコードを出す」をカメラで読みとってもらってね。', '画面共有には「みんなにみせる画面を開く」でひらいた窓を使ってね。進行役の画面は共有しないよ。', '「次へ」「前へ」（矢印キー）で進める。答えを伏せる画面は「せーので見せる」（スペース）でいっせいに出るよ。', '流れの一覧から、好きな画面へ移る・飛ばす・並べかえる、ができるよ。「文を直す」「その場で聞く」で、その場で変えられるよ。', 'チャットや声で答えた人、端末のない人の分は「代わりに入れる」で名前の横を押してね（入れなくても進められるよ）。わけ・ひとことは参加者の一覧に出るよ。', '終わるときは「ルームを閉じる」。'] },
 ] });</script>
 </body>
