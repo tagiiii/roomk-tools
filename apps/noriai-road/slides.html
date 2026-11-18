@@ -73,6 +73,7 @@
   .cols--tight .role-row b{ font-size:21px; }
   .cols--tight .role-row .d{ font-size:16px; margin-top:0; line-height:1.4; }
   .cols--3{ grid-template-columns:repeat(3,1fr); gap:18px; }
+  .stage-no{ flex:none; width:30px; height:28px; margin-top:2px; border-radius:7px; background:var(--acc); color:#fff; font-size:16px; font-weight:900; display:flex; align-items:center; justify-content:center; font-variant-numeric:tabular-nums; }
 
   /* 箇条書き行 */
   .rows{ display:flex; flex-direction:column; gap:16px; }
@@ -251,6 +252,8 @@
 const row = (icon, title, desc) => `<div class="row"><div class="row__ic"><span class="material-symbols-rounded">${icon}</span></div><div><div class="row__t">${title}</div><div class="row__d">${desc}</div></div></div>`;
 const rows = (...items) => `<div class="rows">${items.map((x) => row(x[0], x[1], x[2])).join('')}</div>`;
 const role = (icon, title, desc) => `<div class="role-row"><span class="material-symbols-rounded">${icon}</span><div><b>${title}</b><span class="d">${desc}</span></div></div>`;
+// ステージの一覧の行（番号札。10より大きい番号にもアイコンがないので、12こを同じ形でそろえる）
+const stageRow = (no, title, desc) => `<div class="role-row"><span class="stage-no">${no}</span><div><b>${title}</b><span class="d">${desc}</span></div></div>`;
 const qa = (q, a) => `<div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>${q}</div><div class="qa__a"><span class="qa__badge a">A</span>${a}</div></div>`;
 
 const SLIDES = [
@@ -361,24 +364,24 @@ const SLIDES = [
     body:`<div class="cols cols--tight cols--3">
       <div class="panel">
         <div class="team-head"><div class="team-ic teal-bg"><span class="material-symbols-rounded">extension</span></div><div class="team-name">しかけを1つずつ</div></div>
-        ${role('looks_one', '1. のりあいの練習', '頭に乗る・スイッチ・番号のかべ・カギ')}
-        ${role('looks_two', '2. 重い箱と動く床', '人数で押す箱、人数で動くリフトと床')}
-        ${role('looks_3', '3. シーソーとボール', 'シーソーと、投げてわたすボール')}
-        ${role('looks_4', '4. ひもでつながる', 'となりの番号の人と、ひもでつながる')}
-        ${role('looks_5', '5. ぜんぶ', 'ここまでのしかけが全部出てくる')}
+        ${stageRow(1, 'のりあいの練習', '頭に乗る・スイッチ・番号のかべ・カギ')}
+        ${stageRow(2, '重い箱と動く床', '人数で押す箱、人数で動くリフトと床')}
+        ${stageRow(3, 'シーソーとボール', 'シーソーと、投げてわたすボール')}
+        ${stageRow(4, 'ひもでつながる', 'となりの番号の人と、ひもでつながる')}
+        ${stageRow(5, 'ぜんぶ', 'ここまでのしかけが全部出てくる')}
       </div>
       <div class="panel">
         <div class="team-head"><div class="team-ic coral-bg"><span class="material-symbols-rounded">emoji_events</span></div><div class="team-name">新しいしかけ</div></div>
-        ${role('looks_6', '6. 高い台', '人の塔で上がる3マスの台と、箱の足場')}
-        ${role('filter_7', '7. ばねでとぶ', 'ばねで、広い穴と高いかべをこえる')}
-        ${role('filter_8', '8. 手分けの道', '同時におさえるスイッチと、番号のスイッチ')}
-        ${role('filter_9', '9. ひもと高い台', 'ひもでつながったまま、高い台に上がる')}
+        ${stageRow(6, '高い台', '人の塔で上がる3マスの台と、箱の足場')}
+        ${stageRow(7, 'ばねでとぶ', 'ばねで、広い穴と高いかべをこえる')}
+        ${stageRow(8, '手分けの道', '同時におさえるスイッチと、番号のスイッチ')}
+        ${stageRow(9, 'ひもと高い台', 'ひもでつながったまま、高い台に上がる')}
       </div>
       <div class="panel">
         <div class="team-head"><div class="team-ic blue-bg"><span class="material-symbols-rounded">trending_up</span></div><div class="team-name">むずかしい道</div></div>
-        ${role('filter_9_plus', '10. さいごの道', 'ステージ6〜9のしかけが全部出てくる')}
-        ${role('trending_up', '11. ひもでつながる長い道', 'ひもでつながったまま、長い道を進む')}
-        ${role('trending_up', '12. いちばん長い道', 'ほとんど全部のしかけが出てくる')}
+        ${stageRow(10, 'さいごの道', 'ステージ6〜9のしかけが全部出てくる')}
+        ${stageRow(11, 'ひもでつながる長い道', 'ひもでつながったまま、長い道を進む')}
+        ${stageRow(12, 'いちばん長い道', 'ほとんど全部のしかけが出てくる')}
       </div>
     </div>`,
     note:'ステージは12こあるよ。\n1つ目は「のりあいの練習」。頭に乗る、スイッチ、番号のかべ、カギが出てくるよ。\n2つ目は「重い箱と動く床」、3つ目は「シーソーとボール」、4つ目は「ひもでつながる」、5つ目は「ぜんぶ」。\n6つ目からは新しいしかけ。「高い台」「ばねでとぶ」「手分けの道」「ひもと高い台」、10こ目からは、むずかしい道。「さいごの道」「ひもでつながる長い道」「いちばん長い道」だよ。' },
