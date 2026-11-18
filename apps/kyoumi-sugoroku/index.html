@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c" />
   <!-- index.html と app.js・logic.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261118look" />
+  <link rel="stylesheet" href="style.css?v=20261118life" />
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-database-compat.js"></script>
@@ -62,6 +62,12 @@
       </div>
       <div class="card">
         <div class="ks-field">
+          <span class="ks-field__label">あそびかた</span>
+          <div class="ks-toggle" id="mode-toggle" role="radiogroup" aria-label="あそびかた"></div>
+          <p class="ks-field__note" id="mode-note"></p>
+        </div>
+
+        <div class="ks-field">
           <span class="ks-field__label">何人であそぶ？</span>
           <div class="ks-toggle" id="player-count" role="radiogroup" aria-label="プレイヤー人数"></div>
         </div>
@@ -71,12 +77,17 @@
           <div class="ks-names" id="player-names"></div>
         </div>
 
-        <div class="ks-field">
+        <div class="ks-field" id="field-length" hidden>
+          <span class="ks-field__label">長さ（<span id="life-length-note"></span>）</span>
+          <div class="ks-toggle" id="life-length" role="radiogroup" aria-label="長さ"></div>
+        </div>
+
+        <div class="ks-field" id="field-squares">
           <span class="ks-field__label">マス数</span>
           <div class="ks-toggle" id="square-count" role="radiogroup" aria-label="マス数"></div>
         </div>
 
-        <div class="ks-field">
+        <div class="ks-field" id="field-themes">
           <span class="ks-field__label">テーマ（2つ以上選ぼう）</span>
           <div class="ks-themes" id="theme-list"></div>
         </div>
@@ -146,11 +157,21 @@
           </label>
 
           <div class="ks-field">
+            <span class="ks-field__label">あそびかた</span>
+            <div class="ks-toggle" id="roomMode" role="radiogroup" aria-label="あそびかた"></div>
+          </div>
+
+          <div class="ks-field" id="fieldRoomLength" hidden>
+            <span class="ks-field__label">長さ（<span id="roomLifeLenNote"></span>）</span>
+            <div class="ks-toggle" id="roomLifeLen" role="radiogroup" aria-label="長さ"></div>
+          </div>
+
+          <div class="ks-field" id="fieldRoomSquares">
             <span class="ks-field__label">マス数</span>
             <div class="ks-toggle" id="roomSquares" role="radiogroup" aria-label="マス数"></div>
           </div>
 
-          <div class="ks-field">
+          <div class="ks-field" id="fieldRoomThemes">
             <span class="ks-field__label">テーマ（2つ以上選ぼう）</span>
             <div class="ks-themes" id="roomThemes"></div>
           </div>
@@ -186,6 +207,12 @@
       </div>
 
       <div class="ks-board" id="board"></div>
+      <ul class="ks-legend" id="lifeLegend" aria-label="マスの種類" hidden>
+        <li class="ks-legend__item ks-legend__item--erabu"><span class="material-symbols-rounded" aria-hidden="true">checklist</span>えらぶ</li>
+        <li class="ks-legend__item ks-legend__item--hanasu"><span class="material-symbols-rounded" aria-hidden="true">chat_bubble</span>はなす</li>
+        <li class="ks-legend__item ks-legend__item--kiku"><span class="material-symbols-rounded" aria-hidden="true">forum</span>きく</li>
+        <li class="ks-legend__item ks-legend__item--dekigoto"><span class="material-symbols-rounded" aria-hidden="true">auto_awesome</span>できごと</li>
+      </ul>
 
       <div class="ks-dice-area" id="diceArea">
         <div class="ks-dice" id="dice">?</div>
@@ -218,6 +245,7 @@
       </div>
       <div class="ks-modal__player" id="modal-player"></div>
       <div class="ks-modal__question" id="modal-question"></div>
+      <p class="ks-modal__effect" id="modal-effect" hidden></p>
       <div class="ks-modal__choices" id="modal-choices"></div>
       <p class="ks-modal__wait" id="modal-wait" hidden></p>
       <div class="ks-modal__actions" id="modal-actions">
@@ -239,7 +267,7 @@
       <div class="ks-goal__icon">
         <span class="material-symbols-rounded" aria-hidden="true">emoji_events</span>
       </div>
-      <div class="ks-goal__title">ゴール！</div>
+      <div class="ks-goal__title" id="goal-title">ゴール！</div>
       <div class="ks-goal__name" id="goal-name"></div>
       <p class="ks-modal__wait" id="goal-wait" hidden>ホストが「もう一度あそぶ」を押すのを待ってね。</p>
       <div class="ks-modal__actions">
@@ -263,7 +291,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261118look"></script>
+  <script type="module" src="app.js?v=20261118life"></script>
   <script src="../shared/js/overlay-a11y.js?v=1" defer></script>
   <script src="../shared/js/focus-keep.js?v=1" defer></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
@@ -285,6 +313,13 @@
           '名前を入れたいときは、名前の欄に入れる（入れないときは「プレイヤー1」のように出る）',
           '「ゲームスタート」を押し、自分の番になったら「サイコロを振る」を押す',
           '話しおわったら「話せた！次の人へ」を押す',
+        ] },
+        { heading: '「人生の道」であそぶとき', items: [
+          'ルームではホストが待合室の「あそびかた」で、1台の画面でははじめの設定の「あそびかた」で、「人生の道」を選ぶ',
+          '「小さいころ」「いま」「もうすぐ」「おとなになったら」の4つの場面をたどる盤になる',
+          'マスは4種類。「えらぶ」は3つから選ぶ、「はなす」は質問に答える、「きく」は番の人がだれかに質問する、「できごと」は先へ進めることがある',
+          '「きく」では、番の人が聞く相手を選ぶ（「みんなに聞く」も選べる）。聞かれた人は、答えにくいときは「別の質問」に変えてもらっていい',
+          'みんながゴールしたらおわり',
         ] },
         { heading: 'どちらでも', items: [
           '止まったマスに出てきた質問について話す',

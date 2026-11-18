@@ -891,6 +891,22 @@ function collectEntries() {
     });
   }
 
+  // kyoumi-sugoroku「人生の道」: LIFE_QUESTIONS（場面ごと。形は QUESTIONS と同じ）と LIFE_ASK（場面ごとの文字列）
+  for (const [name, prefix] of [['LIFE_QUESTIONS', 'life'], ['LIFE_ASK', 'life-ask']]) {
+    const lifeData = evalObjectFromSource(read('apps/kyoumi-sugoroku/app.js'), name, 'apps/kyoumi-sugoroku/app.js') || {};
+    for (const [sceneKey, list] of Object.entries(lifeData)) {
+      (list || []).forEach((item, index) => {
+        const isObj = item && typeof item === 'object';
+        const questionText = isObj ? item.q : item;
+        rows.push(entry('kyoumi-sugoroku', `${prefix}:${sceneKey}`, questionText, {
+          id: `kyoumi-sugoroku:${prefix}:${sceneKey}:${index}`,
+          question: questionText,
+          answer: isObj && Array.isArray(item.choices) ? item.choices.join('/') : questionText,
+        }));
+      });
+    }
+  }
+
   // kotoba-pair: packs.js（window.KotobaPairPacks）。ペアの a/b は variant で区別し、
   //   同一ペア内の a×b 一致を「同一意味の重複」と誤判定しないよう pairIndex を添える。
   //   構造検査（a/b/note の欠落・ペア数不足）はここで fail-fast にする。
