@@ -258,6 +258,12 @@
         ".write": "auth != null"
       }
     },
+    "chess_rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
     "shirushi_rooms": {
       "$roomId": {
         ".read": "auth != null",
