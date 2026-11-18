@@ -72,7 +72,8 @@ apps/chess/
 ├── index.html   # 画面の骨組み・howto.js の設定
 ├── app.js       # 進行・描画（ES module）
 ├── engine.js    # 盤のルールと CPU（window.ChessEngine。node では module.exports）
-└── style.css    # 固有スタイル
+├── style.css    # 固有スタイル
+└── slides.html  # 画面共有用説明スライド（20枚）
 ```
 
 - `apps/shogi/` を型にした分割型（ルームへの出入り・切断・再接続・持ち時間・ルームの CPU・みんなにみせる画面は将棋と同じ作り）。index.html・app.js・engine.js・style.css を変えたら `?v=` をそろえて上げる
@@ -89,10 +90,11 @@ apps/chess/
 - `database.rules.json` に `chess_rooms`（2026-11-18 オーナー承認）
 - `scripts/lint.sh` の `RTDB_HTML_FILES` に追加
 - `scripts/content-audit.mjs` の `NO_CONTENT_APPS` に追加（盤と駒だけ）
-- `apps/index.html` にカード（`data-scenes="bodoge hiroba sakusen"`・`data-added="2026-11-18"`。イラスト・サムネイル・説明スライドはまだない）
+- `apps/index.html` にカード（`data-scenes="bodoge hiroba sakusen"`・`data-added="2026-11-18"`。イラスト・サムネイルはまだない。`data-slides`）
 - `apps/updates.json` 先頭に `type: "new"`
 - `apps/guide/index.html` の「すごろく・ボードゲーム系」に1行（将棋の次）
 - `apps/guide/feedback/index.html` の `APPS` に `['chess', 'チェス', 'ちぇす']`
+- 説明スライド `slides.html`（20枚。将棋のスライドと同じエンジン。チャンネル `chess_deck`・保存キー `chs_`）。盤の図は `cboard`、駒の動きの図は `mvFig` で描く（アプリと同じ記号の駒・同じ色の盤）。「？」の「説明スライドを見る」とポータルの「スライド」から開ける（2026-11-18）
 
 ## 画面構成・フロー
 
@@ -173,7 +175,7 @@ chess_rooms/{roomCode}/
 
 ## 既知の制約（v1）
 
-- 説明スライド・イラスト・サムネイルはまだない（「？」に「説明スライドを見る」は出ない）
+- イラスト・サムネイルはまだない
 - 駒の名前は、375px の画面では 8px ほどの小さい字になる（マスが 40px ほどのため）。くわしくは盤の下の「駒の説明」の欄で読む
 - おすすめの手を考える間（0.9秒まで）は、その端末の画面が止まる。CPU の「つよい」も、ホストの端末が考える間（1.5秒まで）止まる
 - 同じ名前・同じ匿名IDのタブが2つ開いていると、両方が同じ `players/{name}` に切断予約を張る（ほかのルーム型ゲームと共通）
