@@ -4,7 +4,7 @@
   'use strict';
 
   const MIN = 3;
-  const MAX = 8;
+  const MAX = 12;
   const LINES = 7; // 1つの番組の、空らんのある行の数
 
   function shuffle(a) {
@@ -16,10 +16,20 @@
     return b;
   }
 
-  // 空らんの数。書く人が2人なら2つずつ、3人からは1人1つ（7人まで）
+  // 空らんの数。書く人が2人なら2つずつ、3人からは1人1つ（7つまで）
   function blanksFor(writers) {
     if (writers <= 2) return writers * 2;
     return Math.min(writers, LINES);
+  }
+
+  // その番組で書く人。空らんより多いときは、これまでに書いた回数の少ない人から（同じ回数ならまぜて）。
+  // 選ばなかった人は、その番組はお休み（判定はする）
+  function pickWriters(cands, wrote) {
+    const mixed = shuffle(cands);
+    if (mixed.length <= LINES) return mixed;
+    const count = (id) => Number((wrote || {})[id]) || 0;
+    const sorted = mixed.map((id, i) => ({ id, i })).sort((a, b) => count(a.id) - count(b.id) || a.i - b.i).map((x) => x.id);
+    return shuffle(sorted.slice(0, LINES));
   }
 
   // まだ使っていない番組を選ぶ。使いきったら、また全部から
@@ -117,7 +127,7 @@
     return out;
   }
 
-  const api = { MIN, MAX, LINES, shuffle, blanksFor, pickProgram, assign, hintOf, splitLine, rubyParts, omakase, judge, roundPoints, readOrder };
+  const api = { MIN, MAX, LINES, shuffle, blanksFor, pickWriters, pickProgram, assign, hintOf, splitLine, rubyParts, omakase, judge, roundPoints, readOrder };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.KanpeEngine = api;
 })(typeof window !== 'undefined' ? window : globalThis);
