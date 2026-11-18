@@ -942,18 +942,21 @@ function test(name, fn) {
     const r1 = L.choose(r0, 1, 1, 1, 2, 0, COUNTS);
     q = L.lifeQuestionOf(r1.game);
     assert.deepStrictEqual(q.picks, { 1: 2 });
+    assert.strictEqual(q.n, 2); // 1人選ぶたびに進む
+    // 同時に押した古いクリック（番の人が選ぶ前の番号）は、次の人のぶんとして入らない
+    assert.strictEqual(L.choose(r1, 1, 1, 1, 4, 0, COUNTS), null);
     assert.strictEqual(L.minnaPicker(r1, r1.game, q), 2); // 次は みどり
     assert.strictEqual(L.canAct(r1, 'uM', 'みどり', 'guest'), true);
     assert.strictEqual(L.canAct(r1, 'uA', 'あお', 'guest'), false);
-    assert.strictEqual(L.reask(r1, 1, 1, 1, 5, COUNTS), null); // 選んだあとは、お題を変えない
-    assert.strictEqual(L.choose(r1, 1, 1, 1, 2, 0, COUNTS), null); // 同じものは選べない
-    const r2 = L.choose(r1, 1, 1, 1, 0, 0, COUNTS);
-    const r3 = L.choose(r2, 1, 1, 1, 5, 0, COUNTS);
+    assert.strictEqual(L.reask(r1, 1, 1, 2, 5, COUNTS), null); // 選んだあとは、お題を変えない
+    assert.strictEqual(L.choose(r1, 1, 1, 2, 2, 0, COUNTS), null); // 同じものは選べない
+    const r2 = L.choose(r1, 1, 1, 2, 0, 0, COUNTS);
+    const r3 = L.choose(r2, 1, 1, 3, 5, 0, COUNTS);
     q = L.lifeQuestionOf(r3.game);
     assert.deepStrictEqual(q.picks, { 0: 5, 1: 2, 2: 0 });
     assert.strictEqual(L.minnaPicker(r3, r3.game, q), null);
     assert.strictEqual(L.actingIndex(r3, r3.game), 1); // 進めるのは番の人
-    assert.strictEqual(L.choose(r3, 1, 1, 1, 1, 0, COUNTS), null); // みんな選んだあとは選べない
+    assert.strictEqual(L.choose(r3, 1, 1, 4, 1, 0, COUNTS), null); // みんな選んだあとは選べない
     const next = L.nextPlayer(r3, 1, 1);
     assert.deepStrictEqual(next.game.pos, [4, 5, 6]);
     assert.strictEqual(next.game.turn, 2);
@@ -964,7 +967,7 @@ function test(name, fn) {
     const { 'みどり': _m, ...rest } = r1.players;
     const without = { ...r1, players: rest };
     assert.strictEqual(L.minnaPicker(without, without.game, L.lifeQuestionOf(without.game)), 0);
-    const two = L.choose(without, 1, 1, 1, 4, 0, COUNTS);
+    const two = L.choose(without, 1, 1, 2, 4, 0, COUNTS);
     assert.strictEqual(L.minnaPicker(two, two.game, L.lifeQuestionOf(two.game)), null);
     const doneRoom = { ...two, game: { ...two.game, pos: [23, 4, 5], done: [true, false, false] } };
     assert.deepStrictEqual(L.nextPlayer(doneRoom, 1, 1).game.pos, [23, 5, 5]);
@@ -975,6 +978,43 @@ function test(name, fn) {
     // 盤に出る（1台の画面にも）
     assert.ok(L.lifeKinds(12).includes('minna'));
     assert.ok(L.lifeKinds(12, true).includes('minna'));
+  });
+
+  test('みんなで: 選べるものが足りなくても止まらない・番の人が退出しても選んだものは残る', () => {
+    const base = lifeRoom();
+    // お題1 は選べるものが4個。ここでは3人なので足りるが、2個まで選ばれた形から、残りがなくなる場合を作る
+    const room = { ...withCard(base, { kind: 'minna', scene: 's1', idx: 1, n: 1 }, [3, 4, 5]) };
+    const four = lifeRoom({ proxies: { 'きいろ': { joinedAt: 4 }, 'しろ': { joinedAt: 5 } } }); // 5人
+    const tight = withCard(four, { kind: 'minna', scene: 's1', idx: 1, n: 5, picks: { 0: 0, 1: 1, 2: 2, 3: 3 } });
+    const tq = L.lifeQuestionOf(tight.game);
+    assert.strictEqual(Object.keys(tq.picks).length, 4);
+    assert.strictEqual(L.minnaPicker(tight, tight.game, tq), null); // 5人目は選べるものがないので、そこまでで終わり
+    const moved = L.nextPlayer(tight, 1, 1);
+    assert.deepStrictEqual(moved.game.pos, [1, 1, 1, 1, 0]); // 選んだ人だけ進む
+    // 番の人が退出: 選んだものは残り、残った人で続く（通信が切れたときと同じ）
+    const r1 = L.choose(room, 1, 1, 1, 2, 0, COUNTS); // ホスト（番の人）が選んだ
+    const { 'ホスト': _h, ...rest } = r1.players;
+    const left = L.leaveTalk({ ...r1, players: rest });
+    assert.deepStrictEqual(L.lifeQuestionOf(left.game).picks, { 0: 2 });
+    assert.strictEqual(L.minnaPicker(left, left.game, L.lifeQuestionOf(left.game)), 1);
+    assert.strictEqual(left.game.turn, 0);
+    // ほかのカードは、今までどおり中身を確定させずに次の人へ
+    const ev = withCard(base, { kind: 'dekigoto', idx: 1, n: 1 }, [22, 22, 22]);
+    const dropped = L.leaveTalk(ev);
+    assert.deepStrictEqual(dropped.game.pos, [22, 22, 22]);
+    assert.strictEqual(dropped.game.q, null);
+    assert.strictEqual(dropped.game.turn, 1);
+    // 今までの遊び方でも使える
+    const theme = L.roll(L.startGame(waitingRoom(), COUNTS), 1, 0, 3, COUNTS);
+    assert.strictEqual(L.leaveTalk(theme).game.step, 'roll');
+  });
+
+  test('書いて答える: 30文字は見た目の文字で数え、絵文字のとちゅうで切らない', () => {
+    const face = '\u{1F600}'; // 1文字だが、内部では2つぶん
+    assert.strictEqual([...L.cleanText(face.repeat(40))].length, 30);
+    assert.strictEqual(L.cleanText('あ'.repeat(29) + face + 'い'), 'あ'.repeat(29) + face);
+    assert.ok(!/[\uD800-\uDBFF]$/.test(L.cleanText('あ'.repeat(29) + face + 'い'))); // 片割れで終わらない
+    assert.strictEqual(L.cleanText('  ' + 'あ'.repeat(29) + ' い'), 'あ'.repeat(29)); // 切ったあとの終わりの空白も取る
   });
 
   console.log(`logic: ${passed} passed`);

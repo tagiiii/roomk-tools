@@ -40,7 +40,8 @@ export const KIND = { ERABU: 'erabu', KIKU: 'kiku', DEKIGOTO: 'dekigoto', ISSHO:
 export const TEXT_MAX = 30;
 export function cleanText(value) {
   if (typeof value !== 'string') return '';
-  return value.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, TEXT_MAX);
+  // 文字の数はコードポイントで数える（絵文字のとちゅうで切らない）
+  return [...value.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim()].slice(0, TEXT_MAX).join('').trim();
 }
 // おたすけカード: 「きく」で答えてもらったら、聞いた人が1枚もらう。自分の番のサイコロの前に、ほかの人を2マス進めるのに使える
 export const CARD_MAX = 3;
@@ -295,6 +296,9 @@ export function actingIndex(room, game) {
 export function minnaPicker(room, game, q) {
   const order = orderOf(game);
   const turn = turnOf(game);
+  // 選べるものが残っていなければ、そこまでで終わり（お題の数が人数より少なくても止まらない）
+  const options = Number(asList(LIFE?.minna)[q.idx]) || 0;
+  if (Object.keys(q.picks).length >= options) return null;
   for (let k = 0; k < order.length; k++) {
     const i = (turn + k) % order.length;
     if (present(room, game, order[i]) && q.picks[i] == null) return i;
@@ -590,7 +594,8 @@ function lifeChoose(room, game, q, choice, choiceCount, seed, text) {
     const options = Number(asList(LIFE?.minna)[q.idx]) || 0;
     if (picker == null || !Number.isInteger(choice) || choice < 0 || choice >= options) return null;
     if (Object.values(q.picks).includes(choice)) return null;
-    return { ...room, game: { ...game, q: { ...game.q, picks: { ...q.picks, [picker]: choice } } } };
+    // 1人選ぶたびに n を進める（番の人とホストが同時に押したとき、おそいほうが次の人のぶんとして入らないように）
+    return { ...room, game: { ...game, q: { ...game.q, picks: { ...q.picks, [picker]: choice }, n: q.n + 1 } } };
   }
   if (q.kind === KIND.KIKU) {
     // だれに聞くか（自分以外の、いまいる人か、みんな）。選んだ相手がいなくなったら選びなおせる
@@ -880,6 +885,14 @@ export function dropPick(room) {
   const game = gameOf(room);
   if (room?.status !== STATUS.PLAYING || !game || !pickBroken(game)) return null;
   return { ...room, game: { ...game, step: STEP.LIFE_ROLL, dice: null } };
+}
+// カードが出ているときに番の人が退出した。「みんなで」は、選んだものを捨てずに、残った人で続ける
+// （通信が切れたときと同じ動きにする。進めるのはホスト）。ほかのカードは、中身を確定させずに次の人へ
+export function leaveTalk(room) {
+  const game = gameOf(room);
+  const q = lifeQuestionOf(game);
+  if (q && isTalkStep(game) && q.kind === KIND.MINNA) return room;
+  return dropTalk(room);
 }
 // カードが出ている段階なのに、読めるカードがない（壊れた値）
 export function talkBroken(game, counts) {

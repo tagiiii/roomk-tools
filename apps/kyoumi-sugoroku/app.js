@@ -1772,7 +1772,7 @@ async function leaveRoom() {
         const game = L.gameOf(left);
         if (game && left.status === L.STATUS.PLAYING && L.actorOf(game) === nickname) {
           // カードが出ていたら、中身（できごとの効き目など）は確定させずに次の人へ
-          return (L.isTalkStep(game) ? L.dropTalk(left) : L.skipAbsent(left)) || left;
+          return (L.isTalkStep(game) ? L.leaveTalk(left) : L.skipAbsent(left)) || left;
         }
         return left;
       });
@@ -2131,7 +2131,9 @@ function renderRoomGame(room, game) {
     });
   } else if (!anim && L.isTalkStep(game) && life && L.lifeQuestionOf(game)) {
     const lq = L.lifeQuestionOf(game);
-    key = 'q:' + game.id + ':' + game.rollNo + ':' + lq.n + (lq.open ? ':open' : '');
+    key = lq.kind === L.KIND.MINNA
+      ? 'q:' + game.id + ':' + game.rollNo + ':minna:' + lq.idx // 1人選ぶたびに n が進むが、カードは同じ
+      : 'q:' + game.id + ':' + game.rollNo + ':' + lq.n + (lq.open ? ':open' : '');
     $('goalCard').hidden = true;
     $('questionCard').hidden = false;
     if (lq.kind === L.KIND.MINNA) {
@@ -2218,9 +2220,10 @@ function renderRoomGame(room, game) {
   stage.hidden = key == null;
   $('diceArea').hidden = key != null || picking;
   renderDicePick(anim ? null : game, act && !net.busy, 'どっちの目で進む？');
+  // カードが変わった・消えたら、書く欄を閉じる（前のカードの文を、次のカードに持ちこさない）
+  if (key !== net.shownKey) closeWrite();
   if (key && key !== net.shownKey) {
     net.voteFor = null; // カードが変わったら、選ぶ人をえらびなおす
-    closeWrite();
     popIn(key.startsWith('goal') ? $('goalCard') : $('questionCard'));
     if (key.startsWith('goal')) celebrate();
   }
@@ -2654,7 +2657,11 @@ $('btnHelp').addEventListener('click', () => {
   renderRoom(net.room);
 });
 $('btnWriteSend').addEventListener('click', sendWrite);
-$('btnWriteBack').addEventListener('click', closeWrite);
+$('btnWriteBack').addEventListener('click', () => {
+  closeWrite();
+  // 押していた「自由に話す」に、キーボードの位置をもどす
+  document.querySelector('#modal-choices .ks-choice--free')?.focus();
+});
 $('writeText').addEventListener('keydown', (e) => {
   // 変換の確定の Enter では送らない（Safari は確定の Enter を keyCode 229 で届ける）
   if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;
