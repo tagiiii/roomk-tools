@@ -44,6 +44,43 @@ const { check, sleep } = L;
   await H.page.click('#roomLifeLen [data-value="0"]');
   await L.waitText(H, '#roomLifeLenNote', '24マス');
 
+  // ── V. 版のちがい: 版を書く前の画面・前の版の画面の人がいると、人生の道をはじめられない ──
+  room = await L.roomOf(code);
+  check('V1 作成・参加で自分の版を書く', ['ほすと', 'あお', 'みどり'].every((n) => room.players[n].ver === 4), room.players);
+  const pPath = (n) => `${L.ROOMS}/${code}/players/${n}`;
+  await L.rest('DELETE', pPath('あお') + '/ver');
+  await L.rest('PATCH', pPath('みどり'), { ver: 3 });
+  await L.waitText(H, '#startNote', 'あおさん');
+  check('V2 版のちがう人がいると、ホストの「はじめる」を押せない・名前を出す', await H.page.$eval('#btnStartGame', (b) => b.disabled) && (await L.text(H, '#startNote')).includes('あおさん、みどりさんに画面を読みこみなおしてもらって'), await L.text(H, '#startNote'));
+  await H.page.click('#roomMode [data-value="theme"]');
+  await L.roomWhen(code, (r) => r.mode === 'theme');
+  await sleep(300);
+  check('V3 今までの遊び方なら、はじめられる', !(await H.page.$eval('#btnStartGame', (b) => b.disabled)));
+  await H.page.click('#roomMode [data-value="life"]');
+  await L.roomWhen(code, (r) => r.mode === 'life');
+  // 在室が残ったまま読みこみなおすと、版を書きなおす（あお）・切断で消えてから戻っても書く（みどり）
+  await A.page.reload();
+  await L.waitScreen(A, 'waiting');
+  await L.roomWhen(code, (r) => r.players?.['あお']?.ver === 4);
+  await L.rest('PATCH', pPath('みどり'), { ver: 4 });
+  await H.page.waitForFunction(() => !document.getElementById('btnStartGame').disabled, null, { timeout: 8000 });
+  check('V4 そろうと「はじめる」を押せる', !(await H.page.$eval('#btnStartGame', (b) => b.disabled)) && (await L.text(H, '#startNote')) === '', await L.text(H, '#startNote'));
+  check('V5 参加者の画面には、版のちがいの知らせが出ない', !(await L.visible(A, '#verNote')));
+  // ホストの画面が前の版のまま → 参加者に知らせる
+  await L.rest('PATCH', pPath('ほすと'), { ver: 3 });
+  await L.waitVisible(A, '#verNote');
+  check('V6 ホストが前の版なら、参加者に「ホストに読みこみなおしてもらって」', (await L.text(A, '#verNote')).includes('ホストに画面を読みこみなおして'), await L.text(A, '#verNote'));
+  await L.rest('PATCH', pPath('ほすと'), { ver: 5 });
+  await L.waitText(A, '#verNote', 'この画面を読みこみなおして');
+  check('V7 ホストが新しい版なら、参加者に「この画面を読みこみなおして」', true);
+  // ホストが読みこみなおすと、ホストの版も書きなおす
+  await L.rest('PATCH', pPath('ほすと'), { ver: 3 });
+  await H.page.reload();
+  await L.waitScreen(H, 'waiting');
+  await L.roomWhen(code, (r) => r.players?.['ほすと']?.ver === 4);
+  await L.waitHidden(A, '#verNote');
+  check('V8 ホストが読みこみなおすと、参加者の知らせが消える', !(await L.visible(A, '#verNote')));
+
   // ── B. はじめる: 盤 ──
   await H.page.click('#btnStartGame');
   await L.waitScreen(A, 'game');
