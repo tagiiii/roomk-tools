@@ -13,9 +13,28 @@ for (let n = E.MIN; n <= E.MAX; n += 1) {
   const w = n - 1;
   const k = E.blanksFor(w);
   ok(k <= E.LINES, 'B4 行が足りる ' + n);
-  const blanks = E.assign(ids(w), D.PROGRAMS[0], k);
-  const per = ids(w).map((id) => blanks.filter((b) => b.writer === id).length);
+  const writers = E.pickWriters(ids(w), {});
+  ok(writers.length === Math.min(w, E.LINES), 'B6 書く人は空らんの数まで ' + n);
+  const blanks = E.assign(writers, D.PROGRAMS[0], k);
+  const per = writers.map((id) => blanks.filter((b) => b.writer === id).length);
   ok(per.every((c) => c >= 1) && Math.max(...per) - Math.min(...per) <= 1, 'B5 書く人みんなに1つ以上・かたよらない ' + n, per);
+}
+ok(E.MAX === 12, 'B7 12人まで遊べる');
+
+// 書く人が空らんより多いとき（12人で遊ぶ＝書く人の候補11人）。書いた回数の少ない人から交代
+{
+  const cands = ids(11);
+  const wrote = {};
+  for (let r = 0; r < 12; r += 1) {
+    const ws = E.pickWriters(cands, wrote);
+    ok(new Set(ws).size === ws.length && ws.every((id) => cands.includes(id)), 'W1 候補の中から、かぶらずに選ぶ ' + r);
+    ws.forEach((id) => { wrote[id] = (wrote[id] || 0) + 1; });
+    const c = cands.map((id) => wrote[id] || 0);
+    ok(Math.max(...c) - Math.min(...c) <= 1, 'W2 書いた回数の差は1まで ' + r, c);
+  }
+  const ws = E.pickWriters(cands, { p0: 3, p1: 3, p2: 3, p3: 3 });
+  ok(!ws.some((id) => ['p0', 'p1', 'p2', 'p3'].includes(id)), 'W3 多く書いた人はあとまわし', ws);
+  ok(E.pickWriters(ids(5), { p0: 9 }).length === 5, 'W4 空らんが足りるときは、みんな書く');
 }
 
 // 原稿の形
