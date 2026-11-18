@@ -466,9 +466,24 @@ test('10人: 頭の上に積み重なっても、リフトの人数に数える'
 const STAGE = Object.fromEntries(E.STAGES.map((st, i) => [st.name, i]));
 const GROUND = 10 - E.PH;
 
-test('ステージは10こ', () => {
-  assert.strictEqual(E.STAGES.length, 10);
-  for (const name of ['高い台', 'ばねでとぶ', '手分けの道', 'ひもと高い台', 'さいごの道']) assert(name in STAGE, name);
+test('ステージは12こ', () => {
+  assert.strictEqual(E.STAGES.length, 12);
+  for (const name of ['高い台', 'ばねでとぶ', '手分けの道', 'ひもと高い台', 'さいごの道', 'ひもでつながる長い道', 'いちばん長い道']) assert(name in STAGE, name);
+});
+test('むずかしい道（11・12）: これまでのステージで使った区間だけで、前より長い', () => {
+  const old = E.STAGES.slice(0, 10);
+  const used = (rope) => new Set(old.filter((st) => !!st.rope === rope).flatMap((st) => st.parts.map((p) => p[0])));
+  for (const k of [10, 11]) {
+    const st = E.STAGES[k];
+    // ひもがあるステージは、ひもがあるステージで使った区間だけ（ひもでこえられるとわかっている区間）
+    const ok = used(!!st.rope);
+    for (const [name] of st.parts) assert(ok.has(name), 'stage ' + (k + 1) + ' の ' + name + ' は、これまでの同じ種類のステージで使っていない');
+    for (let n = 2; n <= E.MAX_PLAYERS; n++) {
+      const W = E.createWorld(k, n).W;
+      const longest = Math.max(...old.map((o, i) => E.createWorld(i, n).W));
+      assert(W > longest, 'stage ' + (k + 1) + '（' + n + '人）は、これまででいちばん長いステージより長い');
+    }
+  }
 });
 
 test('ばね: 乗ると高く跳び、ふつうのジャンプでとどかない穴をこえられる', () => {
