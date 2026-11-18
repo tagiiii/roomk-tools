@@ -68,6 +68,7 @@ RTDB_HTML_FILES=(
   "apps/mancala/index.html"
   "apps/shogi/index.html"
   "apps/chess/index.html"
+  "apps/gomoku/index.html"
   "apps/charin-baton/index.html"
   "apps/suton-block/index.html"
   "apps/sorotte-goal/index.html"
