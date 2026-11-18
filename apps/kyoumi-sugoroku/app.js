@@ -3,8 +3,8 @@
 // ルームの決まりは logic.js。質問はテーマのキーと QUESTIONS の中の番号で共有するので、
 // QUESTIONS は並べ替え・途中の削除をしない（足すのは末尾だけ）。
 import { shuffle, popIn } from '../shared/js/utils.js';
-import * as L from './logic.js?v=20261118game';
-import { SCENE_W, sceneHeight, squarePoints, squareWidth, rowCenters, sceneElement } from './art.js?v=20261118game';
+import * as L from './logic.js?v=20261118vote';
+import { SCENE_W, sceneHeight, squarePoints, squareWidth, rowCenters, sceneElement } from './art.js?v=20261118vote';
 
 const NUMBERS = ['①', '②', '③', '④', '⑤'];
 
@@ -164,6 +164,9 @@ const LIFE_KINDS = {
   erabu: { label: 'えらぶ', icon: 'checklist' },
   kiku: { label: 'きく', icon: 'forum' },
   dekigoto: { label: 'できごと', icon: 'auto_awesome' },
+  // みんなが同時に選ぶマス（ルームで2人以上のときだけ出る）
+  issho: { label: 'いっしょ', icon: 'diversity_3' },
+  yosou: { label: 'よそう', icon: 'lightbulb' },
 };
 // 「えらぶ」のマス: 番の人が3つから選ぶ
 const LIFE_QUESTIONS = {
@@ -277,8 +280,8 @@ L.setLifeContent({
 });
 const lifeScene = (key) => LIFE_SCENES.find((sc) => sc.key === key) || LIFE_SCENES[0];
 // 盤の形（列・マスの種類・段の名前）
-function lifeView(total) {
-  return { cols: total / L.LIFE_ROWS, kinds: L.lifeKinds(total), labels: LIFE_SCENES.map((sc) => sc.label) };
+function lifeView(game) {
+  return { cols: L.boardSize(game) / L.LIFE_ROWS, kinds: L.lifeKindsOf(game), labels: LIFE_SCENES.map((sc) => sc.label) };
 }
 
 // 質問を { q, choices } 形式に正規化
@@ -485,7 +488,9 @@ function fillQuestion(themeKey, item, playerName, opts) {
   $('btn-next').replaceChildren(msIcon(opts.nextIcon || 'check'), document.createTextNode(' ' + (opts.nextLabel || '話せた！次の人へ')));
   $('btn-next').style.display = opts.showNext ? '' : 'none';
   $('btn-skip').style.display = opts.showSkip ? '' : 'none';
-  $('modal-actions').hidden = !opts.showNext && !opts.showSkip;
+  $('btnOpenVotes').style.display = opts.showOpen ? '' : 'none';
+  $('modal-actions').hidden = !opts.showNext && !opts.showSkip && !opts.showOpen;
+  $('modal-voters').hidden = true;
   $('modal-wait').hidden = !opts.waitText;
   $('modal-wait').textContent = opts.waitText || '';
 }
@@ -894,6 +899,122 @@ function fillLifeCard(c) {
     });
   }
 }
+// みんなが同時に選ぶマス（いっしょ・よそう）のカード。
+// c: { kind, scene, question, votes, open, order, turn, allowed: [この画面で選べる人の番号…], waiting: [まだ選んでいない人の番号…],
+//      result（開いたあと）, playerName, playerIndex, dice, act（番の人かホスト）, busy }
+function fillVoteCard(c) {
+  const kind = LIFE_KINDS[c.kind];
+  const who = c.playerName;
+  const issho = c.kind === L.KIND.ISSHO;
+  const base = {
+    head: { key: 'life-' + c.scene.key, icon: kind.icon, label: `${c.scene.label}・${kind.label}` },
+    playerIndex: c.playerIndex,
+    dice: c.dice || null,
+    canPress: false,
+    onChoose: () => {},
+  };
+  const choicesEl = $('modal-choices');
+  const votersEl = $('modal-voters');
+  if (!c.open) {
+    // ── 選ぶ ──
+    const total = c.waiting.length + Object.keys(c.votes).length;
+    const waitText = c.waiting.length
+      ? `選んだ人 ${total - c.waiting.length}／${total}人（まだ: ${c.waiting.map((i) => c.order[i]).join('・')}）`
+      : '';
+    fillQuestion(null, { q: c.question.q, choices: null }, who, {
+      ...base,
+      toText: issho ? 'みんなで選ぼう。番の人と同じだったら進めるよ' : `${who} さんはどれを選ぶ？ みんなで予想しよう`,
+      showNext: false, showSkip: c.act, showOpen: c.act,
+      waitText,
+    });
+    // だれのぶんを選ぶか（ホストが、端末のない人・つながっていない人のぶんも入れるとき）
+    if (!c.allowed.includes(net.voteFor)) net.voteFor = c.allowed.find((i) => c.votes[i] == null) ?? c.allowed[0] ?? null;
+    const voter = net.voteFor;
+    votersEl.replaceChildren();
+    votersEl.hidden = c.allowed.length < 2;
+    if (c.allowed.length >= 2) {
+      votersEl.appendChild(makeElement('span', 'ks-voters__label', 'だれのぶんを選ぶ？'));
+      c.allowed.forEach((i) => {
+        const chip = makeElement('button', 'ks-voters__chip' + (i === voter ? ' is-selected' : ''));
+        chip.type = 'button';
+        chip.setAttribute('aria-pressed', String(i === voter));
+        chip.append(makeElement('span', `ks-pawn ks-pawn--${i}`, i + 1), document.createTextNode(c.order[i]));
+        if (c.votes[i] != null) chip.appendChild(msIcon('check_circle'));
+        chip.addEventListener('click', () => { net.voteFor = i; if (net.room) renderRoom(net.room); });
+        votersEl.appendChild(chip);
+      });
+    }
+    choicesEl.replaceChildren();
+    if (voter != null) {
+      const self = voter === c.turn;
+      const lead = issho || self
+        ? `${c.order[voter]} さんの答えを選んでね（開くまで、ほかの人には見えないよ）`
+        : `${c.order[voter]} さんの予想を選んでね（開くまで、ほかの人には見えないよ）`;
+      choicesEl.appendChild(makeElement('p', 'ks-vote__lead', lead));
+      c.question.choices.forEach((text, i) => {
+        const btn = makeElement('button', 'ks-choice' + (c.votes[voter] === i ? ' is-chosen' : ''));
+        btn.type = 'button';
+        btn.appendChild(makeElement('span', 'ks-choice__num', NUMBERS[i]));
+        btn.appendChild(makeElement('span', 'ks-choice__text', text));
+        if (c.votes[voter] === i) btn.appendChild(msIcon('check_circle'));
+        btn.setAttribute('aria-pressed', String(c.votes[voter] === i));
+        btn.disabled = c.busy;
+        btn.addEventListener('click', () => roomVote(voter, i));
+        choicesEl.appendChild(btn);
+      });
+    } else {
+      // この画面では選べない（番の進行だけのホストなど）: 選択肢を見るだけ
+      c.question.choices.forEach((text, i) => {
+        const row = makeElement('div', 'ks-result');
+        row.append(makeElement('span', 'ks-choice__num', NUMBERS[i]), makeElement('span', 'ks-choice__text', text));
+        choicesEl.appendChild(row);
+      });
+    }
+    return;
+  }
+  // ── 開いたあと: だれが何を選んだか・進む人 ──
+  const r = c.result;
+  const names = (list) => list.map((i) => c.order[i]).join('・');
+  let effect;
+  if (r.answer == null) effect = `${who}さんが選ばなかったので、だれも進まないよ`;
+  else if (issho && r.all) effect = 'みんないっしょ！ みんな進むよ';
+  else if (!r.same.length) effect = '今回は、だれも進まないよ';
+  else if (issho) effect = `${names(r.same)}さんがいっしょ！ 1マス進む`;
+  else effect = `${names(r.same)}さんが当たり！ ${who}さんもいっしょに1マス進む`;
+  const moving = Object.keys(r.moves).length > 0;
+  fillQuestion(null, { q: c.question.q, choices: null }, who, {
+    ...base,
+    toText: issho ? `${who} さんの答えと、同じだった人` : `${who} さんの答えと、当てた人`,
+    effect,
+    showNext: c.act, showSkip: false,
+    nextLabel: moving ? '進む' : '次の人へ', nextIcon: 'arrow_forward',
+    waitText: c.act ? '' : `${who}さんが進めるのを待ってね`,
+  });
+  votersEl.replaceChildren();
+  votersEl.hidden = true;
+  choicesEl.replaceChildren();
+  c.question.choices.forEach((text, i) => {
+    // 番の人の答えと、同じだった人（当てた人）だけを出す。ちがう答え・外れた予想は、だれのものかを出さない
+    // （ルート AGENTS.md「判定・投票は、だれが何を出したかを画面に出さない」）
+    const picked = Object.keys(c.votes).map(Number).filter((v) => c.votes[v] === i && r.answer === i);
+    const row = makeElement('div', 'ks-result' + (r.answer === i ? ' is-answer' : ''));
+    const head = makeElement('div', 'ks-result__head');
+    head.append(makeElement('span', 'ks-choice__num', NUMBERS[i]), makeElement('span', 'ks-choice__text', text));
+    if (r.answer === i) head.appendChild(makeElement('span', 'ks-result__tag', `${who} さんの答え`));
+    row.appendChild(head);
+    if (picked.length) {
+      const people = makeElement('div', 'ks-result__people');
+      picked.forEach((v) => {
+        const person = makeElement('span', 'ks-result__person');
+        person.append(makeElement('span', `ks-pawn ks-pawn--${v}`, v + 1), document.createTextNode(c.order[v]));
+        people.appendChild(person);
+      });
+      row.appendChild(people);
+    }
+    choicesEl.appendChild(row);
+  });
+}
+
 // サイコロを2つ振ったあと、進む目を選ぶ欄（1台の画面・ルーム共通）
 function renderDicePick(game, act, lead) {
   const box = $('dicePick');
@@ -906,7 +1027,7 @@ function renderDicePick(game, act, lead) {
   if (net.pickKey === key) return;
   net.pickKey = key;
   const total = L.boardSize(game);
-  const kinds = L.lifeKinds(total);
+  const kinds = L.lifeKindsOf(game);
   const from = L.posOf(game, L.turnOf(game));
   const row = $('dicePickRow');
   row.replaceChildren();
@@ -944,6 +1065,7 @@ function startLocalLife(names) {
   });
   const waiting = {
     status: L.STATUS.WAITING,
+    offline: true, // 1台の画面: みんなが同時に選ぶマスは出さない（選んだものが見えてしまうため）
     host: '',
     hostUid: 'local',
     hostPlays: false,
@@ -1758,6 +1880,7 @@ function renderRoomGame(room, game) {
   showScreen('game');
   const life = L.isLife(game);
   $('lifeLegend').hidden = !life;
+  $('lifeLegend').classList.toggle('has-votes', life && game.votes === true);
   const order = L.orderOf(game);
   const turn = L.turnOf(game);
   const goal = room.status === L.STATUS.GOAL;
@@ -1780,7 +1903,7 @@ function renderRoomGame(room, game) {
     choice: pick.choice,
   });
   const total = L.boardSize(game);
-  renderBoard(total, positions, goal && !anim ? -1 : current, life ? lifeView(total) : null);
+  renderBoard(total, positions, goal && !anim ? -1 : current, life ? lifeView(game) : null);
 
   const uid = currentUid();
   const act = L.canAct(room, uid, net.nickname, net.role);
@@ -1829,6 +1952,8 @@ function renderRoomGame(room, game) {
         : lq.target === L.TARGET_NEAR ? 'そばにいる人が答える番だよ'
         : order[lq.target] === net.nickname ? 'あなたが答える番だよ' : `${order[lq.target]}さんが答える番だよ`;
     } else if (lq?.kind === L.KIND.KIKU) note.textContent = mine ? 'あなたが、だれかに聞く番だよ' : `${actor}さんが、だれかに聞く番だよ`;
+    else if (lq && L.isVoteKind(lq.kind) && !lq.open) note.textContent = lq.kind === L.KIND.ISSHO ? 'みんなで選ぼう' : `${actor}さんの答えを、みんなで予想しよう`;
+    else if (lq && L.isVoteKind(lq.kind)) note.textContent = mine ? '結果を見たら、次へ進めてね' : `${actor}さんが進めるのを待ってね`;
     else if (life) note.textContent = mine ? 'あなたが選ぶ番だよ' : `${actor}さんが選ぶ番だよ`;
     else note.textContent = mine ? 'あなたが話す番だよ' : `${actor}さんが話す番だよ`;
   }
@@ -1878,9 +2003,30 @@ function renderRoomGame(room, game) {
     });
   } else if (!anim && L.isTalkStep(game) && life && L.lifeQuestionOf(game)) {
     const lq = L.lifeQuestionOf(game);
-    key = 'q:' + game.id + ':' + game.rollNo + ':' + lq.n;
+    key = 'q:' + game.id + ':' + game.rollNo + ':' + lq.n + (lq.open ? ':open' : '');
     $('goalCard').hidden = true;
     $('questionCard').hidden = false;
+    if (L.isVoteKind(lq.kind)) {
+      // みんなが同時に選ぶマス
+      const present = L.voters(room, game);
+      fillVoteCard({
+        kind: lq.kind,
+        scene: lifeScene(lq.scene),
+        question: LIFE_QUESTIONS[lq.scene][lq.idx],
+        votes: lq.votes,
+        open: lq.open,
+        order,
+        turn,
+        allowed: order.map((_, i) => i).filter((i) => L.canVote(room, uid, net.nickname, net.role, i)),
+        waiting: present.filter((i) => lq.votes[i] == null),
+        result: lq.open ? L.voteResult(game, lq) : null,
+        playerName: actor,
+        playerIndex: turn,
+        dice: game.last?.dice || null,
+        act: act && !net.busy,
+        busy: net.busy,
+      });
+    } else {
     const gone = L.targetGone(room, game, lq);
     const kiku = lq.kind === L.KIND.KIKU;
     // 選んだ相手がいなくなったら、聞く相手を選びなおす
@@ -1907,6 +2053,7 @@ function renderRoomGame(room, game) {
       act: act && !net.busy,
       onChoose: roomChoose,
     });
+    }
   } else if (!anim && !rolling && !picking && q) {
     key = 'q:' + game.id + ':' + game.rollNo + ':' + q.n;
     const item = normalizeQ(QUESTIONS[q.theme][q.idx]);
@@ -1930,6 +2077,7 @@ function renderRoomGame(room, game) {
   $('diceArea').hidden = key != null || picking;
   renderDicePick(anim ? null : game, act && !net.busy, 'どっちの目で進む？');
   if (key && key !== net.shownKey) {
+    net.voteFor = null; // カードが変わったら、選ぶ人をえらびなおす
     popIn(key.startsWith('goal') ? $('goalCard') : $('questionCard'));
     if (key.startsWith('goal')) celebrate();
   }
@@ -1937,10 +2085,12 @@ function renderRoomGame(room, game) {
 }
 
 /* ── 番の操作（番の人とホスト） ── */
-async function roomAct(mutate, failMessage) {
+// allow: 押してよいかの検査（ない時は、番の人とホスト）。みんなが同時に選ぶマスでは、自分のぶんを選べるかを見る
+async function roomAct(mutate, failMessage, allow) {
+  const allowed = allow || ((room, uid, nickname, role) => L.canAct(room, uid, nickname, role));
   if (net.offline) {
     // 1台の画面: 通信せずに、その場で決まりを当てる
-    const next = L.canAct(net.room, 'local', null, 'host') ? mutate(net.room) : null;
+    const next = allowed(net.room, 'local', null, 'host') ? mutate(net.room) : null;
     if (next) {
       net.room = next;
       trackRoll(next);
@@ -1955,7 +2105,7 @@ async function roomAct(mutate, failMessage) {
   const role = net.role;
   try {
     const result = await net.roomRef.transaction((room) => {
-      if (!room || isExpired(room) || !L.canAct(room, uid, nickname, role)) return;
+      if (!room || isExpired(room) || !allowed(room, uid, nickname, role)) return;
       return mutate(room) || undefined;
     });
     return result.committed;
@@ -2022,6 +2172,35 @@ async function roomChoose(choice) {
   const item = normalizeQ(QUESTIONS[q.theme][q.idx]);
   const count = item.choices ? item.choices.length : 0;
   await roomAct((room) => L.choose(room, now.id, now.rollNo, now.qn, choice, count, COUNTS), '選べませんでした。もう一度ためしてね');
+}
+
+// みんなが同時に選ぶマス: その人のぶんを選ぶ（自分のぶん。ホストは、端末のない人・つながっていない人のぶんも）
+async function roomVote(voter, choice) {
+  const now = currentTurn();
+  if (!now) return;
+  const ok = await roomAct(
+    (room) => L.vote(room, now.id, now.rollNo, now.qn, voter, choice),
+    '選べませんでした。もう一度ためしてね',
+    (room, uid, nickname, role) => L.canVote(room, uid, nickname, role, voter),
+  );
+  // ホストがほかの人のぶんも入れるときは、次のまだの人へ移る
+  if (ok && net.room) {
+    const game = L.gameOf(net.room);
+    const lq = L.lifeQuestionOf(game);
+    if (lq && L.isVoteKind(lq.kind) && !lq.open) {
+      const uid = currentUid();
+      const next = L.orderOf(game).map((_, i) => i)
+        .find((i) => lq.votes[i] == null && L.canVote(net.room, uid, net.nickname, net.role, i));
+      if (next != null) { net.voteFor = next; renderRoom(net.room); }
+    }
+  }
+}
+
+// みんなが選ぶ前に開く（番の人かホスト）
+async function roomOpenVotes() {
+  const now = currentTurn();
+  if (!now) return;
+  await roomAct((room) => L.openVotes(room, now.id, now.rollNo, now.qn), '開けませんでした。もう一度ためしてね');
 }
 
 // サイコロを2つ振ったあと、進む目を選ぶ
@@ -2094,8 +2273,12 @@ function hostWatchAbsent(room) {
   // カードが出ている段階なのに読めるカードがない・目を選ぶ段階なのに目が読めないとき（壊れた値）→ 立て直す
   const broken = playing && L.talkBroken(game, COUNTS);
   const badPick = playing && L.pickBroken(game);
-  const kind = old ? 'o' : broken ? 'b' : badPick ? 'p' : skip ? 's' : '';
-  const key = kind ? `${game.id}:${game.rollNo}:${L.turnOf(game)}:${kind}` : null;
+  // みんなが同時に選ぶマスで、まだ選んでいない人がいなくなって、いる人がみんな選んだ形になったとき → 開く
+  const ready = playing && L.votesComplete(room, game);
+  const kind = old ? 'o' : broken ? 'b' : badPick ? 'p' : ready ? 'v' : skip ? 's' : '';
+  // 質問の番号も入れる（別の質問に変わったら、待つ時間を数えなおす）
+  const watchBase = (g) => `${g.id}:${g.rollNo}:${L.turnOf(g)}:${L.qnOf(g)}`;
+  const key = kind ? `${watchBase(game)}:${kind}` : null;
   if (key === net.skipKey) return;
   clearTimeout(net.skipTimer);
   net.skipTimer = null;
@@ -2106,10 +2289,11 @@ function hostWatchAbsent(room) {
     if (net.skipKey !== key) return;
     const ok = await hostTransaction((r) => {
       const g = L.gameOf(r);
-      if (!g || `${g.id}:${g.rollNo}:${L.turnOf(g)}` !== key.slice(0, -2)) return;
+      if (!g || watchBase(g) !== key.slice(0, -2)) return;
       if (kind === 'o') return L.isOldLife(g) ? L.backToWaiting(r, g.id) : undefined;
       if (kind === 'b') return L.talkBroken(g, COUNTS) ? L.dropTalk(r) : undefined;
       if (kind === 'p') return L.dropPick(r);
+      if (kind === 'v') return L.openIfComplete(r);
       return L.skipAbsent(r);
     }, '');
     if (ok && kind === 'o') toast('ゲームを続けられなくなったので、待合室にもどりました。「はじめる」でもう一度あそべます', false);
@@ -2299,6 +2483,7 @@ $('btn-roll').addEventListener('click', () => (inRoom() ? roomRoll() : rollLocal
 $('btn-next').addEventListener('click', () => (inRoom() ? roomNext() : closeLocalQuestion()));
 $('btn-skip').addEventListener('click', () => (inRoom() ? roomReask() : skipLocalQuestion()));
 $('btn-restart').addEventListener('click', () => (net.offline ? playAgainLocal() : inRoom() ? backToWaiting(true) : playAgainLocal()));
+$('btnOpenVotes').addEventListener('click', roomOpenVotes);
 $('btnGoalSettings').addEventListener('click', backToLocalSettings);
 $('btn-back').addEventListener('click', () => {
   if (confirm('ゲームを終わって設定に戻りますか？')) backToLocalSettings();

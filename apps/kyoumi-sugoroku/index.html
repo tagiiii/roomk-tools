@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c" />
   <!-- index.html と app.js・logic.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261118game" />
+  <link rel="stylesheet" href="style.css?v=20261118vote" />
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-database-compat.js"></script>
@@ -215,6 +215,8 @@
         <li class="ks-legend__item ks-legend__item--erabu"><span class="material-symbols-rounded" aria-hidden="true">checklist</span>えらぶ</li>
         <li class="ks-legend__item ks-legend__item--kiku"><span class="material-symbols-rounded" aria-hidden="true">forum</span>きく</li>
         <li class="ks-legend__item ks-legend__item--dekigoto"><span class="material-symbols-rounded" aria-hidden="true">auto_awesome</span>できごと</li>
+        <li class="ks-legend__item ks-legend__item--issho ks-legend__item--vote"><span class="material-symbols-rounded" aria-hidden="true">diversity_3</span>いっしょ</li>
+        <li class="ks-legend__item ks-legend__item--yosou ks-legend__item--vote"><span class="material-symbols-rounded" aria-hidden="true">lightbulb</span>よそう</li>
       </ul>
 
       <div class="ks-dice-area" id="diceArea">
@@ -248,6 +250,7 @@
       </div>
       <div class="ks-modal__player" id="modal-player"></div>
       <div class="ks-modal__question" id="modal-question"></div>
+      <div class="ks-voters" id="modal-voters" hidden></div>
       <p class="ks-modal__effect" id="modal-effect" hidden></p>
       <div class="ks-modal__choices" id="modal-choices"></div>
       <p class="ks-modal__wait" id="modal-wait" hidden></p>
@@ -255,6 +258,10 @@
         <button class="btn btn-secondary" id="btn-skip">
           <span class="material-symbols-rounded" aria-hidden="true">refresh</span>
           別の質問
+        </button>
+        <button class="btn btn-secondary" id="btnOpenVotes" style="display:none">
+          <span class="material-symbols-rounded" aria-hidden="true">visibility</span>
+          開く
         </button>
         <button class="btn btn-primary" id="btn-next">
           <span class="material-symbols-rounded" aria-hidden="true">check</span>
@@ -294,7 +301,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261118game"></script>
+  <script type="module" src="app.js?v=20261118vote"></script>
   <script src="../shared/js/overlay-a11y.js?v=1" defer></script>
   <script src="../shared/js/focus-keep.js?v=1" defer></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
@@ -321,8 +328,10 @@
           'ルームではホストが待合室の「あそびかた」で、1台の画面でははじめの設定の「あそびかた」で、「人生の道」を選ぶ',
           '「小さいころ」「いま」「もうすぐ」「おとなになったら」の4つの場面をたどる盤になる',
           '「サイコロを振る」を押すと目が2つ出るので、進む目を選ぶ（同じ目のときは、そのまま進む）',
-          'マスは3種類。「えらぶ」は3つから選ぶ、「きく」は番の人がだれかに質問する、「できごと」は先へ進めることがある',
+          '「えらぶ」は3つから選ぶ、「きく」は番の人がだれかに質問する、「できごと」は先へ進めることがある',
           '「きく」では、番の人が聞く相手を選び、3枚の質問から1枚を選ぶ。聞かれた人が3つから選んで答える（「別の質問」に変えてもいい）',
+          'ルームで2人以上のときは、「いっしょ」「よそう」のマスも出る。みんなが自分の端末で同時に選び、そろったら開く',
+          '「いっしょ」は、番の人と同じものを選んだ人が1マス進む（みんな同じなら、もう1マス）。「よそう」は、番の人の答えを当てた人と、当ててもらった番の人が1マス進む',
           'ゴールした人は、自分の番に「おうえん」で、だれかを1マス進められる',
           'みんながゴールしたらおわり',
         ] },
