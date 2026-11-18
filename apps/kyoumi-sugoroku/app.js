@@ -3,7 +3,7 @@
 // ルームの決まりは logic.js。質問はテーマのキーと QUESTIONS の中の番号で共有するので、
 // QUESTIONS は並べ替え・途中の削除をしない（足すのは末尾だけ）。
 import { shuffle, popIn } from '../shared/js/utils.js';
-import * as L from './logic.js?v=20261118more';
+import * as L from './logic.js?v=20261118ver';
 import { SCENE_W, sceneHeight, squarePoints, squareWidth, rowCenters, sceneElement } from './art.js?v=20261118more';
 
 const NUMBERS = ['①', '②', '③', '④', '⑤'];
@@ -1505,8 +1505,17 @@ async function ensurePresence(force = false) {
       if (stale()) return;
       await ref.transaction((room) => {
         if (stale() || !room || room.hostUid !== uid || isExpired(room)) return;
-        if (room.hostConnected === true && room.hostDisconnectedAt == null) return;
-        return { ...room, hostConnected: true, hostDisconnectedAt: null };
+        // 読みこみなおして新しい版になったホストは、自分の版も書きなおす（参加者の画面が版のちがいを知らせるため）
+        // 自分の在室（ホストの印・同じ匿名ID）だけを書きかえる。在室がなければ、ホストとして書きもどす
+        const me = room.host === nickname ? room.players?.[nickname] : null;
+        const own = !!me && me.isHost === true && me.uid === uid;
+        const verOk = room.host !== nickname || (own ? Number(me.ver) === L.VER : !!me);
+        if (room.hostConnected === true && room.hostDisconnectedAt == null && verOk) return;
+        const next = { ...room, hostConnected: true, hostDisconnectedAt: null };
+        if (!verOk) {
+          next.players = { ...(room.players || {}), [nickname]: own ? { ...me, ver: L.VER } : { isHost: true, uid, joinedAt, ver: L.VER } };
+        }
+        return next;
       });
     } else if (role === 'guest') {
       await ref.child('players/' + nickname).onDisconnect().remove();
@@ -1514,7 +1523,13 @@ async function ensurePresence(force = false) {
       let full = false;
       await ref.transaction((room) => {
         full = false;
-        if (stale() || !room || isExpired(room) || room.players?.[nickname]) return;
+        if (stale() || !room || isExpired(room)) return;
+        const mine = room.players?.[nickname];
+        if (mine) {
+          // 在室が残ったまま読みこみなおしたとき: 自分の在室なら、版だけ書きなおす
+          if (mine.isHost || mine.uid !== uid || Number(mine.ver) === L.VER) return;
+          return { ...room, players: { ...room.players, [nickname]: { ...mine, ver: L.VER } } };
+        }
         if (nickname === room.host || room.proxies?.[nickname] || reservedByOther(room, nickname, uid)) return;
         // 戻るときは参加したときの順番のまま。遊んでいるゲームの人は人数の上限を見ない
         const inGame = room.status !== L.STATUS.WAITING && L.ownsName(L.gameOf(room), nickname, uid);
@@ -1526,7 +1541,7 @@ async function ensurePresence(force = false) {
           ...room,
           players: {
             ...(room.players || {}),
-            [nickname]: { isHost: false, uid, joinedAt },
+            [nickname]: { isHost: false, uid, joinedAt, ver: L.VER },
           },
         };
       });
@@ -1576,7 +1591,7 @@ async function createRoom() {
           createdAt: serverTimestamp(),
           lastGameId: 0,
           players: {
-            [nickname]: { isHost: true, uid, joinedAt },
+            [nickname]: { isHost: true, uid, joinedAt, ver: L.VER },
           },
         };
       });
@@ -1676,7 +1691,7 @@ async function joinRoom() {
         ...room,
         players: {
           ...(room.players || {}),
-          [nickname]: { isHost: false, uid, joinedAt: rejoinAt || joinedAt },
+          [nickname]: { isHost: false, uid, joinedAt: rejoinAt || joinedAt, ver: L.VER },
         },
       };
     });
@@ -1943,6 +1958,15 @@ function renderWaiting(room) {
 
   $('hostWaitingTools').hidden = !host;
   $('guestWaitingNote').hidden = host;
+  // 版のちがい（人生の道のときだけ。今までの遊び方は、前の版の画面とも遊べる）
+  const stale = life ? L.staleNames(room) : [];
+  const hostVer = L.hostVer(room);
+  const verNote = !life || host ? ''
+    : hostVer < L.VER ? 'ホストの画面が前の版のままです。人生の道をいっしょに遊ぶには、ホストに画面を読みこみなおしてもらってね'
+      : hostVer > L.VER ? 'アプリが新しくなりました。この画面を読みこみなおしてね'
+        : '';
+  $('verNote').textContent = verNote;
+  $('verNote').hidden = !verNote;
   if (host) {
     const box = $('hostPlays');
     box.checked = !!room.hostPlays;
@@ -1957,10 +1981,11 @@ function renderWaiting(room) {
     $('roomThemes').querySelectorAll('input').forEach((input) => { input.checked = themes.includes(input.value); });
     const full = playing.length >= L.MAX_PLAYERS;
     $('btnAddProxy').disabled = full;
-    $('btnStartGame').disabled = playing.length < L.MIN_PLAYERS;
+    $('btnStartGame').disabled = playing.length < L.MIN_PLAYERS || stale.length > 0;
     $('startNote').textContent = playing.length < L.MIN_PLAYERS
       ? '遊ぶ人がいません。「自分もプレイヤーとして参加する」にするか、参加する人を待ってね'
-      : full ? `遊べるのは${L.MAX_PLAYERS}人までです` : '';
+      : stale.length ? `アプリが新しくなったので、${stale.map((name) => name + 'さん').join('、')}に画面を読みこみなおしてもらってください。そろうと人生の道をはじめられます`
+        : full ? `遊べるのは${L.MAX_PLAYERS}人までです` : '';
   }
 }
 

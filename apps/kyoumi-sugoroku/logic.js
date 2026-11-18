@@ -16,15 +16,20 @@ export const STATUS = {
   GOAL: 'goal',
 };
 
+// 画面の版。人生の道の決まりを変えて、前の版の画面と混ざると困るときに1つ上げる（段階の名前 life{VER}-* も変わる）。
+// ルームの参加者は players/{名前}/ver に自分の版を書く。版のちがう人がいると、人生の道を始められない（staleNames）
+export const VER = 4;
+const LV = 'life' + VER;
+
 export const STEP = {
   ROLL: 'roll',  // 番の人がサイコロを振るのを待っている
   TALK: 'talk',  // 質問が出ている
   // 「人生の道」の段階。名前を分けて、ちがう決まりの版の画面からの操作を通さない。
   // 今までの遊び方は roll / talk、公開済みの前の版の人生の道は life-roll / life-talk（サイコロ1つ・「はなす」あり）と
   // life2-*（「いっしょ」「よそう」のマスがない）・life3-*（「みんなで」のマスとおたすけカードがない）
-  LIFE_ROLL: 'life4-roll',
-  LIFE_PICK: 'life4-pick', // サイコロを2つ振って、進む目を選んでいる
-  LIFE_TALK: 'life4-talk',
+  LIFE_ROLL: LV + '-roll',
+  LIFE_PICK: LV + '-pick', // サイコロを2つ振って、進む目を選んでいる
+  LIFE_TALK: LV + '-talk',
 };
 // この版の人生の道の段階。これ以外（前の版が作ったゲームの life-roll / life-talk や、壊れた値）は、
 // この版では進められないので、ホストの画面が待合室にもどす
@@ -161,6 +166,16 @@ export function playingNames(room) {
   const entries = Object.entries(room?.players || {}).filter(([, p]) => !p?.isHost || room.hostPlays)
     .concat(Object.entries(room?.proxies || {}));
   return byJoined(entries);
+}
+
+// 版のちがう画面の人（ホストのほか）。版を書く前の画面（ver なし）も、ちがう版として数える。1台の画面は見ない
+export function staleNames(room) {
+  if (room?.offline) return [];
+  return byJoined(Object.entries(room?.players || {}).filter(([, p]) => p && !p.isHost && Number(p.ver) !== VER));
+}
+// ホストの画面の版。ver のない（版を書く前の）ホストは 0
+export function hostVer(room) {
+  return Number(room?.players?.[room?.host]?.ver) || 0;
 }
 
 export function gameOf(room) {
@@ -762,6 +777,8 @@ export function startGame(room, counts) {
   if (room?.status !== STATUS.WAITING) return null;
   const names = playingNames(room);
   if (names.length < MIN_PLAYERS || names.length > MAX_PLAYERS) return null;
+  // 人生の道は、版のちがう画面の人がいると始めない（その画面では操作できないため。読みこみなおすとそろう）
+  if (modeOf(room.mode) === MODE.LIFE && staleNames(room).length) return null;
   const id = (Number(room.lastGameId) || 0) + 1;
   const proxies = room.proxies || {};
   const real = names.filter((name) => !proxies[name]);

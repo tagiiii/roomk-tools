@@ -27,13 +27,34 @@ function test(name, fn) {
       themes: ['a', 'b', 'c'],
       lastGameId: 0,
       players: {
-        'ホスト': { isHost: true, uid: 'uH', joinedAt: 1 },
-        'あお': { isHost: false, uid: 'uA', joinedAt: 2 },
-        'みどり': { isHost: false, uid: 'uM', joinedAt: 3 },
+        'ホスト': { isHost: true, uid: 'uH', joinedAt: 1, ver: L.VER },
+        'あお': { isHost: false, uid: 'uA', joinedAt: 2, ver: L.VER },
+        'みどり': { isHost: false, uid: 'uM', joinedAt: 3, ver: L.VER },
       },
       ...extra,
     };
   }
+
+  test('版: 版のちがう参加者がいると、人生の道ははじめない（今までの遊び方ははじめる）', () => {
+    assert.strictEqual(L.STEP.LIFE_ROLL, 'life' + L.VER + '-roll');
+    const players = (vers) => Object.fromEntries(Object.entries(waitingRoom().players).map(([n, p]) => [n, { ...p, ver: vers[n] ?? p.ver }]));
+    const old = players({ 'あお': L.VER - 1, 'みどり': undefined });
+    delete old['みどり'].ver;
+    assert.deepStrictEqual(L.staleNames(waitingRoom({ players: old })), ['あお', 'みどり']);
+    assert.deepStrictEqual(L.staleNames(waitingRoom()), []);
+    assert.strictEqual(L.startGame(waitingRoom({ mode: L.MODE.LIFE, players: old }), COUNTS), null);
+    assert.ok(L.startGame(waitingRoom({ players: old }), COUNTS)); // 今までの遊び方
+    assert.ok(L.startGame(waitingRoom({ mode: L.MODE.LIFE }), COUNTS));
+    // ホストの版は staleNames に入れない（はじめるのはホスト自身）。ホストの版は hostVer で見る
+    const oldHost = players({ 'ホスト': L.VER - 1 });
+    assert.deepStrictEqual(L.staleNames(waitingRoom({ players: oldHost })), []);
+    assert.strictEqual(L.hostVer(waitingRoom({ players: oldHost })), L.VER - 1);
+    const noVer = waitingRoom();
+    delete noVer.players['ホスト'].ver;
+    assert.strictEqual(L.hostVer(noVer), 0);
+    // 1台の画面（通信しない）は版を見ない
+    assert.deepStrictEqual(L.staleNames({ ...waitingRoom({ players: old }), offline: true }), []);
+  });
 
   test('はじめる: 参加した順・ホストが最初・端末なしもふくむ', () => {
     const room = waitingRoom({ proxies: { 'きいろ': { joinedAt: 4 } } });
