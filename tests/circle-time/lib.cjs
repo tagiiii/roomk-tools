@@ -60,10 +60,15 @@ function jmaBody(office) {
   const d = new Date(today + 'T00:00:00+09:00'); d.setDate(d.getDate() + 1);
   const tomorrow = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo' }).format(d);
   const [code, text, max, min] = WX_FIX[office] || ['201', 'くもり　時々　晴れ', '18', '9'];
-  return JSON.stringify([{ publishingOffice: 'テスト', reportDatetime: today + 'T05:00:00+09:00', timeSeries: [
+  // 那覇だけ11時の発表の形（今日の T09:00 が先で、今日の T00:00 の欄にも最高と同じ値が入る）
+  const late = office === '471000';
+  const temps = late
+    ? { timeDefines: [today + 'T09:00:00+09:00', today + 'T00:00:00+09:00', tomorrow + 'T00:00:00+09:00', tomorrow + 'T09:00:00+09:00'], areas: [{ area: { name: '都市', code: office }, temps: [max, max, '8', '17'] }] }
+    : { timeDefines: [today + 'T00:00:00+09:00', today + 'T09:00:00+09:00', tomorrow + 'T00:00:00+09:00', tomorrow + 'T09:00:00+09:00'], areas: [{ area: { name: '都市', code: office }, temps: [min, max, '8', '17'] }] };
+  return JSON.stringify([{ publishingOffice: 'テスト', reportDatetime: today + (late ? 'T11:00:00+09:00' : 'T05:00:00+09:00'), timeSeries: [
     { timeDefines: [today + 'T05:00:00+09:00'], areas: [{ area: { name: '地方', code: office }, weatherCodes: [code], weathers: [text] }] },
     { timeDefines: [today + 'T06:00:00+09:00'], areas: [{ area: { name: '地方', code: office }, pops: ['10'] }] },
-    { timeDefines: [today + 'T00:00:00+09:00', today + 'T09:00:00+09:00', tomorrow + 'T00:00:00+09:00', tomorrow + 'T09:00:00+09:00'], areas: [{ area: { name: '都市', code: office }, temps: [min, max, '8', '17'] }] },
+    temps,
   ] }, {}]);
 }
 

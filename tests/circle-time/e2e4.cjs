@@ -130,11 +130,13 @@ const PROGRAM = [
     cards: document.querySelectorAll('#watch-stage .wxcard').length,
     dots: document.querySelectorAll('#watch-stage .wxmap .dot').length,
     tokyo: document.querySelector('#watch-stage .wxcard[data-city="東京"]')?.textContent,
+    naha: [...document.querySelectorAll('#watch-stage .wxcard[data-city="那覇"] .tp')].map((e) => e.getAttribute('class') + ' ' + e.textContent),
     ask: !!document.querySelector('#watch-stage .wxmap foreignObject .ask2'),
   }));
   check('C1 日本地図（本州・沖縄の2つ）', wx.land === 2 && wx.landLen[0] > 5000 && wx.landLen[1] > 300, wx.landLen);
   check('C2 13都市のカードと点', wx.cards === 13 && wx.dots === 13, wx);
   check('C3 東京は晴れ 21°・10°（天気の言葉は出さない）', /東京.*sunny.*21°.*10°/.test(wx.tokyo || '') && !(wx.tokyo || '').includes('晴れ'), wx.tokyo);
+  check('C3b 11時の発表では今日の最低を出さない（最高と同じ値が入っているため）', wx.naha.length === 1 && wx.naha[0] === 'tp hi 26°', wx.naha);
   check('C4 きみのところは？は地図の中', wx.ask);
   // カードどうしが重ならない
   const overlap = await W.page.evaluate(() => {
