@@ -90,7 +90,8 @@ apps/chess/
 - `database.rules.json` に `chess_rooms`（2026-11-18 オーナー承認）
 - `scripts/lint.sh` の `RTDB_HTML_FILES` に追加
 - `scripts/content-audit.mjs` の `NO_CONTENT_APPS` に追加（盤と駒だけ）
-- `apps/index.html` にカード（`data-scenes="bodoge hiroba sakusen"`・`data-added="2026-11-18"`。イラスト・サムネイルはまだない。`data-slides`）
+- `apps/index.html` にカード（`data-scenes="bodoge hiroba sakusen"`・`data-added="2026-11-18"`・`data-slides`・イラスト `assets/illustrations/chess.webp`・サムネイル `assets/thumbnails/chess.png`（撮り方は `tests/chess/shot.cjs` と `docs/development/thumbnails.md`））
+- イラスト（2026-11-18・fal の Recraft V3 手描き風。指示文は `scripts/illustrations/prompts.json`。ナイト・キング・ポーンと市松の盤。盤だけを描かせると枠いっぱいに広がるので、駒を中心にした文に変え、5回作って4回目を選んだ）。はじめの画面の `.app-hero` にも出す
 - `apps/updates.json` 先頭に `type: "new"`
 - `apps/guide/index.html` の「すごろく・ボードゲーム系」に1行（将棋の次）
 - `apps/guide/feedback/index.html` の `APPS` に `['chess', 'チェス', 'ちぇす']`
@@ -175,7 +176,6 @@ chess_rooms/{roomCode}/
 
 ## 既知の制約（v1）
 
-- イラスト・サムネイルはまだない
 - 駒の名前は、375px の画面では 8px ほどの小さい字になる（マスが 40px ほどのため）。くわしくは盤の下の「駒の説明」の欄で読む
 - おすすめの手を考える間（0.9秒まで）は、その端末の画面が止まる。CPU の「つよい」も、ホストの端末が考える間（1.5秒まで）止まる
 - 同じ名前・同じ匿名IDのタブが2つ開いていると、両方が同じ `players/{name}` に切断予約を張る（ほかのルーム型ゲームと共通）
