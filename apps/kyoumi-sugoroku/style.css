@@ -244,7 +244,7 @@
 }
 .ks-square {
   position: absolute;
-  width: 14.5%;
+  width: var(--ks-stone, 14.5%);
   aspect-ratio: 1 / 1;
   transform: translate(-50%, -50%);
   border-radius: 50%;
@@ -262,7 +262,7 @@
   border-color: var(--color-accent);
 }
 .ks-square.is-goal {
-  width: 17%;
+  width: calc(var(--ks-stone, 14.5%) * 1.17);
   background: #FFE9A8;
   border-color: #D4A537;
   box-shadow: 0 4px 0 rgba(160, 118, 20, 0.55), 0 0 0 6px rgba(255, 233, 168, 0.55), 0 7px 12px rgba(63, 54, 45, 0.2);
@@ -950,4 +950,102 @@
   .ks-square.is-bump,
   .ks-dice.is-rolling,
   .ks-goal__icon .material-symbols-rounded { animation: none; }
+}
+
+/* ── 「人生の道」モード（1台の画面） ── */
+.ks-field__note {
+  margin-top: 8px;
+  font-size: var(--font-size-sub);
+  color: var(--color-muted);
+  line-height: 1.6;
+}
+.ks-field[hidden] { display: none; }
+/* マスは、番号のかわりに種類のアイコンと色で見分ける（スタートとゴールは文字のまま） */
+.ks-board.is-life .ks-square:not(.is-start):not(.is-goal) .ks-square__num { display: none; }
+.ks-square__icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 22px;
+  font-size: min(26px, 44cqi);
+  line-height: 1;
+  color: #6A4F35;
+  pointer-events: none;
+}
+.ks-square:has(.ks-pawn) .ks-square__icon {
+  top: 3%;
+  transform: translate(-50%, 0);
+  font-size: 12px;
+  font-size: min(13px, 22cqi);
+}
+.ks-square--k-erabu { background: #FFE9B0; }
+.ks-square--k-hanasu { background: #FFD9E1; }
+.ks-square--k-kiku { background: #CFEAF6; }
+.ks-square--k-dekigoto { background: #D9F0C2; }
+/* 段（場面）の名前 */
+.ks-board__label {
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 2px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(63, 54, 45, 0.2);
+  z-index: 1;
+  pointer-events: none;
+}
+/* マスの種類の見本 */
+.ks-legend {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 10px;
+  margin: -8px auto 18px;
+  padding: 0;
+  max-width: 560px;
+}
+.ks-legend[hidden] { display: none; }
+.ks-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 12px 3px 8px;
+  border-radius: 999px;
+  border: 2px solid #fff;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+.ks-legend__item .material-symbols-rounded { font-size: 17px; }
+.ks-legend__item--erabu { background: #FFE9B0; }
+.ks-legend__item--hanasu { background: #FFD9E1; }
+.ks-legend__item--kiku { background: #CFEAF6; }
+.ks-legend__item--dekigoto { background: #D9F0C2; }
+/* できごとの中身 */
+.ks-modal__effect {
+  display: inline-block;
+  margin: -6px 0 18px;
+  padding: 6px 18px;
+  border-radius: 999px;
+  background: var(--color-accent-soft);
+  color: var(--color-primary);
+  font-size: 17px;
+  font-weight: 700;
+}
+.ks-modal__effect[hidden] { display: none; }
+/* 場面ごとのカードの色 */
+.ks-modal[data-theme="life-chiisai"] { --ks-theme: #5A9A45; --ks-theme-soft: #E8F4E0; }
+.ks-modal[data-theme="life-ima"] { --ks-theme: #3F8A5A; --ks-theme-soft: #E1F1E6; }
+.ks-modal[data-theme="life-mousugu"] { --ks-theme: #2E8C9A; --ks-theme-soft: #E0F2F4; }
+.ks-modal[data-theme="life-otona"] { --ks-theme: #8A63C9; --ks-theme-soft: #F0E8FA; }
+.ks-modal[data-theme="life-event"] { --ks-theme: #C99A22; --ks-theme-soft: #FBF1D3; }
+@media (max-width: 600px) {
+  .ks-board__label { font-size: 10px; padding: 1px 8px; }
 }

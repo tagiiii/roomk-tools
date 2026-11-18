@@ -3,9 +3,9 @@
    SVG の文字列を要素にする部分だけ。色は景色の色なので直書き（design-system の変数にしない）。 */
 
 export const SCENE_W = 600;
-const COLS = 5;
+const DEFAULT_COLS = 5;
 const X0 = 90;        // 1列目のマスの中心
-const DX = 105;       // 列の間
+const SPAN = 420;     // 1列目から最後の列まで
 const Y0 = 100;       // 1段目のマスの中心
 const DY = 128;       // 段の間
 const TURN = 58;      // 折り返しのふくらみ
@@ -14,21 +14,33 @@ const BOTTOM = 96;    // いちばん下の段の下のあき
 // 段ごとの景色（草原 → 森 → 水辺 → 夕方の丘）。5段目からはくり返す
 const BANDS = ['#DDF0C4', '#CDE7B4', '#CFEAEC', '#EADFF0'];
 
-function rowsOf(total) { return Math.ceil(total / COLS); }
+function rowsOf(total, cols) { return Math.ceil(total / cols); }
+function dxOf(cols) { return SPAN / Math.max(1, cols - 1); }
 
-export function sceneHeight(total) {
-  return Y0 + (rowsOf(total) - 1) * DY + BOTTOM;
+export function sceneHeight(total, cols = DEFAULT_COLS) {
+  return Y0 + (rowsOf(total, cols) - 1) * DY + BOTTOM;
+}
+
+// マスの幅（盤の幅に対する％）。列が多いときは、となりと重ならない大きさにする
+export function squareWidth(cols = DEFAULT_COLS) {
+  return Math.min(14.5, (dxOf(cols) - 8) / 6);
+}
+
+// 段の中心の高さ（場面の名前を置くのに使う）
+export function rowCenters(total, cols = DEFAULT_COLS) {
+  return Array.from({ length: rowsOf(total, cols) }, (_, r) => Y0 + r * DY);
 }
 
 // マスの中心（蛇行。偶数段は左→右、奇数段は右→左。段の中ほどを少し持ち上げて道を波うたせる）
-export function squarePoints(total) {
+export function squarePoints(total, cols = DEFAULT_COLS) {
   const points = [];
+  const dx = dxOf(cols);
   for (let i = 0; i < total; i++) {
-    const row = Math.floor(i / COLS);
-    const inRow = i % COLS;
-    const col = row % 2 === 0 ? inRow : COLS - 1 - inRow;
-    const lift = Math.sin((col / (COLS - 1)) * Math.PI) * 13;
-    points.push({ x: X0 + col * DX, y: Math.round(Y0 + row * DY - lift) });
+    const row = Math.floor(i / cols);
+    const inRow = i % cols;
+    const col = row % 2 === 0 ? inRow : cols - 1 - inRow;
+    const lift = Math.sin((col / (cols - 1)) * Math.PI) * 13;
+    points.push({ x: Math.round(X0 + col * dx), y: Math.round(Y0 + row * DY - lift) });
   }
   return points;
 }
@@ -45,12 +57,12 @@ function seeded(seed) {
 const n = (v) => Math.round(v * 10) / 10;
 
 // 道: マスの中心と折り返しの点を、なめらかな曲線でつなぐ
-function roadPath(points) {
+function roadPath(points, cols) {
   const pts = [];
   points.forEach((p, i) => {
     pts.push(p);
     const next = points[i + 1];
-    if (next && Math.floor(i / COLS) !== Math.floor((i + 1) / COLS)) {
+    if (next && Math.floor(i / cols) !== Math.floor((i + 1) / cols)) {
       const right = p.x > SCENE_W / 2;
       pts.push({ x: p.x + (right ? TURN : -TURN), y: (p.y + next.y) / 2 });
     }
@@ -177,12 +189,12 @@ function pickDecor(kind, rnd, x, y) {
   return pine(x, y, s * 0.85);
 }
 
-export function sceneSvg(total) {
-  const rows = rowsOf(total);
-  const h = sceneHeight(total);
-  const points = squarePoints(total);
-  const rnd = seeded(total * 7919 + 13);
-  const road = roadPath(points);
+export function sceneSvg(total, cols = DEFAULT_COLS) {
+  const rows = rowsOf(total, cols);
+  const h = sceneHeight(total, cols);
+  const points = squarePoints(total, cols);
+  const rnd = seeded(total * 7919 + cols * 31 + 13);
+  const road = roadPath(points, cols);
 
   // 地面: 段ごとの色をなめらかにつなぐ
   const stops = [];
@@ -196,7 +208,10 @@ export function sceneSvg(total) {
   decor.push(sun(548, 34, 1));
   decor.push(cloud(150, 30, 0.95), cloud(372, 24, 0.75));
   // 段のあいだと、いちばん下
-  const slots = [142, 247, 352, 457];
+  // 置く場所は、列と列のあいだ
+  const dx = dxOf(cols);
+  const slots = Array.from({ length: cols - 1 }, (_, i) => X0 + dx * (i + 0.5));
+  const lastSlot = slots.length - 1;
   for (let r = 0; r < rows; r++) {
     const kind = r % BANDS.length;
     const baseY = Y0 + r * DY + 78;
@@ -204,9 +219,9 @@ export function sceneSvg(total) {
     // 折り返しのある側（偶数段は右）は道が通るので、そちらの端には置かない
     const turnRight = r % 2 === 0;
     slots.forEach((x, i) => {
-      if (!last && ((turnRight && i === 3) || (!turnRight && i === 0)) && rnd() < 0.6) return;
+      if (!last && ((turnRight && i === lastSlot) || (!turnRight && i === 0)) && rnd() < 0.6) return;
       if (rnd() < 0.18) return;
-      decor.push(pickDecor(kind, rnd, x + (rnd() - 0.5) * 26, baseY + (rnd() - 0.5) * 10));
+      decor.push(pickDecor(kind, rnd, x + (rnd() - 0.5) * Math.min(26, dx / 4), baseY + (rnd() - 0.5) * 10));
     });
     // 折り返しのない側の端
     if (!last) decor.push(pickDecor(kind, rnd, turnRight ? 34 : SCENE_W - 34, baseY - 6));
@@ -225,8 +240,8 @@ export function sceneSvg(total) {
 }
 
 // 景色の要素（innerHTML を使わずに作る）
-export function sceneElement(total) {
-  const doc = new DOMParser().parseFromString(sceneSvg(total), 'image/svg+xml');
+export function sceneElement(total, cols = DEFAULT_COLS) {
+  const doc = new DOMParser().parseFromString(sceneSvg(total, cols), 'image/svg+xml');
   const svg = document.importNode(doc.documentElement, true);
   svg.setAttribute('class', 'ks-board__scene');
   return svg;
