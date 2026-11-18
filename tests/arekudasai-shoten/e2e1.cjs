@@ -143,7 +143,10 @@ async function offer(c, name) {
   await L.waitStats(C, 'hit', 1);
 
   // ── 2回目: 時間が来て、だれも出さなかった ──
-  await sleep(6500);   // 結果の札は自動で閉じる
+  // 結果の札は、6秒たっても自動では閉じない（「次へ」で閉じる）
+  await sleep(6500);
+  check('card stays', (await text(C, '#stage')).includes('ぴったり！') && (await text(watch, '#stage')).includes('ぴったり！'));
+  await L.closeCards([...players, watch]);
   cust = g.seats[g.S.turn];
   C = byName(cust);
   want = g.S.players[g.S.turn].order;
@@ -160,7 +163,7 @@ async function offer(c, name) {
   check('none round', g.last.none === true && g.r.n === 3);
 
   // ── 3回目: えらばれなかったけれど、ヒントに合う物を出したお店にも1ポイント ──
-  await sleep(6500);   // 結果の札は自動で閉じる
+  await L.closeCards([...players, watch]);
   g = await gameOf(code);
   const c3 = g.S.turn;
   want = g.S.players[c3].order;
@@ -199,7 +202,7 @@ async function offer(c, name) {
   check('fit item stays', g.S.players[y3].hand.includes(alt.id));
 
   // ── 4回目: ちがう物がえらばれると、出したお店は1ポイント減る（本人の画面にだけ出す） ──
-  await sleep(6500);   // 結果の札は自動で閉じる
+  await L.closeCards([...players, watch]);
   g = await gameOf(code);
   const c4 = g.S.turn;
   const w4 = g.S.players[c4].order;
@@ -235,7 +238,7 @@ async function offer(c, name) {
   check('reload keeps seat', (await text(a, '#myPointsBox')) !== null && await visible(a, '#myPointsBox'));
 
   // ── 退出した人の番は、ホストが飛ばせる ──
-  await sleep(6500);   // 結果の札は自動で閉じる
+  await L.closeCards([...players, watch]);
   await b.page.click('#btnLeave');
   await L.waitScreen(b, 'top');
   await roomWhen(code, (r) => !r.players['みどり']);

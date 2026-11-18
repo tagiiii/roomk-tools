@@ -16,9 +16,9 @@ const TIMES = [5, 10, 15, 0];   // あそぶ時間（分）。0 はなし
 const DEFAULT_SET = { hostPlays: true, time: 10, showAll: false, offer: 30, ask: 0 };
 // お店の人が決める時間（秒。お客さんがヒントを送ってから、品物を出すか決めるまで）。ホストが待合室でえらぶ
 // （2026-11-15 オーナー「商品を説明する時間がかかりすぎる人がいる。商品を出すまでの時間を設定できるように」）
-const OFFERS = [15, 20, 30, 45, 60];
+const OFFERS = [0, 15, 20, 30, 45, 60];   // お店の人が決める時間（秒。0 はなし＝みんな決めるまで待つ）
 const ASKS = [0, 20, 30, 45, 60];   // お客さんがヒントを決める時間（秒。0 はなし）
-const RESULT_MS = 6000;         // 結果の札を出しておく長さ
+const RESULT_MS = 6000;         // 結果の札のあと、ヒントを決める時間を数えはじめるまで（札は「次へ」で閉じる）
 const OPEN_MS = 900;            // 箱がゆれてから開くまで
 // ちがう物が出てきたときの、お客さんのひとこと
 const VOICES = [
@@ -71,7 +71,8 @@ const state = {
   picks: [],           // お客さんがえらんでいるヒント（送る前）
   comment: null,       // お店の人がえらんでいるコメントの番号（送る前）
   lastSeen: null,      // 結果の札を出した番 { game, key }（はじめて開いたときは、前の結果を出さない）
-  result: null,        // いま出している結果の札 { last, until, openUntil, voice }
+  result: null,        // いま出している結果の札 { key, openUntil }（「次へ」で閉じる）
+  cardClosed: null,    // 結果の札を閉じた番と時刻 { round, at }（お客さんのヒントを決める時間に使う）
   phaseKey: '',        // いま出している場面（時間が来て場面が変わったら、出しなおす）
   sending: false,      // ヒント・決めたこと・番を決める書き込みの途中
   setKey: null,
@@ -172,7 +173,8 @@ function normSet(raw) {
 }
 const timeLabel = (t) => (t ? t + '分' : 'なし');
 const askLabel = (t) => (t ? t + '秒' : 'なし');
-const settingSummary = (set) => 'あそぶ時間は ' + timeLabel(set.time) + '・お客さんがヒントを決める時間は ' + askLabel(set.ask) + '・お店の人が決める時間は ' + set.offer + '秒' + (set.showAll ? '・みんなのポイントを見せる' : '');
+const offerLabel = askLabel;
+const settingSummary = (set) => 'あそぶ時間は ' + timeLabel(set.time) + '・お客さんがヒントを決める時間は ' + askLabel(set.ask) + '・お店の人が決める時間は ' + offerLabel(set.offer) + (set.showAll ? '・みんなのポイントを見せる' : '');
 
 /* ── ルームの読み取り ── */
 function byJoined(entries) {
@@ -316,12 +318,19 @@ function phaseOf(room, game) {
   if (!game.hints.length) return 'ask';
   const shops = game.seats.map((_, i) => i).filter((i) => i !== game.S.turn && seatPresent(room, game, i));
   const all = shops.every((i) => game.d[i] != null);
-  if (all || roomNow(room) >= game.at + game.offerMs) return 'pick';
+  if (all || (game.offerMs && roomNow(room) >= game.at + game.offerMs)) return 'pick';
   return 'offer';
 }
-const offerLeft = (room, game) => Math.max(0, Math.ceil((game.at + game.offerMs - roomNow(room)) / 1000));
+// お店の人が決める、のこり秒（時間をえらんでいないときは null）
+const offerLeft = (room, game) => (game.offerMs ? Math.max(0, Math.ceil((game.at + game.offerMs - roomNow(room)) / 1000)) : null);
 // お客さんがヒントを決める、のこり秒（時間をえらんでいないときは null。前の結果の札を出している間は数えない）
-const askLeft = (room, game) => (game.askMs && game.askAt ? Math.max(0, Math.min(game.askMs / 1000, Math.ceil((game.askAt + game.askMs - roomNow(room)) / 1000))) : null);
+// お客さん本人の端末では、結果の札を「次へ」で閉じた時刻から数える（札を長く見ていても、ヒントを決める時間が減らない）
+const askLeft = (room, game) => {
+  if (!game.askMs || !game.askAt) return null;
+  const closed = state.cardClosed && state.cardClosed.round === game.id + ':' + game.n && selfSeat(game) === game.S.turn ? state.cardClosed.at : 0;
+  const from = Math.max(game.askAt, closed);
+  return Math.max(0, Math.min(game.askMs / 1000, Math.ceil((from + game.askMs - roomNow(room)) / 1000)));
+};
 
 // 出された箱（お店の番号の順）
 function offersOf(game) {
@@ -1325,7 +1334,7 @@ function renderWaiting(room) {
       state.setKey = key;
       seg($('timeSeg'), TIMES.map((t) => [t, timeLabel(t)]), set.time, (v) => saveSet((s) => ({ ...s, time: v })));
       seg($('askSeg'), ASKS.map((t) => [t, askLabel(t)]), set.ask, (v) => saveSet((s) => ({ ...s, ask: v })));
-      seg($('offerSeg'), OFFERS.map((t) => [t, t + '秒']), set.offer, (v) => saveSet((s) => ({ ...s, offer: v })));
+      seg($('offerSeg'), OFFERS.map((t) => [t, offerLabel(t)]), set.offer, (v) => saveSet((s) => ({ ...s, offer: v })));
       $('showAll').checked = set.showAll;
     }
   } else {
@@ -1362,9 +1371,9 @@ function renderGame() {
   else if (lastKey && lastKey !== state.lastSeen.key) {
     state.lastSeen.key = lastKey;
     const now = Date.now();
-    state.result = { key: lastKey, until: now + RESULT_MS, openUntil: CALM.matches ? 0 : now + OPEN_MS };
+    state.result = { key: lastKey, openUntil: CALM.matches ? 0 : now + OPEN_MS };
   }
-  if (state.result && (state.result.key !== lastKey || Date.now() > state.result.until)) state.result = null;
+  if (state.result && state.result.key !== lastKey) state.result = null;
 
   // 上の帯: のこり時間・自分のポイント
   renderClock(room, game);
@@ -1376,7 +1385,10 @@ function renderGame() {
   stage.replaceChildren();
   stage.classList.toggle('is-end', phase === 'end');
   if (phase === 'end') renderEnd(room, game, me, host);
-  else if (state.result) renderResult(room, game, me);
+  else if (state.result) {
+    renderResult(room, game, me);
+    if (!(state.result.openUntil && Date.now() < state.result.openUntil)) resultNext(game, me, phase);
+  }
   else if (phase === 'ask') renderAsk(room, game, me, host);
   else if (phase === 'offer') renderOffer(room, game, me);
   else renderPick(room, game, me, host);
@@ -1498,7 +1510,7 @@ function renderOffer(room, game, me) {
   const left = offerLeft(room, game);
   const shops = game.seats.map((_, i) => i).filter((i) => i !== c && seatPresent(room, game, i));
   const done = shops.filter((i) => game.d[i] != null).length;
-  const countdown = el('p', 'ak-count', 'のこり ' + left + '秒');
+  const countdown = el('p', 'ak-count', left === null ? 'みんな決めるまで待つよ' : 'のこり ' + left + '秒');
   countdown.id = 'offerCount';
 
   if (me === c || me < 0) {
@@ -1622,6 +1634,21 @@ function renderPick(room, game, me, host) {
   }
 }
 
+// 結果の札の「次へ」。札は自分で閉じるまで出しておく（ほかの人の画面とは関係なく、自分の画面だけ閉じる）
+function resultNext(game, me, phase) {
+  const st = $('stage');
+  const c = game.S.turn;
+  if (me === c && phase === 'ask') st.append(el('p', 'ak-small', 'つぎは、あなたがお客さん。'));
+  else if (me >= 0 && me !== c && phase !== 'ask') st.append(el('p', 'ak-small', 'お客さんの' + game.seats[c] + 'から、ヒントが届いているよ。'));
+  const row = el('div', 'ak-endbtns');
+  row.append(btn('btn btn-primary btn-lg', '次へ', () => {
+    state.result = null;
+    state.cardClosed = { round: game.id + ':' + game.n, at: RoomkRTDB.now() };
+    renderGame();
+  }));
+  st.append(row);
+}
+
 // 結果の札。お客さんのほしい物は、ここではじめてみんなの画面に出る
 function renderResult(room, game, me) {
   const st = $('stage');
@@ -1739,7 +1766,7 @@ function tickClock() {
   if (!game) return;
   const phase = phaseOf(room, game);
   const key = game.id + ':' + game.n + ':' + phase;
-  const resultDone = state.result && (Date.now() > state.result.until || (state.result.openUntil && Date.now() >= state.result.openUntil && !state.result.opened));
+  const resultDone = state.result && state.result.openUntil && Date.now() >= state.result.openUntil && !state.result.opened;
   if (state.result && state.result.openUntil && Date.now() >= state.result.openUntil) state.result.opened = true;
   if (key !== state.phaseKey || resultDone) {
     renderGame();
@@ -1747,7 +1774,8 @@ function tickClock() {
   }
   renderClock(room, game);
   const count = $('offerCount');
-  if (count && phase === 'offer') count.textContent = 'のこり ' + offerLeft(room, game) + '秒';
+  const oLeft = offerLeft(room, game);
+  if (count && phase === 'offer' && oLeft !== null) count.textContent = 'のこり ' + oLeft + '秒';
   if (phase === 'ask' && !state.result) {
     const left = askLeft(room, game);
     const ac = $('askCount');
