@@ -44,18 +44,18 @@ const { check, sleep } = L;
   await H.page.click('#roomLifeLen [data-value="0"]');
   await L.waitText(H, '#roomLifeLenNote', '24マス');
 
-  // ── V. 版のちがい: 版を書く前の画面・前の版の画面の人がいると、人生の道をはじめられない ──
+  // ── R. 版のちがい: 版を書く前の画面・前の版の画面の人がいると、人生の道をはじめられない ──
   room = await L.roomOf(code);
-  check('V1 作成・参加で自分の版を書く', ['ほすと', 'あお', 'みどり'].every((n) => room.players[n].ver === 4), room.players);
+  check('R1 作成・参加で自分の版を書く', ['ほすと', 'あお', 'みどり'].every((n) => room.players[n].ver === 4), room.players);
   const pPath = (n) => `${L.ROOMS}/${code}/players/${n}`;
   await L.rest('DELETE', pPath('あお') + '/ver');
   await L.rest('PATCH', pPath('みどり'), { ver: 3 });
   await L.waitText(H, '#startNote', 'あおさん');
-  check('V2 版のちがう人がいると、ホストの「はじめる」を押せない・名前を出す', await H.page.$eval('#btnStartGame', (b) => b.disabled) && (await L.text(H, '#startNote')).includes('あおさん、みどりさんに画面を読みこみなおしてもらって'), await L.text(H, '#startNote'));
+  check('R2 版のちがう人がいると、ホストの「はじめる」を押せない・名前を出す', await H.page.$eval('#btnStartGame', (b) => b.disabled) && (await L.text(H, '#startNote')).includes('あおさん、みどりさんに画面を読みこみなおしてもらって'), await L.text(H, '#startNote'));
   await H.page.click('#roomMode [data-value="theme"]');
   await L.roomWhen(code, (r) => r.mode === 'theme');
   await sleep(300);
-  check('V3 今までの遊び方なら、はじめられる', !(await H.page.$eval('#btnStartGame', (b) => b.disabled)));
+  check('R3 今までの遊び方なら、はじめられる', !(await H.page.$eval('#btnStartGame', (b) => b.disabled)));
   await H.page.click('#roomMode [data-value="life"]');
   await L.roomWhen(code, (r) => r.mode === 'life');
   // 在室が残ったまま読みこみなおすと、版を書きなおす（あお）・切断で消えてから戻っても書く（みどり）
@@ -64,22 +64,22 @@ const { check, sleep } = L;
   await L.roomWhen(code, (r) => r.players?.['あお']?.ver === 4);
   await L.rest('PATCH', pPath('みどり'), { ver: 4 });
   await H.page.waitForFunction(() => !document.getElementById('btnStartGame').disabled, null, { timeout: 8000 });
-  check('V4 そろうと「はじめる」を押せる', !(await H.page.$eval('#btnStartGame', (b) => b.disabled)) && (await L.text(H, '#startNote')) === '', await L.text(H, '#startNote'));
-  check('V5 参加者の画面には、版のちがいの知らせが出ない', !(await L.visible(A, '#verNote')));
+  check('R4 そろうと「はじめる」を押せる', !(await H.page.$eval('#btnStartGame', (b) => b.disabled)) && (await L.text(H, '#startNote')) === '', await L.text(H, '#startNote'));
+  check('R5 参加者の画面には、版のちがいの知らせが出ない', !(await L.visible(A, '#verNote')));
   // ホストの画面が前の版のまま → 参加者に知らせる
   await L.rest('PATCH', pPath('ほすと'), { ver: 3 });
   await L.waitVisible(A, '#verNote');
-  check('V6 ホストが前の版なら、参加者に「ホストに読みこみなおしてもらって」', (await L.text(A, '#verNote')).includes('ホストに画面を読みこみなおして'), await L.text(A, '#verNote'));
+  check('R6 ホストが前の版なら、参加者に「ホストに読みこみなおしてもらって」', (await L.text(A, '#verNote')).includes('ホストに画面を読みこみなおして'), await L.text(A, '#verNote'));
   await L.rest('PATCH', pPath('ほすと'), { ver: 5 });
   await L.waitText(A, '#verNote', 'この画面を読みこみなおして');
-  check('V7 ホストが新しい版なら、参加者に「この画面を読みこみなおして」', true);
+  check('R7 ホストが新しい版なら、参加者に「この画面を読みこみなおして」', true);
   // ホストが読みこみなおすと、ホストの版も書きなおす
   await L.rest('PATCH', pPath('ほすと'), { ver: 3 });
   await H.page.reload();
   await L.waitScreen(H, 'waiting');
   await L.roomWhen(code, (r) => r.players?.['ほすと']?.ver === 4);
   await L.waitHidden(A, '#verNote');
-  check('V8 ホストが読みこみなおすと、参加者の知らせが消える', !(await L.visible(A, '#verNote')));
+  check('R8 ホストが読みこみなおすと、参加者の知らせが消える', !(await L.visible(A, '#verNote')));
 
   // ── B. はじめる: 盤 ──
   await H.page.click('#btnStartGame');
@@ -222,8 +222,8 @@ const { check, sleep } = L;
   await L.waitText(B, '#modal-effect', 'いっしょ');
   check('V7 結果: 番の人と同じだった人が進む', (await L.text(B, '#modal-effect')) === 'ほすとさんがいっしょ！ 1マス進む', await L.text(B, '#modal-effect'));
   const rows = await B.page.$$eval('#modal-choices .ks-result', (els) => els.map((e) => ({ answer: e.classList.contains('is-answer'), people: [...e.querySelectorAll('.ks-result__person')].map((p) => p.textContent.replace(/^\d+/, '')) })));
-  check('V8 番の人の答えと、同じだった人だけが出る（ちがう答えの人は、だれが何を選んだかを出さない）', rows.length === 3 && rows[0].answer && rows[0].people.join() === 'ほすと,あお' && rows[1].people.length === 0 && !rows[1].answer
-    && !(await L.text(B, '#modal-choices')).includes('みどり'), rows);
+  check('V8 いっしょは、みんなの答えが選択肢ごとに出る・番の人の答えに印', rows.length === 3 && rows[0].answer && rows[0].people.join() === 'ほすと,あお' && rows[1].people.join() === 'みどり' && !rows[1].answer, rows);
+  check('V8b 見出しは「みんなの答え」', (await L.text(B, '#modal-player')).includes('みんなの答え'), await L.text(B, '#modal-player'));
   check('V9 進めるのは番の人とホスト', (await L.card(A)).next && (await L.card(H)).next && !(await L.card(B)).next && (await L.text(A, '#btn-next')).includes('進む'));
   await A.page.click('#btn-next');
   room = await gameWhen((g) => g.step === 'life4-roll' && !g.q);
@@ -274,6 +274,20 @@ const { check, sleep } = L;
   check('V17 よそうの結果は、番の人の答えと当てた人だけ（外れた人の予想は出さない）', yrows[2].answer && yrows[2].people.join() === 'ほすと,みどり' && yrows[0].people.length === 0 && yrows[1].people.length === 0
     && !(await L.text(A, '#modal-choices')).includes('あお'), yrows);
   await B.page.click('#btn-next');
+  await gameWhen((g) => g.step === 'life4-roll' && !g.q);
+  // いっしょ: 番の人（ほすと）と同じ人がいない（ほかの2人は同じ答え）→ 「同じ答えの人はいなかった」・みんなの答えは出る
+  await set({ step: 'life4-talk', turn: 0, q: { kind: 'issho', scene: 'chiisai', idx: 0, n: 2 } });
+  await cardWhen(A, '小さいころ、よく遊んだのは？');
+  await H.page.click('#modal-choices button.ks-choice >> nth=0');
+  await gameWhen((g) => g.q && g.q.votes && g.q.votes[0] === 0);
+  await A.page.click('#modal-choices button.ks-choice >> nth=1');
+  await gameWhen((g) => g.q && g.q.votes && g.q.votes[1] === 1);
+  await B.page.click('#modal-choices button.ks-choice >> nth=1');
+  await gameWhen((g) => g.q && g.q.open === true);
+  await L.waitText(A, '#modal-effect', '同じ答えの人');
+  const nrows = await A.page.$$eval('#modal-choices .ks-result', (els) => els.map((e) => [...e.querySelectorAll('.ks-result__person')].map((p) => p.textContent.replace(/^\d+/, '')).join()));
+  check('V17b いっしょで番の人と同じ人がいない: 「ほすとさんと同じ答えの人はいなかったよ」・みんなの答えは出る', (await L.text(A, '#modal-effect')) === 'ほすとさんと同じ答えの人はいなかったよ' && nrows[0] === 'ほすと' && nrows[1] === 'あお,みどり', { e: await L.text(A, '#modal-effect'), nrows });
+  await H.page.click('#btn-next');
   await gameWhen((g) => g.step === 'life4-roll' && !g.q);
   // まだ選んでいない人がいなくなったら、ホストの画面が開く
   await set({ step: 'life4-talk', turn: 0, q: { kind: 'issho', scene: 'chiisai', idx: 0, n: 1 } });
