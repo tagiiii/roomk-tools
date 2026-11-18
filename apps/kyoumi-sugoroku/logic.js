@@ -19,6 +19,9 @@ export const STATUS = {
 export const STEP = {
   ROLL: 'roll',  // 番の人がサイコロを振るのを待っている
   TALK: 'talk',  // 質問が出ている
+  // 「人生の道」の段階。名前を分けて、モードを知らない古い版の画面からの操作（step が roll / talk のときだけ動く）を通さない
+  LIFE_ROLL: 'life-roll',
+  LIFE_TALK: 'life-talk',
 };
 
 /* ── 「人生の道」モード（2026-11-18） ──
@@ -55,6 +58,9 @@ export function lifeKinds(total) {
   return Array.from({ length: total }, (_, i) => (i === 0 || i === total - 1 ? '' : LIFE_PATTERN[(i - 1) % LIFE_PATTERN.length]));
 }
 export function isLife(game) { return game?.mode === MODE.LIFE; }
+// サイコロを振るのを待っている・カードが出ている（モードごとの段階の名前で見る）
+export function isRollStep(game) { return !!game && game.step === (isLife(game) ? STEP.LIFE_ROLL : STEP.ROLL); }
+export function isTalkStep(game) { return !!game && game.step === (isLife(game) ? STEP.LIFE_TALK : STEP.TALK); }
 
 export function validNickname(value) {
   if (!value) return '名前を入れてね';
@@ -160,7 +166,7 @@ export function lifeSceneAt(game, pos) {
 }
 // ゴールした人か（「人生の道」だけ）
 export function doneOf(game, i) {
-  return asList(game?.done)[i] === true;
+  return isLife(game) && game.done != null && typeof game.done === 'object' && game.done[i] === true;
 }
 export function qnOf(game) {
   return Number(game?.q?.n) || 0;
@@ -309,7 +315,7 @@ function lifeSettle(room, game, pos) {
   const arrived = done.map((d, i) => d && !doneOf(game, i)).map((d, i) => (d ? i : -1)).filter((i) => i >= 0);
   const settled = { ...game, pos, done, arrived: arrived.length ? { who: arrived, rollNo: Number(game.rollNo) || 0 } : null };
   if (done.every(Boolean)) {
-    return { all: true, room: { ...room, status: STATUS.GOAL, game: { ...settled, step: STEP.ROLL, q: null, winner: null } } };
+    return { all: true, room: { ...room, status: STATUS.GOAL, game: { ...settled, step: STEP.LIFE_ROLL, q: null, winner: null } } };
   }
   return { all: false, game: settled };
 }
@@ -328,7 +334,7 @@ function lifeRoll(room, game, rollNo, seed) {
   if (to >= max) {
     const end = lifeSettle(room, moved, pos);
     if (end.all) return end.room;
-    return { ...room, game: { ...end.game, step: STEP.ROLL, q: null, turn: nextTurn(room, end.game) } };
+    return { ...room, game: { ...end.game, step: STEP.LIFE_ROLL, q: null, turn: nextTurn(room, end.game) } };
   }
   const kind = lifeKinds(max + 1)[to];
   const scene = kind === KIND.DEKIGOTO ? null : lifeSceneAt(moved, to);
@@ -337,19 +343,24 @@ function lifeRoll(room, game, rollNo, seed) {
   if (scene) q.scene = scene;
   // 聞く相手がほかにいないとき（1人で遊ぶ）は、そばにいる人に聞く
   if (kind === KIND.KIKU && orderOf(game).length < 2) q.target = TARGET_NEAR;
-  return { ...room, game: { ...moved, step: STEP.TALK, used: drawn.used, q } };
+  return { ...room, game: { ...moved, step: STEP.LIFE_TALK, used: drawn.used, q } };
 }
 function lifeReask(room, game, q, seed) {
   if (!LIFE || q.kind === KIND.DEKIGOTO) return null;
   const drawn = lifeDraw(game, lifeUsedKey(q.kind, q.scene), lifeCandidates(q.kind, q.scene), seededRandom(seed), q.idx);
   return { ...room, game: { ...game, used: drawn.used, q: { ...game.q, idx: drawn.idx, n: q.n + 1 } } };
 }
+// 「きく」で選んだ相手が、いまルームにいない
+export function targetGone(room, game, q) {
+  return !!q && q.kind === KIND.KIKU && Number.isInteger(q.target) && q.target >= 0 && !present(room, game, orderOf(game)[q.target]);
+}
 function lifeChoose(room, game, q, choice, choiceCount) {
   if (q.kind === KIND.KIKU) {
-    // だれに聞くかを選ぶ（自分以外の人か、みんな）
-    if (q.target != null) return null;
+    // だれに聞くかを選ぶ（自分以外の、いまいる人か、みんな）。選んだ相手がいなくなったら選びなおせる
+    const order = orderOf(game);
+    if (q.target != null && !targetGone(room, game, q)) return null;
     const ok = choice === TARGET_ALL
-      || (Number.isInteger(choice) && choice >= 0 && choice < orderOf(game).length && choice !== turnOf(game));
+      || (Number.isInteger(choice) && choice >= 0 && choice < order.length && choice !== turnOf(game) && present(room, game, order[choice]));
     if (!ok) return null;
     return { ...room, game: { ...game, q: { ...game.q, target: choice, n: q.n + 1 } } };
   }
@@ -359,7 +370,7 @@ function lifeChoose(room, game, q, choice, choiceCount) {
     ...room,
     game: {
       ...game,
-      step: STEP.ROLL,
+      step: STEP.LIFE_ROLL,
       q: null,
       picked: { life: true, turn: turnOf(game), scene: q.scene, idx: q.idx, choice },
       turn: nextTurn(room, game),
@@ -368,7 +379,7 @@ function lifeChoose(room, game, q, choice, choiceCount) {
 }
 // 「話せた！次の人へ」・できごとの「進む」。できごとで進んだ先のマスでは何も起きない
 function lifeNext(room, game, q) {
-  const base = { ...game, step: STEP.ROLL, q: null, picked: null };
+  const base = { ...game, step: STEP.LIFE_ROLL, q: null, picked: null };
   if (!q || q.kind !== KIND.DEKIGOTO || !LIFE) return { ...room, game: { ...base, turn: nextTurn(room, game) } };
   const ev = LIFE.events[q.idx] || {};
   const turn = turnOf(game);
@@ -406,6 +417,7 @@ export function startGame(room, counts) {
   };
   if (modeOf(room.mode) === MODE.LIFE) {
     game.mode = MODE.LIFE;
+    game.step = STEP.LIFE_ROLL;
     game.squares = lifeSizeFor(names.length, room.lifeLen); // 人数と「長さ」から
     game.done = names.map(() => false);
   }
@@ -416,7 +428,7 @@ export function startGame(room, counts) {
 export function roll(room, gameId, rollNo, seed, counts) {
   const game = gameOf(room);
   if (room?.status !== STATUS.PLAYING || !game || game.id !== gameId) return null;
-  if (game.step !== STEP.ROLL || (Number(game.rollNo) || 0) !== rollNo) return null;
+  if (!isRollStep(game) || (Number(game.rollNo) || 0) !== rollNo) return null;
   if (isLife(game)) return lifeRoll(room, game, rollNo, seed);
   const rng = seededRandom(seed);
   const dice = Math.floor(rng() * 6) + 1;
@@ -454,7 +466,7 @@ export function roll(room, gameId, rollNo, seed, counts) {
 export function reask(room, gameId, rollNo, qn, seed, counts) {
   const game = gameOf(room);
   const q = isLife(game) ? lifeQuestionOf(game) : questionOf(game, counts);
-  if (room?.status !== STATUS.PLAYING || !game || game.id !== gameId || game.step !== STEP.TALK) return null;
+  if (room?.status !== STATUS.PLAYING || !game || game.id !== gameId || !isTalkStep(game)) return null;
   if ((Number(game.rollNo) || 0) !== rollNo || !q || q.n !== qn) return null;
   if (isLife(game)) return lifeReask(room, game, q, seed);
   const drawn = drawQuestion(game, counts, seededRandom(seed), q.theme);
@@ -469,7 +481,7 @@ export function reask(room, gameId, rollNo, qn, seed, counts) {
 export function choose(room, gameId, rollNo, qn, choice, choiceCount, counts) {
   const game = gameOf(room);
   const q = isLife(game) ? lifeQuestionOf(game) : questionOf(game, counts);
-  if (room?.status !== STATUS.PLAYING || !game || game.id !== gameId || game.step !== STEP.TALK) return null;
+  if (room?.status !== STATUS.PLAYING || !game || game.id !== gameId || !isTalkStep(game)) return null;
   if ((Number(game.rollNo) || 0) !== rollNo || !q || q.n !== qn) return null;
   if (isLife(game)) return lifeChoose(room, game, q, choice, choiceCount);
   if (choice !== CHOICE_FREE && !(Number.isInteger(choice) && choice >= 0 && choice < choiceCount)) return null;
@@ -488,16 +500,32 @@ export function choose(room, gameId, rollNo, qn, choice, choiceCount, counts) {
 // 「話せた！次の人へ」: 質問を消して、次の人がサイコロを振る番に
 export function nextPlayer(room, gameId, rollNo) {
   const game = gameOf(room);
-  if (room?.status !== STATUS.PLAYING || !game || game.id !== gameId || game.step !== STEP.TALK) return null;
+  if (room?.status !== STATUS.PLAYING || !game || game.id !== gameId || !isTalkStep(game)) return null;
   if ((Number(game.rollNo) || 0) !== rollNo) return null;
   if (isLife(game)) return lifeNext(room, game, lifeQuestionOf(game));
   return { ...room, game: { ...game, step: STEP.ROLL, q: null, picked: null, turn: nextTurn(room, game) } };
 }
 
+// カードが出ているときに、その中身（できごとの効き目・選んだもの）を確定させずに次の人へ進める。
+// 番の人の退出と、読めないカードで止まったときの立て直し（ホストの見はり）から
+export function dropTalk(room) {
+  const game = gameOf(room);
+  if (room?.status !== STATUS.PLAYING || !game || !isTalkStep(game)) return null;
+  return {
+    ...room,
+    game: { ...game, step: isLife(game) ? STEP.LIFE_ROLL : STEP.ROLL, q: null, picked: null, turn: nextTurn(room, game) },
+  };
+}
+// カードが出ている段階なのに、読めるカードがない（壊れた値）
+export function talkBroken(game, counts) {
+  if (!isTalkStep(game)) return false;
+  return !(isLife(game) ? lifeQuestionOf(game) : questionOf(game, counts));
+}
+
 // サイコロを振る番の人がいなくなったら（退出・切断）、次にいる人へとばす（ホストの見はりと退出から）
 export function skipAbsent(room) {
   const game = gameOf(room);
-  if (room?.status !== STATUS.PLAYING || !game || game.step !== STEP.ROLL) return null;
+  if (room?.status !== STATUS.PLAYING || !game || !isRollStep(game)) return null;
   const actor = actorOf(game);
   // 「人生の道」で、ゴールした人に番が残っているときもとばす
   if (actor == null || (present(room, game, actor) && !doneOf(game, turnOf(game)))) return null;

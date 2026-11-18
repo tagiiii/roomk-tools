@@ -1601,8 +1601,8 @@ async function leaveRoom() {
         // 自分の番だったら、待たせないように次の人へ
         const game = L.gameOf(left);
         if (game && left.status === L.STATUS.PLAYING && L.actorOf(game) === nickname) {
-          const rollNo = Number(game.rollNo) || 0;
-          return (game.step === L.STEP.TALK ? L.nextPlayer(left, game.id, rollNo) : L.skipAbsent(left)) || left;
+          // カードが出ていたら、中身（できごとの効き目など）は確定させずに次の人へ
+          return (L.isTalkStep(game) ? L.dropTalk(left) : L.skipAbsent(left)) || left;
         }
         return left;
       });
@@ -1821,7 +1821,7 @@ function renderRoomGame(room, game) {
   const act = L.canAct(room, uid, net.nickname, net.role);
   const actor = L.actorOf(game);
   const mine = actor === net.nickname && net.role === 'guest' || (net.role === 'host' && actor === room.host);
-  const rolling = game.step === L.STEP.ROLL && !goal;
+  const rolling = L.isRollStep(game) && !goal;
 
   // サイコロ
   const diceRolling = !!anim && performance.now() - anim.start < DICE_MS;
@@ -1844,7 +1844,7 @@ function renderRoomGame(room, game) {
   } else if (!goal) {
     const lq = life ? L.lifeQuestionOf(game) : null;
     if (lq?.kind === L.KIND.DEKIGOTO) note.textContent = `${actor}さんのできごと`;
-    else if (lq?.kind === L.KIND.KIKU && lq.target != null) {
+    else if (lq?.kind === L.KIND.KIKU && lq.target != null && !L.targetGone(room, game, lq)) {
       // 聞く相手が決まったら、答える人を知らせる
       note.textContent = lq.target === L.TARGET_ALL ? 'みんなが答える番だよ'
         : lq.target === L.TARGET_NEAR ? 'そばにいる人が答える番だよ'
@@ -1881,7 +1881,8 @@ function renderRoomGame(room, game) {
     key = 'q:' + game.id + ':' + game.rollNo + ':' + lq.n;
     $('goalCard').hidden = true;
     $('questionCard').hidden = false;
-    const targetText = lq.target == null ? null
+    const gone = L.targetGone(room, game, lq);
+    const targetText = lq.target == null || gone ? null
       : lq.target === L.TARGET_ALL ? 'みんな'
       : lq.target === L.TARGET_NEAR ? 'そばにいる人'
       : `${order[lq.target]} さん`;
@@ -1893,7 +1894,7 @@ function renderRoomGame(room, game) {
         : normalizeQ(LIFE_QUESTIONS[lq.scene][lq.idx]),
       event: lq.kind === L.KIND.DEKIGOTO ? LIFE_EVENTS[lq.idx] : null,
       target: targetText,
-      others: order.filter((_, i) => i !== turn),
+      others: order.filter((name, i) => i !== turn && L.present(room, game, name)),
       playerName: actor,
       playerIndex: turn,
       dice: game.last?.dice || null,
@@ -1987,7 +1988,7 @@ async function roomChoose(choice) {
     let n = 0;
     if (lq.kind === L.KIND.KIKU) {
       // 画面の並び（自分以外の人）を、順番の番号になおす
-      const others = L.orderOf(game).map((_, i) => i).filter((i) => i !== L.turnOf(game));
+      const others = L.orderOf(game).map((_, i) => i).filter((i) => i !== L.turnOf(game) && L.present(net.room, game, L.orderOf(game)[i]));
       picked = choice === L.CHOICE_FREE ? L.TARGET_ALL : others[choice];
       if (picked == null) return;
     } else {
@@ -2034,9 +2035,13 @@ async function hostTransaction(update, failMessage) {
 // サイコロを振る番の人がいない（退出・切断）まま少し待っても戻らなければ、次の人へとばす
 function hostWatchAbsent(room) {
   const game = L.gameOf(room);
-  const actor = game && room.status === L.STATUS.PLAYING && game.step === L.STEP.ROLL ? L.actorOf(game) : null;
-  // いない人と、「人生の道」でゴールした人に番が残っているとき
-  const key = actor != null && (!L.present(room, game, actor) || L.doneOf(game, L.turnOf(game))) ? `${game.id}:${game.rollNo}:${L.turnOf(game)}` : null;
+  const playing = game && room.status === L.STATUS.PLAYING;
+  const actor = playing && L.isRollStep(game) ? L.actorOf(game) : null;
+  // いない人と、「人生の道」でゴールした人に番が残っているとき → 次の人へとばす
+  const skip = actor != null && (!L.present(room, game, actor) || L.doneOf(game, L.turnOf(game)));
+  // カードが出ている段階なのに読めるカードがないとき（壊れた値）→ 次の人へ進めて立て直す
+  const broken = playing && L.talkBroken(game, COUNTS);
+  const key = skip || broken ? `${game.id}:${game.rollNo}:${L.turnOf(game)}:${broken ? 'b' : 's'}` : null;
   if (key === net.skipKey) return;
   clearTimeout(net.skipTimer);
   net.skipTimer = null;
@@ -2047,8 +2052,8 @@ function hostWatchAbsent(room) {
     if (net.skipKey !== key) return;
     const ok = await hostTransaction((r) => {
       const g = L.gameOf(r);
-      if (!g || `${g.id}:${g.rollNo}:${L.turnOf(g)}` !== key) return;
-      return L.skipAbsent(r);
+      if (!g || `${g.id}:${g.rollNo}:${L.turnOf(g)}` !== key.slice(0, -2)) return;
+      return broken ? (L.talkBroken(g, COUNTS) ? L.dropTalk(r) : undefined) : L.skipAbsent(r);
     }, '');
     // 進めなかったら（処理中など）、次のルームの変化でまた見る
     if (!ok && net.skipKey === key) net.skipKey = null;
