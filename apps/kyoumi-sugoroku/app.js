@@ -3,8 +3,8 @@
 // ルームの決まりは logic.js。質問はテーマのキーと QUESTIONS の中の番号で共有するので、
 // QUESTIONS は並べ替え・途中の削除をしない（足すのは末尾だけ）。
 import { shuffle, popIn } from '../shared/js/utils.js';
-import * as L from './logic.js?v=20261118vote';
-import { SCENE_W, sceneHeight, squarePoints, squareWidth, rowCenters, sceneElement } from './art.js?v=20261118vote';
+import * as L from './logic.js?v=20261118more';
+import { SCENE_W, sceneHeight, squarePoints, squareWidth, rowCenters, sceneElement } from './art.js?v=20261118more';
 
 const NUMBERS = ['①', '②', '③', '④', '⑤'];
 
@@ -165,6 +165,7 @@ const LIFE_KINDS = {
   kiku: { label: 'きく', icon: 'forum' },
   dekigoto: { label: 'できごと', icon: 'auto_awesome' },
   // みんなが同時に選ぶマス（ルームで2人以上のときだけ出る）
+  minna: { label: 'みんなで', icon: 'groups' },
   issho: { label: 'いっしょ', icon: 'diversity_3' },
   yosou: { label: 'よそう', icon: 'lightbulb' },
 };
@@ -258,6 +259,18 @@ const LIFE_ASK = {
     { q: 'おとなって、どんなところが楽しそう？', choices: ['自由なところ', '自分で決められるところ', 'まだよくわからない'] },
   ],
 };
+// 「みんなで」のマス: お題に合うものを、番の人から順に1つずつ選ぶ（ほかの人が選んだものは選べない）。
+// ルームでは番号で共有するので、お題も、その中の並びも、並べ替え・途中の削除をしない（足すのは末尾だけ）
+const LIFE_MINNA = [
+  { title: '好きなくだもの', options: ['いちご', 'バナナ', 'りんご', 'みかん', 'ぶどう', 'もも', 'メロン', 'すいか', 'パイナップル', 'さくらんぼ', 'キウイ', 'なし'] },
+  { title: '好きなおやつ', options: ['チョコ', 'アイス', 'ポテトチップス', 'クッキー', 'グミ', 'プリン', 'ドーナツ', 'せんべい', 'ケーキ', 'あめ', 'ポップコーン', 'たいやき'] },
+  { title: '好きな動物', options: ['犬', '猫', 'うさぎ', 'パンダ', 'ペンギン', 'ライオン', 'ぞう', 'きりん', 'イルカ', 'ハムスター', 'コアラ', 'カワウソ'] },
+  { title: '好きな色', options: ['赤', '青', '黄色', '緑', 'オレンジ', 'ピンク', '紫', '水色', '白', '黒', '茶色', '金色'] },
+  { title: '乗ってみたい乗りもの', options: ['自転車', '電車', 'バス', '飛行機', '船', '新幹線', '車', 'ロケット', '気球', 'モノレール', 'バイク', 'ヘリコプター'] },
+  { title: '好きなごはん', options: ['カレー', 'ラーメン', 'すし', 'ハンバーグ', 'からあげ', 'オムライス', 'ピザ', 'うどん', 'やきそば', 'おにぎり', 'パスタ', 'ぎょうざ'] },
+  { title: '行ってみたい場所', options: ['海', '山', '遊園地', '水族館', '動物園', '温泉', 'お祭り', 'キャンプ場', '映画館', 'ゲームセンター', '公園', '牧場'] },
+  { title: '好きな飲みもの', options: ['水', 'お茶', '牛乳', 'ココア', 'オレンジジュース', 'りんごジュース', 'サイダー', 'コーラ', 'スープ', 'いちごミルク', 'レモネード', 'むぎ茶'] },
+];
 // 「できごと」のマス。move: その人が進む / all: みんなが進む / again: もう一度サイコロ
 const LIFE_EVENTS = [
   { text: '追い風がふいた！', effect: '2マス進む', move: 2 },
@@ -277,6 +290,7 @@ L.setLifeContent({
   erabu: Object.fromEntries(LIFE_SCENES.map((sc) => [sc.key, LIFE_QUESTIONS[sc.key].length])),
   kiku: Object.fromEntries(LIFE_SCENES.map((sc) => [sc.key, LIFE_ASK[sc.key].length])),
   events: LIFE_EVENTS.map((ev) => ({ move: ev.move || 0, all: ev.all || 0, again: !!ev.again })),
+  minna: LIFE_MINNA.map((theme) => theme.options.length),
 });
 const lifeScene = (key) => LIFE_SCENES.find((sc) => sc.key === key) || LIFE_SCENES[0];
 // 盤の形（列・マスの種類・段の名前）
@@ -326,6 +340,13 @@ function renderIndicator(items) {
     label.appendChild(makeElement('span', `ks-pawn ks-pawn--${i}`, i + 1));
     label.appendChild(makeElement('span', 'ks-player-label__name', p.name));
     (p.tags || []).forEach((tag) => label.appendChild(makeElement('span', 'ks-tag', tag)));
+    if (p.cards) {
+      const badge = makeElement('span', 'ks-cardbadge');
+      badge.append(msIcon('redeem'), document.createTextNode(String(p.cards)));
+      badge.setAttribute('aria-label', `おたすけカード ${p.cards}枚`);
+      badge.title = `おたすけカード ${p.cards}枚`;
+      label.appendChild(badge);
+    }
     ind.appendChild(label);
   });
 }
@@ -479,7 +500,8 @@ function fillQuestion(themeKey, item, playerName, opts) {
       free.type = 'button';
       free.append(msIcon(opts.freeIcon || 'chat'), document.createTextNode(opts.freeLabel || '自由に話す'));
       free.disabled = !opts.canPress;
-      free.addEventListener('click', () => opts.onChoose(L.CHOICE_FREE));
+      // freeWrites: 「自由に話す」を押したら、ひとこと書く欄を出す（書かずに進んでもよい）
+      free.addEventListener('click', () => (opts.freeWrites ? openWrite((text) => opts.onChoose(L.CHOICE_FREE, text)) : opts.onChoose(L.CHOICE_FREE)));
       choicesEl.appendChild(free);
     }
   }
@@ -489,6 +511,7 @@ function fillQuestion(themeKey, item, playerName, opts) {
   $('btn-next').style.display = opts.showNext ? '' : 'none';
   $('btn-skip').style.display = opts.showSkip ? '' : 'none';
   $('btnOpenVotes').style.display = opts.showOpen ? '' : 'none';
+  $('btn-skip').replaceChildren(msIcon(opts.skipIcon || 'refresh'), document.createTextNode(' ' + (opts.skipLabel || '別の質問')));
   $('modal-actions').hidden = !opts.showNext && !opts.showSkip && !opts.showOpen;
   $('modal-voters').hidden = true;
   $('modal-wait').hidden = !opts.waitText;
@@ -505,11 +528,34 @@ function renderPick(pick) {
     document.createTextNode(pick.title || `${pick.name} さんが選んだもの`),
   );
   $('pickQ').textContent = pick.item.q;
-  const label = pick.choice === L.CHOICE_FREE ? '自由に話す' : (pick.item.choices?.[pick.choice] ?? '');
+  // 「自由に話す」で書いた文があれば、それを出す
+  const label = pick.choice === L.CHOICE_FREE ? (pick.text ? `「${pick.text}」` : '自由に話す') : (pick.item.choices?.[pick.choice] ?? '');
   $('pickA').replaceChildren(msIcon(pick.choice === L.CHOICE_FREE ? 'chat' : 'check_circle'), document.createTextNode(label));
 }
 
 const CHOICE_HINT = '選ぶと、次の人の番になるよ';
+
+// 「自由に話す」のとき、ひとこと書いて添えられる（書かなくてもよい）。send(文) で次の人へ
+const writeState = { send: null };
+function openWrite(send) {
+  writeState.send = send;
+  $('writeText').value = '';
+  $('questionCard').classList.add('is-writing');
+  $('modal-write').hidden = false;
+  $('writeText').focus();
+}
+function closeWrite() {
+  writeState.send = null;
+  $('questionCard').classList.remove('is-writing');
+  $('modal-write').hidden = true;
+}
+function sendWrite() {
+  const send = writeState.send;
+  if (!send) return;
+  const text = L.cleanText($('writeText').value);
+  closeWrite();
+  send(text);
+}
 
 // 質問とゴールのカードを、1台の画面ではモーダルに、ルームでは画面の中に置く
 function placeCards(inRoom) {
@@ -785,6 +831,7 @@ function renderLocalModal() {
     dice: null,
     canPress: true,
     onChoose: chooseLocal,
+    freeWrites: true,
     showNext: !hasChoices,
     showSkip: true,
     waitText: hasChoices ? CHOICE_HINT : '',
@@ -802,13 +849,14 @@ function showLocalQuestion() {
   popIn($('questionCard'));
 }
 
-function chooseLocal(choice) {
+function chooseLocal(choice, text = '') {
   const player = local.players[local.currentIndex];
-  local.lastPick = { playerIndex: local.currentIndex, name: player.name, item: local.currentQ.question, choice };
+  local.lastPick = { playerIndex: local.currentIndex, name: player.name, item: local.currentQ.question, choice, text: L.cleanText(text) };
   closeLocalQuestion();
 }
 
 function closeLocalQuestion() {
+  closeWrite();
   local.history.push(local.currentQ);
   $('modal').style.display = 'none';
   local.currentIndex = (local.currentIndex + 1) % local.players.length;
@@ -819,6 +867,7 @@ function closeLocalQuestion() {
 }
 
 function skipLocalQuestion() {
+  closeWrite();
   // 別の質問を出す（テーマは維持）
   const theme = local.currentQ.theme;
   local.currentQ = { theme, question: pickLocalQuestion(theme) };
@@ -881,7 +930,7 @@ function fillLifeCard(c) {
   } else if (c.kind === 'kiku' && c.answerer) {
     // 聞かれた人が、3つから選んで答える
     fillQuestion(null, c.question, who, {
-      ...base, toText: `${who} さんから、${c.target}へ`,
+      ...base, toText: `${who} さんから、${c.target}へ`, freeWrites: true,
       showNext: false, showSkip: c.act,
       waitText: c.act ? '選ぶと、次の人の番になるよ。答えにくいときは「別の質問」に変えてね' : `${c.answerer}さんが選ぶと、次の人の番になるよ`,
     });
@@ -894,11 +943,56 @@ function fillLifeCard(c) {
     });
   } else {
     fillQuestion(null, c.question, who, {
-      ...base, showNext: false, showSkip: c.act,
+      ...base, freeWrites: true, showNext: false, showSkip: c.act,
       waitText: c.act ? CHOICE_HINT : `${who}さんが選ぶと、次の人の番になるよ`,
     });
   }
 }
+// 「みんなで」のカード: お題に合うものを、番の人から順に1つずつ選ぶ
+// c: { scene, theme: { title, options }, picks, order, picker（いま選ぶ人の番号。みんな選んだら null）, playerName, playerIndex, dice, act, busy }
+function fillMinnaCard(c) {
+  const kind = LIFE_KINDS.minna;
+  const who = c.playerName;
+  // ended: もう選ぶ人がいない（みんな選んだ・選べるものがなくなった・選べる人がいなくなった）
+  // complete: そのうえで、1人以上が選んでいる（選んだ人が1マス進む）
+  const ended = c.picker == null;
+  const started = Object.keys(c.picks).length > 0;
+  const complete = ended && started;
+  fillQuestion(null, { q: `${c.theme.title}を、1つずつ選ぼう`, choices: null }, who, {
+    head: { key: 'life-' + c.scene.key, icon: kind.icon, label: `${c.scene.label}・${kind.label}` },
+    playerIndex: c.picker != null ? c.picker : c.playerIndex,
+    dice: c.dice || null,
+    canPress: false,
+    onChoose: () => {},
+    toText: complete ? 'みんな選べたね' : ended ? '選ぶ人が、いまいないよ' : `${c.order[c.picker]} さんの番（ほかの人が選んだものは選べないよ）`,
+    effect: complete ? 'みんな選べた！ みんな1マス進む' : '',
+    // 選ぶ人がいなくなったら「進む」（だれも選んでいなければ、だれも進まずに次の人へ）。お題を変えられるのは、だれかが選ぶ前で、選ぶ人がいるときだけ
+    showNext: ended && c.act, showSkip: !started && !ended && c.act,
+    nextLabel: complete ? '進む' : '次の人へ', nextIcon: 'arrow_forward',
+    skipLabel: '別のお題',
+    waitText: ended ? (c.act ? '' : `${who}さんが進めるのを待ってね`) : (c.act ? '好きなものを1つ選んでね' : `${c.order[c.picker]}さんが選んでいるよ`),
+  });
+  const choicesEl = $('modal-choices');
+  choicesEl.replaceChildren();
+  const grid = makeElement('div', 'ks-minna');
+  const taken = {};
+  Object.keys(c.picks).forEach((i) => { taken[c.picks[i]] = Number(i); });
+  c.theme.options.forEach((text, i) => {
+    const by = taken[i];
+    const btn = makeElement('button', 'ks-minna__item' + (by != null ? ' is-taken' : ''));
+    btn.type = 'button';
+    btn.appendChild(makeElement('span', 'ks-minna__text', text));
+    if (by != null) {
+      btn.appendChild(makeElement('span', `ks-pawn ks-pawn--${by}`, by + 1));
+      btn.setAttribute('aria-label', `${text}（${c.order[by]} さんが選んだ）`);
+    }
+    btn.disabled = by != null || ended || !c.act || c.busy;
+    btn.addEventListener('click', () => roomChoose(i));
+    grid.appendChild(btn);
+  });
+  choicesEl.appendChild(grid);
+}
+
 // みんなが同時に選ぶマス（いっしょ・よそう）のカード。
 // c: { kind, scene, question, votes, open, order, turn, allowed: [この画面で選べる人の番号…], waiting: [まだ選んでいない人の番号…],
 //      result（開いたあと）, playerName, playerIndex, dice, act（番の人かホスト）, busy }
@@ -1081,6 +1175,7 @@ function startLocalLife(names) {
   Object.assign(net, { offline: true, role: 'host', nickname: null, room, seen: null, shownKey: null, arrivedKey: null, busy: false });
   placeCards(true);
   $('roomBar').hidden = true;
+  $('btnHelp').hidden = true;
   window.RoomkStats?.count('start-local');
   window.RoomkStats?.count('mode-life');
   trackRoll(room);
@@ -1093,6 +1188,9 @@ function endLocalLife() {
   $('roomStage').hidden = true;
   $('diceArea').hidden = false;
   $('lifeLegend').hidden = true;
+  $('btnHelp').hidden = true;
+  $('dicePick').hidden = true;
+  closeWrite();
   placeCards(false);
 }
 
@@ -1677,7 +1775,7 @@ async function leaveRoom() {
         const game = L.gameOf(left);
         if (game && left.status === L.STATUS.PLAYING && L.actorOf(game) === nickname) {
           // カードが出ていたら、中身（できごとの効き目など）は確定させずに次の人へ
-          return (L.isTalkStep(game) ? L.dropTalk(left) : L.skipAbsent(left)) || left;
+          return (L.isTalkStep(game) ? L.leaveTalk(left) : L.skipAbsent(left)) || left;
         }
         return left;
       });
@@ -1892,7 +1990,7 @@ function renderRoomGame(room, game) {
   // アニメーション中は、振った人を「いまの番」として出す
   const current = anim ? anim.turn : goal ? winner : turn;
 
-  renderIndicator(order.map((name, i) => ({ name, current: i === current, tags: playerTags(room, game, name) })));
+  renderIndicator(order.map((name, i) => ({ name, current: i === current, tags: playerTags(room, game, name), cards: L.cardsOf(game, i) })));
   // 前の人が選んだもの（次にサイコロが振られると消える）
   const pick = !goal && !anim ? L.pickedOf(game, COUNTS) : null;
   renderPick(pick && {
@@ -1901,6 +1999,7 @@ function renderRoomGame(room, game) {
     title: pick.kiku ? `${order[pick.turn]} さんの答え${pick.by != null ? `（${order[pick.by]} さんの質問）` : ''}` : '',
     item: normalizeQ(pick.kiku ? LIFE_ASK[pick.scene][pick.idx] : pick.life ? LIFE_QUESTIONS[pick.scene][pick.idx] : QUESTIONS[pick.theme][pick.idx]),
     choice: pick.choice,
+    text: pick.text,
   });
   const total = L.boardSize(game);
   renderBoard(total, positions, goal && !anim ? -1 : current, life ? lifeView(game) : null);
@@ -1924,6 +2023,15 @@ function renderRoomGame(room, game) {
   else setDice('?');
   $('btn-roll').hidden = !rolling || !act || cheering;
   $('btn-roll').disabled = !!anim || net.busy;
+  // おたすけカード: 自分の番のサイコロの前に、ほかの人を2マス進められる
+  const helpKey = `${game.id}:${game.rollNo}:${turn}`;
+  const helpCards = life && rolling && !cheering ? L.cardsOf(game, turn) : 0;
+  const helpList = helpCards ? L.helpTargets(room, game) : [];
+  const canHelp = helpCards > 0 && helpList.length > 0 && act;
+  if (!canHelp || net.helpOpen !== helpKey) net.helpOpen = null;
+  $('btnHelp').hidden = !canHelp || !!anim;
+  $('btnHelp').disabled = net.busy;
+  $('btnHelpCount').textContent = String(helpCards);
 
   // いまの番の案内
   const note = $('turnNote');
@@ -1952,7 +2060,11 @@ function renderRoomGame(room, game) {
         : lq.target === L.TARGET_NEAR ? 'そばにいる人が答える番だよ'
         : order[lq.target] === net.nickname ? 'あなたが答える番だよ' : `${order[lq.target]}さんが答える番だよ`;
     } else if (lq?.kind === L.KIND.KIKU) note.textContent = mine ? 'あなたが、だれかに聞く番だよ' : `${actor}さんが、だれかに聞く番だよ`;
-    else if (lq && L.isVoteKind(lq.kind) && !lq.open) note.textContent = lq.kind === L.KIND.ISSHO ? 'みんなで選ぼう' : `${actor}さんの答えを、みんなで予想しよう`;
+    else if (lq && lq.kind === L.KIND.MINNA) {
+      const picker = L.minnaPicker(room, game, lq);
+      note.textContent = picker == null ? (mine ? 'みんな選べたね。次へ進めてね' : `${actor}さんが進めるのを待ってね`)
+        : mine ? 'あなたが選ぶ番だよ' : `${order[picker]}さんが選ぶ番だよ`;
+    } else if (lq && L.isVoteKind(lq.kind) && !lq.open) note.textContent = lq.kind === L.KIND.ISSHO ? 'みんなで選ぼう' : `${actor}さんの答えを、みんなで予想しよう`;
     else if (lq && L.isVoteKind(lq.kind)) note.textContent = mine ? '結果を見たら、次へ進めてね' : `${actor}さんが進めるのを待ってね`;
     else if (life) note.textContent = mine ? 'あなたが選ぶ番だよ' : `${actor}さんが選ぶ番だよ`;
     else note.textContent = mine ? 'あなたが話す番だよ' : `${actor}さんが話す番だよ`;
@@ -1966,7 +2078,8 @@ function renderRoomGame(room, game) {
     if (net.arrivedKey !== arrivedKey) { net.arrivedKey = arrivedKey; celebrate(); }
   }
 
-  if (L.isOldLife(game) && !goal) note.textContent = 'このゲームは続けられなくなったよ。ホストの画面が待合室にもどすのを待ってね';
+  // 前の版が作ったゲーム（ツールが新しくなる前から開いたままの画面で作ったもの）。この版では進められない
+  if (L.isOldLife(game) && !goal) note.textContent = 'このゲームは続けられなくなったよ。ホストの画面が待合室にもどすのを待ってね。しばらく待ってもそのままなら、みんなで画面を読みこみなおしてね';
   $('btnRoomBack').hidden = net.offline || !(net.role === 'host' && !goal);
   $('btn-back').hidden = !net.offline;
 
@@ -1983,6 +2096,25 @@ function renderRoomGame(room, game) {
     $('btn-restart').hidden = net.role !== 'host';
     $('btnGoalSettings').hidden = !net.offline;
     $('goal-wait').hidden = net.role === 'host';
+  } else if (!anim && net.helpOpen === helpKey) {
+    // おたすけカード: だれを進めるか
+    key = 'h:' + helpKey;
+    $('goalCard').hidden = true;
+    $('questionCard').hidden = false;
+    fillQuestion(null, { q: 'だれを2マス進める？', choices: helpList.map((i) => `${order[i]} さん`) }, actor, {
+      head: { key: 'life-help', icon: 'redeem', label: 'おたすけカード' },
+      toText: `${actor} さんのおたすけカード（あと${helpCards}枚）`,
+      playerIndex: turn,
+      dice: null,
+      canPress: act && !net.busy,
+      onChoose: roomHelp,
+      noFree: true,
+      showNext: false,
+      showSkip: true,
+      skipLabel: 'やめる',
+      skipIcon: 'close',
+      waitText: '使ったあとで、サイコロを振れるよ',
+    });
   } else if (!anim && cheering) {
     // おうえん: まだゴールしていない人を1人選んで、1マス進める
     key = 'c:' + game.id + ':' + game.rollNo + ':' + turn;
@@ -2003,10 +2135,25 @@ function renderRoomGame(room, game) {
     });
   } else if (!anim && L.isTalkStep(game) && life && L.lifeQuestionOf(game)) {
     const lq = L.lifeQuestionOf(game);
-    key = 'q:' + game.id + ':' + game.rollNo + ':' + lq.n + (lq.open ? ':open' : '');
+    key = lq.kind === L.KIND.MINNA
+      ? 'q:' + game.id + ':' + game.rollNo + ':minna:' + lq.idx // 1人選ぶたびに n が進むが、カードは同じ
+      : 'q:' + game.id + ':' + game.rollNo + ':' + lq.n + (lq.open ? ':open' : '');
     $('goalCard').hidden = true;
     $('questionCard').hidden = false;
-    if (L.isVoteKind(lq.kind)) {
+    if (lq.kind === L.KIND.MINNA) {
+      fillMinnaCard({
+        scene: lifeScene(lq.scene),
+        theme: LIFE_MINNA[lq.idx],
+        picks: lq.picks,
+        order,
+        picker: L.minnaPicker(room, game, lq),
+        playerName: actor,
+        playerIndex: turn,
+        dice: game.last?.dice || null,
+        act: act && !net.busy,
+        busy: net.busy,
+      });
+    } else if (L.isVoteKind(lq.kind)) {
       // みんなが同時に選ぶマス
       const present = L.voters(room, game);
       fillVoteCard({
@@ -2065,6 +2212,7 @@ function renderRoomGame(room, game) {
       dice: game.last?.dice || null,
       canPress: act && !net.busy,
       onChoose: roomChoose,
+      freeWrites: true,
       // 選択肢がある質問は、選ぶと次の人の番になる（選んだものは盤の上に出る）
       showNext: act && !hasChoices,
       showSkip: act,
@@ -2076,6 +2224,8 @@ function renderRoomGame(room, game) {
   stage.hidden = key == null;
   $('diceArea').hidden = key != null || picking;
   renderDicePick(anim ? null : game, act && !net.busy, 'どっちの目で進む？');
+  // カードが変わった・消えたら、書く欄を閉じる（前のカードの文を、次のカードに持ちこさない）
+  if (key !== net.shownKey) closeWrite();
   if (key && key !== net.shownKey) {
     net.voteFor = null; // カードが変わったら、選ぶ人をえらびなおす
     popIn(key.startsWith('goal') ? $('goalCard') : $('questionCard'));
@@ -2145,7 +2295,7 @@ async function roomReask() {
   await roomAct((room) => L.reask(room, now.id, now.rollNo, now.qn, seed, COUNTS), '質問を変えられませんでした。もう一度ためしてね');
 }
 
-async function roomChoose(choice) {
+async function roomChoose(choice, text = '') {
   const now = currentTurn();
   const game = L.gameOf(net.room);
   if (now && L.isLife(game)) {
@@ -2164,14 +2314,14 @@ async function roomChoose(choice) {
       n = LIFE_QUESTIONS[lq.scene][lq.idx].choices.length;
     }
     const seed = L.randomSeed();
-    await roomAct((room) => L.choose(room, now.id, now.rollNo, now.qn, picked, n, COUNTS, seed), '選べませんでした。もう一度ためしてね');
+    await roomAct((room) => L.choose(room, now.id, now.rollNo, now.qn, picked, n, COUNTS, seed, text), '選べませんでした。もう一度ためしてね');
     return;
   }
   const q = L.questionOf(game, COUNTS);
   if (!now || !q) return;
   const item = normalizeQ(QUESTIONS[q.theme][q.idx]);
   const count = item.choices ? item.choices.length : 0;
-  await roomAct((room) => L.choose(room, now.id, now.rollNo, now.qn, choice, count, COUNTS), '選べませんでした。もう一度ためしてね');
+  await roomAct((room) => L.choose(room, now.id, now.rollNo, now.qn, choice, count, COUNTS, 0, text), '選べませんでした。もう一度ためしてね');
 }
 
 // みんなが同時に選ぶマス: その人のぶんを選ぶ（自分のぶん。ホストは、端末のない人・つながっていない人のぶんも）
@@ -2194,6 +2344,24 @@ async function roomVote(voter, choice) {
       if (next != null) { net.voteFor = next; renderRoom(net.room); }
     }
   }
+}
+
+// おたすけカードを使う: 画面の並び（進められる相手）を順番の番号になおして、2マス進める
+async function roomHelp(choice) {
+  const now = currentTurn();
+  const game = L.gameOf(net.room);
+  if (!now || !game || animRunning()) return;
+  const target = L.helpTargets(net.room, game)[choice];
+  const have = L.cardsOf(game, L.turnOf(game));
+  if (target == null || !have) return;
+  net.helpOpen = null;
+  let goal = false;
+  const ok = await roomAct((room) => {
+    const next = L.useHelp(room, now.id, now.rollNo, target, have);
+    goal = next?.status === L.STATUS.GOAL;
+    return next;
+  }, 'おたすけカードを使えませんでした。もう一度ためしてね');
+  if (ok && goal) window.RoomkStats?.count('finish');
 }
 
 // みんなが選ぶ前に開く（番の人かホスト）
@@ -2481,7 +2649,29 @@ $('btnRoomBack').addEventListener('click', () => backToWaiting(false));
 
 $('btn-roll').addEventListener('click', () => (inRoom() ? roomRoll() : rollLocalDice()));
 $('btn-next').addEventListener('click', () => (inRoom() ? roomNext() : closeLocalQuestion()));
-$('btn-skip').addEventListener('click', () => (inRoom() ? roomReask() : skipLocalQuestion()));
+$('btn-skip').addEventListener('click', () => {
+  // おたすけカードの相手を選んでいるときは「やめる」
+  if (net.helpOpen) { net.helpOpen = null; if (net.room) renderRoom(net.room); return; }
+  if (inRoom()) roomReask(); else skipLocalQuestion();
+});
+$('btnHelp').addEventListener('click', () => {
+  const game = L.gameOf(net.room);
+  if (!game) return;
+  net.helpOpen = `${game.id}:${game.rollNo}:${L.turnOf(game)}`;
+  renderRoom(net.room);
+});
+$('btnWriteSend').addEventListener('click', sendWrite);
+$('btnWriteBack').addEventListener('click', () => {
+  closeWrite();
+  // 押していた「自由に話す」に、キーボードの位置をもどす
+  document.querySelector('#modal-choices .ks-choice--free')?.focus();
+});
+$('writeText').addEventListener('keydown', (e) => {
+  // 変換の確定の Enter では送らない（Safari は確定の Enter を keyCode 229 で届ける）
+  if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;
+  e.preventDefault();
+  $('btnWriteSend').click();
+});
 $('btn-restart').addEventListener('click', () => (net.offline ? playAgainLocal() : inRoom() ? backToWaiting(true) : playAgainLocal()));
 $('btnOpenVotes').addEventListener('click', roomOpenVotes);
 $('btnGoalSettings').addEventListener('click', backToLocalSettings);

@@ -216,6 +216,10 @@ const { check, sleep } = L;
   await L.rest('PATCH', `${L.ROOMS}/${code}/game/q`, { theme: 'suki', idx: ci, n: 3 });
   await L.waitText(B, '#modal-question', Q.suki[ci].q);
   await B.page.click('#modal-choices .ks-choice--free');
+  // 「自由に話す」を押すと、ひとこと書く欄が出る（書かずに「次の人へ」でもよい。2026-11-18）
+  await L.waitVisible(B, '#modal-write');
+  check('F1c0 「自由に話す」で書く欄が出て、まだ番は進まない', (await L.roomOf(code)).game.step === 'talk');
+  await B.page.click('#btnWriteSend');
   await L.waitText(H, '#turnNote', 'きいろさんの番だよ');
   await L.waitVisible(A, '#lastPick');
   check('F1c 「自由に話す」でも次の人の番・みんなに出る', (await L.text(A, '#pickA')).includes('自由に話す') && (await L.roomOf(code)).game.picked?.choice === -1);

@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c" />
   <!-- index.html と app.js・logic.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261118vote" />
+  <link rel="stylesheet" href="style.css?v=20261118more" />
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-database-compat.js"></script>
@@ -214,6 +214,7 @@
       <ul class="ks-legend" id="lifeLegend" aria-label="マスの種類" hidden>
         <li class="ks-legend__item ks-legend__item--erabu"><span class="material-symbols-rounded" aria-hidden="true">checklist</span>えらぶ</li>
         <li class="ks-legend__item ks-legend__item--kiku"><span class="material-symbols-rounded" aria-hidden="true">forum</span>きく</li>
+        <li class="ks-legend__item ks-legend__item--minna"><span class="material-symbols-rounded" aria-hidden="true">groups</span>みんなで</li>
         <li class="ks-legend__item ks-legend__item--dekigoto"><span class="material-symbols-rounded" aria-hidden="true">auto_awesome</span>できごと</li>
         <li class="ks-legend__item ks-legend__item--issho ks-legend__item--vote"><span class="material-symbols-rounded" aria-hidden="true">diversity_3</span>いっしょ</li>
         <li class="ks-legend__item ks-legend__item--yosou ks-legend__item--vote"><span class="material-symbols-rounded" aria-hidden="true">lightbulb</span>よそう</li>
@@ -224,6 +225,10 @@
         <button class="btn btn-primary btn-lg" id="btn-roll">
           <span class="material-symbols-rounded" aria-hidden="true">casino</span>
           サイコロを振る
+        </button>
+        <button class="btn btn-secondary" id="btnHelp" hidden>
+          <span class="material-symbols-rounded" aria-hidden="true">redeem</span>
+          おたすけカードを使う（<span id="btnHelpCount">0</span>枚）
         </button>
       </div>
 
@@ -251,6 +256,14 @@
       <div class="ks-modal__player" id="modal-player"></div>
       <div class="ks-modal__question" id="modal-question"></div>
       <div class="ks-voters" id="modal-voters" hidden></div>
+      <div class="ks-write" id="modal-write" hidden>
+        <label class="ks-write__label" for="writeText">ひとこと書いてもいいよ（30文字まで。書かなくてもOK）</label>
+        <input class="form-input" id="writeText" maxlength="30" autocomplete="off" enterkeyhint="send" />
+        <div class="ks-write__actions">
+          <button type="button" class="btn btn-secondary" id="btnWriteBack">もどる</button>
+          <button type="button" class="btn btn-primary" id="btnWriteSend">次の人へ</button>
+        </div>
+      </div>
       <p class="ks-modal__effect" id="modal-effect" hidden></p>
       <div class="ks-modal__choices" id="modal-choices"></div>
       <p class="ks-modal__wait" id="modal-wait" hidden></p>
@@ -301,7 +314,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261118vote"></script>
+  <script type="module" src="app.js?v=20261118more"></script>
   <script src="../shared/js/overlay-a11y.js?v=1" defer></script>
   <script src="../shared/js/focus-keep.js?v=1" defer></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
@@ -332,6 +345,8 @@
           '「きく」では、番の人が聞く相手を選び、3枚の質問から1枚を選ぶ。聞かれた人が3つから選んで答える（「別の質問」に変えてもいい）',
           'ルームで2人以上のときは、「いっしょ」「よそう」のマスも出る。みんなが自分の端末で同時に選び、そろったら開く',
           '「いっしょ」は、番の人と同じものを選んだ人が1マス進む（みんな同じなら、もう1マス）。「よそう」は、番の人の答えを当てた人と、当ててもらった番の人が1マス進む',
+          '「みんなで」は、お題に合うものを順に1つずつ選ぶ（ほかの人が選んだものは選べない）。みんな選べたら、みんな1マス進む',
+          '「きく」で答えてもらうと、聞いた人は「おたすけカード」を1枚もらえる。自分の番のサイコロの前に使うと、だれかを2マス進められる',
           'ゴールした人は、自分の番に「おうえん」で、だれかを1マス進められる',
           'みんながゴールしたらおわり',
         ] },
@@ -339,6 +354,7 @@
           '止まったマスに出てきた質問について話す',
           '「別の質問」を押すと、ちがう質問に変えられる',
           '選択肢がある質問は、ひとつ選ぶ（選ばないときは「自由に話す」）と次の人の番になる。選んだものは、次の人がサイコロを振るまで盤の上に出る',
+          '「自由に話す」を押すと、ひとこと書く欄が出る。書いても、書かずに「次の人へ」を押してもいい。書いた文は、選んだものと同じように盤の上に出る',
         ] },
         { heading: 'おわりかた', text: '「テーマで話す」は、だれかがゴールしたらおわり。「人生の道」は、みんながゴールしたらおわり。「もう一度あそぶ」で、またあそべるよ。' },
       ],

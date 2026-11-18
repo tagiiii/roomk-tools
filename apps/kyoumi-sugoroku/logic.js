@@ -21,10 +21,10 @@ export const STEP = {
   TALK: 'talk',  // 質問が出ている
   // 「人生の道」の段階。名前を分けて、ちがう決まりの版の画面からの操作を通さない。
   // 今までの遊び方は roll / talk、公開済みの前の版の人生の道は life-roll / life-talk（サイコロ1つ・「はなす」あり）と
-  // life2-*（「いっしょ」「よそう」のマスがない）
-  LIFE_ROLL: 'life3-roll',
-  LIFE_PICK: 'life3-pick', // サイコロを2つ振って、進む目を選んでいる
-  LIFE_TALK: 'life3-talk',
+  // life2-*（「いっしょ」「よそう」のマスがない）・life3-*（「みんなで」のマスとおたすけカードがない）
+  LIFE_ROLL: 'life4-roll',
+  LIFE_PICK: 'life4-pick', // サイコロを2つ振って、進む目を選んでいる
+  LIFE_TALK: 'life4-talk',
 };
 // この版の人生の道の段階。これ以外（前の版が作ったゲームの life-roll / life-talk や、壊れた値）は、
 // この版では進められないので、ホストの画面が待合室にもどす
@@ -34,7 +34,18 @@ const LIFE_STEPS = [STEP.LIFE_ROLL, STEP.LIFE_PICK, STEP.LIFE_TALK];
    盤は4段で、1段が1つの場面。マスの種類で起きることが決まる。みんながゴールしたらおわり。
    質問・できごとは、種類・場面のキー・app.js の一覧の中の番号で共有する（一覧は並べ替え・途中の削除をしない）。 */
 export const MODE = { THEME: 'theme', LIFE: 'life' };
-export const KIND = { ERABU: 'erabu', KIKU: 'kiku', DEKIGOTO: 'dekigoto', ISSHO: 'issho', YOSOU: 'yosou' };
+export const KIND = { ERABU: 'erabu', KIKU: 'kiku', DEKIGOTO: 'dekigoto', ISSHO: 'issho', YOSOU: 'yosou', MINNA: 'minna' };
+// みんなで（minna）: お題に合うものを、番の人から順に1つずつ選ぶ（ほかの人が選んだものは選べない）。みんな選べたら、みんな1マス
+// 書いて答える: 「自由に話す」のとき、短い文を添えられる（次のサイコロまで出して消す）
+export const TEXT_MAX = 30;
+export function cleanText(value) {
+  if (typeof value !== 'string') return '';
+  // 文字の数はコードポイントで数える（絵文字のとちゅうで切らない）
+  return [...value.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim()].slice(0, TEXT_MAX).join('').trim();
+}
+// おたすけカード: 「きく」で答えてもらったら、聞いた人が1枚もらう。自分の番のサイコロの前に、ほかの人を2マス進めるのに使える
+export const CARD_MAX = 3;
+export const CARD_STEPS = 2;
 // みんなが同時に選ぶマス（ルームで2人以上のときだけ出る）。
 // いっしょ: みんなが自分の答えを選び、番の人と同じだった人が進む。よそう: 番の人の答えを、ほかの人が予想する
 export function isVoteKind(kind) { return kind === KIND.ISSHO || kind === KIND.YOSOU; }
@@ -45,13 +56,13 @@ export const ASK_CARDS = 3;
 export const LIFE_ROWS = 4;
 export const LIFE_SIZES = [12, 16, 20, 24, 28];
 // マスの種類の並び（スタートの次のマスから、この順にくり返す）
-export const LIFE_PATTERN = ['erabu', 'kiku', 'erabu', 'dekigoto', 'erabu', 'kiku', 'erabu', 'dekigoto', 'kiku', 'erabu'];
+export const LIFE_PATTERN = ['erabu', 'kiku', 'erabu', 'dekigoto', 'erabu', 'kiku', 'minna', 'dekigoto', 'kiku', 'erabu'];
 // みんなが同時に選ぶマスのある並び（game.votes が true のとき）
-export const LIFE_PATTERN_VOTES = ['erabu', 'kiku', 'issho', 'dekigoto', 'erabu', 'yosou', 'kiku', 'erabu', 'dekigoto', 'issho'];
+export const LIFE_PATTERN_VOTES = ['erabu', 'kiku', 'issho', 'dekigoto', 'erabu', 'yosou', 'kiku', 'minna', 'dekigoto', 'issho'];
 export const TARGET_ALL = -1;   // 「きく」の相手: みんな
 export const TARGET_NEAR = -2;  // 「きく」の相手: そばにいる人（1人で遊ぶとき）
 
-// app.js が持つ中身の形: { scenes: [キー…], erabu: {場面: 数}, kiku: {場面: 数}, events: [{ move, all, again }] }（質問はどれも3択）
+// app.js が持つ中身の形: { scenes: [キー…], erabu: {場面: 数}, kiku: {場面: 数}, events: [{ move, all, again }], minna: [お題ごとの選べるものの数…] }（質問はどれも3択）
 let LIFE = null;
 export function setLifeContent(content) { LIFE = content; }
 
@@ -210,6 +221,7 @@ function lifeIndexOk(kind, scene, idx) {
   if (!LIFE.scenes.includes(scene)) return false;
   if (kind === KIND.KIKU || kind === KIND.ERABU) return idx < (LIFE[kind][scene] || 0);
   if (isVoteKind(kind)) return idx < (LIFE.erabu[scene] || 0); // 質問は「えらぶ」と同じ一覧から
+  if (kind === KIND.MINNA) return idx < asList(LIFE.minna).length;
   return false;
 }
 // 「人生の道」のいまのカード。壊れた値は読み飛ばす。
@@ -233,6 +245,22 @@ export function lifeQuestionOf(game) {
         }
       }
       card.open = q.open === true;
+    }
+    if (q.kind === KIND.MINNA) {
+      // みんなの選んだもの { 順番の番号: 選べるものの番号 }。同じものは1人だけ（あとの人のぶんは読まない）
+      const count = orderOf(game).length;
+      const options = Number(asList(LIFE.minna)[idx]) || 0;
+      const taken = new Set();
+      card.picks = {};
+      if (q.picks != null && typeof q.picks === 'object') {
+        for (let i = 0; i < count; i++) {
+          const v = q.picks[i];
+          if (typeof v === 'number' && Number.isInteger(v) && v >= 0 && v < options && !taken.has(v)) {
+            card.picks[i] = v;
+            taken.add(v);
+          }
+        }
+      }
     }
     return card;
   }
@@ -258,7 +286,41 @@ export function targetGone(room, game, q) {
 export function actingIndex(room, game) {
   const q = lifeQuestionOf(game);
   if (q && isTalkStep(game) && q.phase === PHASE.ANSWER && q.target >= 0 && !targetGone(room, game, q)) return q.target;
+  if (q && isTalkStep(game) && q.kind === KIND.MINNA) {
+    const picker = minnaPicker(room, game, q);
+    if (picker != null) return picker;
+  }
   return turnOf(game);
+}
+// 「みんなで」で、いま選ぶ番の人（番の人から順に、いまいて、まだ選んでいない人）。みんな選んだら null
+export function minnaPicker(room, game, q) {
+  const order = orderOf(game);
+  const turn = turnOf(game);
+  // 選べるものが残っていなければ、そこまでで終わり（お題の数が人数より少なくても止まらない）
+  const options = Number(asList(LIFE?.minna)[q.idx]) || 0;
+  if (Object.keys(q.picks).length >= options) return null;
+  for (let k = 0; k < order.length; k++) {
+    const i = (turn + k) % order.length;
+    if (present(room, game, order[i]) && q.picks[i] == null) return i;
+  }
+  return null;
+}
+// おたすけカードの枚数
+export function cardsOf(game, i) {
+  if (!isLife(game) || game.cards == null || typeof game.cards !== 'object') return 0;
+  const n = game.cards[i];
+  return typeof n === 'number' && Number.isInteger(n) && n > 0 ? Math.min(CARD_MAX, n) : 0;
+}
+// おたすけカードで進められる相手（自分以外の、まだゴールしていない、いまいる人）
+export function helpTargets(room, game) {
+  const turn = turnOf(game);
+  return orderOf(game).map((_, i) => i).filter((i) => i !== turn && !doneOf(game, i) && present(room, game, orderOf(game)[i]));
+}
+function addCard(game, i) {
+  const cards = {};
+  orderOf(game).forEach((_, k) => { const n = cardsOf(game, k); if (n) cards[k] = n; });
+  cards[i] = Math.min(CARD_MAX, (cards[i] || 0) + 1);
+  return cards;
 }
 
 export function posOf(game, i) {
@@ -303,13 +365,13 @@ export function pickedOf(game, counts) {
     if (!Number.isInteger(choice) || choice < CHOICE_FREE) return null;
     const by = Number(p.by);
     // kiku: 「きく」で聞かれた人の答え（by は聞いた人）
-    return { life: true, kiku, by: kiku && Number.isInteger(by) && by >= 0 && by < orderOf(game).length ? by : null, scene: p.scene, idx, turn, choice };
+    return { life: true, kiku, by: kiku && Number.isInteger(by) && by >= 0 && by < orderOf(game).length ? by : null, scene: p.scene, idx, turn, choice, text: choice === CHOICE_FREE ? cleanText(p.text) : '' };
   }
   if (!counts[p.theme]) return null;
   if (!Number.isInteger(idx) || idx < 0 || idx >= counts[p.theme]) return null;
   if (!Number.isInteger(turn) || turn < 0 || turn >= orderOf(game).length) return null;
   if (!Number.isInteger(choice) || choice < CHOICE_FREE) return null;
-  return { theme: p.theme, idx, turn, choice };
+  return { theme: p.theme, idx, turn, choice, text: choice === CHOICE_FREE ? cleanText(p.text) : '' };
 }
 
 // 自分が、いまの番の操作（サイコロ・質問のボタン）をしてよいか。
@@ -383,10 +445,12 @@ function lifeDraw(game, key, candidates, rng, avoid = [], count = 1) {
 }
 function lifeCandidates(kind, scene) {
   if (kind === KIND.DEKIGOTO) return LIFE.events.map((_, i) => i);
+  if (kind === KIND.MINNA) return asList(LIFE.minna).map((_, i) => i);
   const list = isVoteKind(kind) ? KIND.ERABU : kind;
   return Array.from({ length: LIFE[list][scene] || 0 }, (_, i) => i);
 }
 function lifeUsedKey(kind, scene) {
+  if (kind === KIND.MINNA) return 'life_minna';
   return kind === KIND.DEKIGOTO ? 'life_event' : `life_${kind}_${scene}`;
 }
 // ゴールに着いた人に印を付ける。みんな着いたらおわり（順位は出さない）
@@ -457,6 +521,24 @@ export function pickDie(room, gameId, rollNo, which, seed) {
 export function cheerTargets(room, game) {
   return orderOf(game).map((_, i) => i).filter((i) => !doneOf(game, i) && present(room, game, orderOf(game)[i]));
 }
+// おたすけカードを使う: 自分の番のサイコロの前に、ほかの人を2マス進める（進んだ先のマスでは何も起きない）。
+// have は押した時点の枚数（二度押しで2枚使わないように）。使っても番はそのまま（そのあとサイコロを振る）
+export function useHelp(room, gameId, rollNo, target, have) {
+  const game = gameOf(room);
+  if (room?.status !== STATUS.PLAYING || !game || game.id !== gameId || !isLife(game) || !isRollStep(game)) return null;
+  if ((Number(game.rollNo) || 0) !== rollNo) return null;
+  const turn = turnOf(game);
+  if (doneOf(game, turn) || have < 1 || cardsOf(game, turn) !== have) return null;
+  if (!helpTargets(room, game).includes(target)) return null;
+  const max = boardSize(game) - 1;
+  const pos = orderOf(game).map((_, i) => posOf(game, i));
+  pos[target] = Math.min(max, pos[target] + CARD_STEPS);
+  const cards = {};
+  orderOf(game).forEach((_, k) => { const n = cardsOf(game, k) - (k === turn ? 1 : 0); if (n > 0) cards[k] = n; });
+  const end = lifeSettle(room, { ...game, cards, picked: null }, pos);
+  if (end.all) return end.room;
+  return { ...room, game: end.game };
+}
 // ゴールした人の番: まだゴールしていない人を1人選んで、1マス進める
 export function cheer(room, gameId, rollNo, target) {
   const game = gameOf(room);
@@ -496,14 +578,25 @@ function lifeReask(room, game, q, seed) {
     }
   }
   if (isVoteKind(q.kind) && q.open) return null;
+  if (q.kind === KIND.MINNA && Object.keys(q.picks).length) return null; // だれかが選んだあとは、お題を変えない
   const drawn = lifeDraw(game, key, all, rng, [q.idx]);
   const next = { ...game.q, idx: drawn.list[0], n: q.n + 1 };
   if (isVoteKind(q.kind)) next.votes = null; // 質問が変わるので、選んだものは消す
   return { ...room, game: { ...game, used: drawn.used, q: next } };
 }
-function lifeChoose(room, game, q, choice, choiceCount, seed) {
+function lifeChoose(room, game, q, choice, choiceCount, seed, text) {
   const turn = turnOf(game);
   const order = orderOf(game);
+  const note = choice === CHOICE_FREE ? cleanText(text) : '';
+  if (q.kind === KIND.MINNA) {
+    // いま選ぶ番の人が、まだだれも選んでいないものを1つ
+    const picker = minnaPicker(room, game, q);
+    const options = Number(asList(LIFE?.minna)[q.idx]) || 0;
+    if (picker == null || !Number.isInteger(choice) || choice < 0 || choice >= options) return null;
+    if (Object.values(q.picks).includes(choice)) return null;
+    // 1人選ぶたびに n を進める（番の人とホストが同時に押したとき、おそいほうが次の人のぶんとして入らないように）
+    return { ...room, game: { ...game, q: { ...game.q, picks: { ...q.picks, [picker]: choice }, n: q.n + 1 } } };
+  }
   if (q.kind === KIND.KIKU) {
     // だれに聞くか（自分以外の、いまいる人か、みんな）。選んだ相手がいなくなったら選びなおせる
     if (q.phase === PHASE.WHO || targetGone(room, game, q)) {
@@ -527,7 +620,8 @@ function lifeChoose(room, game, q, choice, choiceCount, seed) {
         ...game,
         step: STEP.LIFE_ROLL,
         q: null,
-        picked: { life: true, kiku: true, turn: q.target, by: turn, scene: q.scene, idx: q.idx, choice },
+        picked: withText({ life: true, kiku: true, turn: q.target, by: turn, scene: q.scene, idx: q.idx, choice }, note),
+        cards: addCard(game, turn), // 答えてもらったので、聞いた人におたすけカードを1枚
         turn: nextTurn(room, game),
       },
     };
@@ -540,10 +634,13 @@ function lifeChoose(room, game, q, choice, choiceCount, seed) {
       ...game,
       step: STEP.LIFE_ROLL,
       q: null,
-      picked: { life: true, turn, scene: q.scene, idx: q.idx, choice },
+      picked: withText({ life: true, turn, scene: q.scene, idx: q.idx, choice }, note),
       turn: nextTurn(room, game),
     },
   };
+}
+function withText(picked, note) {
+  return note ? { ...picked, text: note } : picked;
 }
 /* ── みんなが同時に選ぶマス（いっしょ・よそう） ── */
 // 選ぶ人（いまいる人。端末のない人もふくむ）の順番の番号
@@ -632,6 +729,19 @@ function lifeNext(room, game, q) {
     const end = lifeSettle(room, base, pos);
     if (end.all) return end.room;
     return { ...room, game: { ...end.game, turn: nextTurn(room, end.game) } };
+  }
+  if (q && q.kind === KIND.MINNA) {
+    // いまいる人がみんな選べたら、選んだ人みんな1マス
+    const max = boardSize(game) - 1;
+    const complete = Object.keys(q.picks).length > 0 && minnaPicker(room, game, q) == null;
+    const pos = orderOf(game).map((_, i) => Math.min(max, posOf(game, i) + (complete && q.picks[i] != null && !doneOf(game, i) ? 1 : 0)));
+    const end = lifeSettle(room, base, pos);
+    if (end.all) return end.room;
+    return { ...room, game: { ...end.game, turn: nextTurn(room, end.game) } };
+  }
+  if (q && q.kind === KIND.KIKU && q.phase === PHASE.ANSWER && orderOf(game).length >= 2) {
+    // みんなに聞いて、声やチャットで答えてもらったとき
+    return { ...room, game: { ...base, cards: addCard(game, turnOf(game)), turn: nextTurn(room, game) } };
   }
   if (!q || q.kind !== KIND.DEKIGOTO || !LIFE) return { ...room, game: { ...base, turn: nextTurn(room, game) } };
   const ev = LIFE.events[q.idx] || {};
@@ -732,12 +842,12 @@ export function reask(room, gameId, rollNo, qn, seed, counts) {
 
 // 選択肢を選ぶ（CHOICE_FREE は「自由に話す」）。選ぶと次の人の番になり、選んだものは
 // 次にサイコロが振られるまで、みんなの画面の盤の上に出る（記録・集計はしない）
-export function choose(room, gameId, rollNo, qn, choice, choiceCount, counts, seed = 0) {
+export function choose(room, gameId, rollNo, qn, choice, choiceCount, counts, seed = 0, text = '') {
   const game = gameOf(room);
   const q = isLife(game) ? lifeQuestionOf(game) : questionOf(game, counts);
   if (room?.status !== STATUS.PLAYING || !game || game.id !== gameId || !isTalkStep(game)) return null;
   if ((Number(game.rollNo) || 0) !== rollNo || !q || q.n !== qn) return null;
-  if (isLife(game)) return lifeChoose(room, game, q, choice, choiceCount, seed);
+  if (isLife(game)) return lifeChoose(room, game, q, choice, choiceCount, seed, text);
   if (choice !== CHOICE_FREE && !(Number.isInteger(choice) && choice >= 0 && choice < choiceCount)) return null;
   return {
     ...room,
@@ -745,7 +855,7 @@ export function choose(room, gameId, rollNo, qn, choice, choiceCount, counts, se
       ...game,
       step: STEP.ROLL,
       q: null,
-      picked: { turn: turnOf(game), theme: q.theme, idx: q.idx, choice },
+      picked: withText({ turn: turnOf(game), theme: q.theme, idx: q.idx, choice }, choice === CHOICE_FREE ? cleanText(text) : ''),
       turn: nextTurn(room, game),
     },
   };
@@ -775,6 +885,14 @@ export function dropPick(room) {
   const game = gameOf(room);
   if (room?.status !== STATUS.PLAYING || !game || !pickBroken(game)) return null;
   return { ...room, game: { ...game, step: STEP.LIFE_ROLL, dice: null } };
+}
+// カードが出ているときに番の人が退出した。「みんなで」は、選んだものを捨てずに、残った人で続ける
+// （通信が切れたときと同じ動きにする。進めるのはホスト）。ほかのカードは、中身を確定させずに次の人へ
+export function leaveTalk(room) {
+  const game = gameOf(room);
+  const q = lifeQuestionOf(game);
+  if (q && isTalkStep(game) && q.kind === KIND.MINNA) return room;
+  return dropTalk(room);
 }
 // カードが出ている段階なのに、読めるカードがない（壊れた値）
 export function talkBroken(game, counts) {
