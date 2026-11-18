@@ -130,25 +130,70 @@
   right: 6px;
 }
 
-/* ── プレイヤーコマ色（pawn） ── */
+/* ── コマ（色ごとのキャラクター。番号は中に書く） ──
+   体の色は --ks-c。目は背景の丸、耳は前後の擬似要素（色ごとに丸・三角・長い耳） */
 .ks-pawn {
+  --ks-c: #2E7D8C;
+  position: relative;
+  isolation: isolate;
   display: inline-flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
   width: 26px;
   height: 26px;
-  border-radius: 50%;
+  border-radius: 50% 50% 46% 46% / 56% 56% 44% 44%;
+  background-color: var(--ks-c);
+  background-image:
+    radial-gradient(circle at 33% 36%, #3F362D 0 5%, #fff 5.6% 10.5%, transparent 11.5%),
+    radial-gradient(circle at 67% 36%, #3F362D 0 5%, #fff 5.6% 10.5%, transparent 11.5%);
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.16), 0 1px 2px rgba(63, 54, 45, 0.35);
   color: #fff;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
+  line-height: 1.2;
   flex-shrink: 0;
 }
-.ks-pawn--0 { background: #2E7D8C; }
-.ks-pawn--1 { background: #E08E45; }
-.ks-pawn--2 { background: #5A8F4A; }
-.ks-pawn--3 { background: #B5476B; }
-.ks-pawn--4 { background: #5B5FA8; }
-.ks-pawn--5 { background: #8C6A3F; }
+.ks-pawn::before,
+.ks-pawn::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: -13%;
+  width: 36%;
+  height: 36%;
+  border-radius: 50%;
+  background: var(--ks-c);
+}
+.ks-pawn::before { left: 3%; }
+.ks-pawn::after { right: 3%; }
+/* 三角の耳 */
+.ks-pawn.ks-pawn--1::before,
+.ks-pawn.ks-pawn--1::after,
+.ks-pawn.ks-pawn--4::before,
+.ks-pawn.ks-pawn--4::after {
+  top: -22%;
+  width: 40%;
+  height: 48%;
+  border-radius: 0;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+/* 長い耳 */
+.ks-pawn.ks-pawn--2::before,
+.ks-pawn.ks-pawn--2::after,
+.ks-pawn.ks-pawn--5::before,
+.ks-pawn.ks-pawn--5::after {
+  top: -36%;
+  width: 24%;
+  height: 60%;
+}
+.ks-pawn.ks-pawn--2::before, .ks-pawn.ks-pawn--5::before { left: 18%; }
+.ks-pawn.ks-pawn--2::after, .ks-pawn.ks-pawn--5::after { right: 18%; }
+.ks-pawn--0 { --ks-c: #2E7D8C; }
+.ks-pawn--1 { --ks-c: #C96F1E; }
+.ks-pawn--2 { --ks-c: #4F8540; }
+.ks-pawn--3 { --ks-c: #B5476B; }
+.ks-pawn--4 { --ks-c: #5B5FA8; }
+.ks-pawn--5 { --ks-c: #8C6A3F; }
 
 /* ── ゲーム画面：プレイヤーインジケーター ── */
 .ks-indicator {
@@ -178,75 +223,130 @@
   transform: scale(1.05);
 }
 
-/* ── ボード（蛇行レイアウト）── */
+/* ── 盤（景色の中を通る道。マスは道の上の丸い石） ── */
 .ks-board {
-  display: grid;
-  /* minmax(0, 1fr): コマが集まったマスがあっても、列の幅を同じに保つ（盤が画面からはみ出さないように） */
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 10px;
-  justify-content: center;
-  background: var(--color-surface);
-  padding: 20px;
-  border-radius: var(--radius-box);
-  border: 1px solid var(--color-border);
-  margin-bottom: 24px;
-  max-width: 520px;
-  margin-left: auto;
-  margin-right: auto;
+  position: relative;
+  max-width: 560px;
+  aspect-ratio: var(--ks-ratio, 600 / 452);
+  margin: 0 auto 22px;
+  border: 4px solid #fff;
+  border-radius: 24px;
+  overflow: hidden;
+  background: #DDF0C4;
+  box-shadow: 0 6px 18px rgba(106, 79, 53, 0.2);
+}
+.ks-board__scene {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 .ks-square {
+  position: absolute;
+  width: 14.5%;
   aspect-ratio: 1 / 1;
-  background: var(--color-primary-soft);
-  border: 2px solid var(--color-border);
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  position: relative;
-  padding-top: 4px;
-  /* コマとマスの番号は、マスの幅に合わせて小さくする（6人が同じマスにいても正方形に収まるように） */
-  min-width: 0;
-  min-height: 0;
-  overflow: hidden;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: #FFF3D6;
+  border: 3px solid #fff;
+  box-shadow: 0 4px 0 rgba(122, 92, 52, 0.4), 0 7px 10px rgba(63, 54, 45, 0.18);
+  /* コマとマスの番号は、マスの幅に合わせて大きさを決める（6人が同じマスにいても収まるように） */
   container-type: inline-size;
 }
+.ks-square--c1 { background: #FFE3E8; }
+.ks-square--c2 { background: #DFF2F8; }
+.ks-square--c3 { background: #E9F5DA; }
 .ks-square.is-start {
-  background: var(--color-accent-soft);
+  background: #fff;
   border-color: var(--color-accent);
 }
 .ks-square.is-goal {
-  background: #FFF4D6;
+  width: 17%;
+  background: #FFE9A8;
   border-color: #D4A537;
+  box-shadow: 0 4px 0 rgba(160, 118, 20, 0.55), 0 0 0 6px rgba(255, 233, 168, 0.55), 0 7px 12px rgba(63, 54, 45, 0.2);
+}
+/* ゴールの旗 */
+.ks-square.is-goal::before {
+  content: 'flag';
+  font-family: 'Material Symbols Rounded';
+  font-variation-settings: 'FILL' 1;
+  position: absolute;
+  left: 58%;
+  bottom: 78%;
+  font-size: 22px;
+  font-size: min(26px, 46cqi);
+  line-height: 1;
+  color: #C4452D;
+  pointer-events: none;
 }
 .ks-square__num {
+  position: absolute;
+  top: 7%;
+  left: 0;
+  right: 0;
+  text-align: center;
   font-size: 11px;
-  font-size: min(11px, 20cqi);
+  font-size: min(12px, 19cqi);
   font-weight: 700;
-  color: var(--color-muted);
+  color: #6A4F35;
   line-height: 1;
 }
-.ks-square.is-goal .ks-square__num,
-.ks-square.is-start .ks-square__num {
-  color: var(--color-primary);
-  font-size: 14px;
-  font-size: min(14px, 22cqi);
+/* だれもいないマスは、番号をまん中に大きく */
+.ks-square:not(:has(.ks-pawn)) .ks-square__num {
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 16px;
+  font-size: min(20px, 32cqi);
 }
 .ks-square__pawns {
+  position: absolute;
+  inset: 12% -6% -6%;
   display: flex;
   flex-wrap: wrap;
-  gap: 1px;
+  gap: 2px 1px;
+  align-items: center;
+  align-content: center;
   justify-content: center;
-  margin-top: 2px;
 }
 .ks-square__pawns .ks-pawn {
-  width: 20px;
-  height: 20px;
-  font-size: 11px;
-  /* 3つで1段・2段で6人分。せまいマスでは小さくする */
-  width: min(20px, 30cqi);
-  height: min(20px, 30cqi);
-  font-size: min(11px, 17cqi);
+  /* 3つで1段・2段で6人分 */
+  width: min(30px, 31cqi);
+  height: min(30px, 31cqi);
+  font-size: min(12px, 14cqi);
+}
+/* 1〜2人のマスは、コマを大きく */
+.ks-square__pawns:not(:has(:nth-child(3))) .ks-pawn {
+  width: min(38px, 46cqi);
+  height: min(38px, 46cqi);
+  font-size: min(14px, 19cqi);
+}
+/* いまの番の人のコマ: 白いふちと、ゆっくりした上下 */
+.ks-square__pawns .ks-pawn.is-current {
+  z-index: 2;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.16), 0 0 0 2px #fff, 0 2px 6px rgba(63, 54, 45, 0.45);
+  animation: ks-bob 1.4s ease-in-out infinite;
+}
+.ks-square__pawns .ks-pawn.is-hop {
+  z-index: 3;
+  animation: ks-hop 0.24s ease-out;
+}
+.ks-square.is-bump { animation: ks-bump 0.24s ease-out; }
+@keyframes ks-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12%); }
+}
+@keyframes ks-hop {
+  0% { transform: translateY(-10%) scale(0.92, 1.08); }
+  45% { transform: translateY(-75%) scale(1.02, 1); }
+  85% { transform: translateY(0) scale(1.1, 0.88); }
+  100% { transform: translateY(0) scale(1); }
+}
+@keyframes ks-bump {
+  0% { transform: translate(-50%, -50%) scale(1); }
+  55% { transform: translate(-50%, -46%) scale(1.08, 0.95); }
+  100% { transform: translate(-50%, -50%) scale(1); }
 }
 
 /* ── サイコロエリア ── */
@@ -254,21 +354,41 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 18px;
   margin-bottom: 20px;
 }
+/* サイコロ: 数字は文字で持ち（読み上げ用）、見た目は目で出す。「?」のときは文字を出す */
 .ks-dice {
-  width: 88px;
-  height: 88px;
-  background: var(--color-primary);
-  color: #fff;
-  border-radius: 16px;
+  --ks-pip: radial-gradient(circle closest-side, #3F362D 0 90%, transparent 100%);
+  --ks-pip-one: radial-gradient(circle closest-side, #C4452D 0 92%, transparent 100%);
+  width: 84px;
+  height: 84px;
+  background-color: #fff;
+  background-repeat: no-repeat;
+  background-size: 21% 21%;
+  color: var(--color-primary);
+  border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 56px;
+  font-size: 48px;
   font-weight: 700;
-  box-shadow: 0 6px 16px rgba(106, 79, 53, 0.25);
+  box-shadow: inset 0 -7px 0 rgba(106, 79, 53, 0.13), 0 5px 0 #CDB894, 0 10px 18px rgba(63, 54, 45, 0.22);
+}
+.ks-dice[data-n] { font-size: 0; }
+.ks-dice[data-n="1"] { background-image: var(--ks-pip-one); background-size: 30% 30%; background-position: 50% 46%; }
+.ks-dice[data-n="2"] { background-image: var(--ks-pip), var(--ks-pip); background-position: 24% 20%, 76% 72%; }
+.ks-dice[data-n="3"] { background-image: var(--ks-pip), var(--ks-pip), var(--ks-pip); background-position: 24% 20%, 50% 46%, 76% 72%; }
+.ks-dice[data-n="4"] { background-image: var(--ks-pip), var(--ks-pip), var(--ks-pip), var(--ks-pip); background-position: 24% 20%, 76% 20%, 24% 72%, 76% 72%; }
+.ks-dice[data-n="5"] { background-image: var(--ks-pip), var(--ks-pip), var(--ks-pip), var(--ks-pip), var(--ks-pip); background-position: 24% 20%, 76% 20%, 50% 46%, 24% 72%, 76% 72%; }
+.ks-dice[data-n="6"] { background-image: var(--ks-pip), var(--ks-pip), var(--ks-pip), var(--ks-pip), var(--ks-pip), var(--ks-pip); background-position: 24% 20%, 76% 20%, 24% 46%, 76% 46%, 24% 72%, 76% 72%; }
+.ks-dice.is-rolling { animation: ks-roll 0.3s linear infinite; }
+@keyframes ks-roll {
+  0% { transform: translateY(0) rotate(-12deg); }
+  25% { transform: translateY(-14px) rotate(8deg); }
+  50% { transform: translateY(0) rotate(14deg); }
+  75% { transform: translateY(-8px) rotate(-6deg); }
+  100% { transform: translateY(0) rotate(-12deg); }
 }
 
 .ks-actions {
@@ -717,8 +837,8 @@
 @media (max-width: 600px) {
   .wrapper { padding: 24px 14px 60px; }
   .ks-themes { grid-template-columns: repeat(2, 1fr); }
-  .ks-board { padding: 12px; gap: 6px; }
-  .ks-dice { width: 72px; height: 72px; font-size: 44px; }
+  .ks-board { border-width: 3px; border-radius: 18px; }
+  .ks-dice { width: 72px; height: 72px; font-size: 42px; border-radius: 17px; }
   .ks-modal__question { font-size: 18px; }
   .ks-header { margin-bottom: 18px; }
   .ks-roombar .btn { padding: 6px 4px; font-size: 12px; min-height: 34px; }
@@ -745,3 +865,89 @@
 .wrapper:has(> #screen-top:not([hidden])) > .ks-header { margin-bottom: 0; }
 /* 型の中は、もとのトップの白い面の縦並び（flex の gap）をやめて、型のあきにする */
 .ks-top.app-entry { display: block; }
+
+/* ── 質問のカード: テーマごとの色（上の帯・テーマの札・アイコン） ── */
+.ks-modal[data-theme] {
+  --ks-theme: var(--color-accent);
+  --ks-theme-soft: var(--color-accent-soft);
+  border-top: 10px solid var(--ks-theme);
+  padding-top: 24px;
+}
+.ks-modal[data-theme="suki"] { --ks-theme: #D9577A; --ks-theme-soft: #FDE9EE; }
+.ks-modal[data-theme="yatte"] { --ks-theme: #DD8434; --ks-theme-soft: #FDEEDD; }
+.ks-modal[data-theme="moshimo"] { --ks-theme: #8A63C9; --ks-theme-soft: #F0E8FA; }
+.ks-modal[data-theme="jibun"] { --ks-theme: #2E8C9A; --ks-theme-soft: #E0F2F4; }
+.ks-modal[data-theme="saikin"] { --ks-theme: #5A9A45; --ks-theme-soft: #E8F4E0; }
+.ks-modal[data-theme="tokui"] { --ks-theme: #C99A22; --ks-theme-soft: #FBF1D3; }
+.ks-modal[data-theme] .ks-modal__theme {
+  background: var(--ks-theme-soft);
+  color: var(--color-primary);
+  font-size: 14px;
+  padding: 6px 16px 6px 8px;
+}
+.ks-modal[data-theme] .ks-modal__theme .material-symbols-rounded {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--ks-theme);
+  color: #fff;
+  font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.ks-stage .ks-modal[data-theme] {
+  border-color: var(--ks-theme);
+  border-top-width: 10px;
+}
+
+/* ── ゴール: トロフィーのまわりの光と、紙ふぶき ── */
+.ks-goal__icon .material-symbols-rounded {
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle, #FFF4D0 0 55%, rgba(255, 244, 208, 0) 72%);
+  animation: ks-trophy 0.7s ease-out;
+}
+@keyframes ks-trophy {
+  0% { transform: scale(0.4) rotate(-18deg); }
+  60% { transform: scale(1.15) rotate(6deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+.ks-confetti {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  overflow: hidden;
+  pointer-events: none;
+}
+.ks-confetti__piece {
+  position: absolute;
+  top: -24px;
+  width: 10px;
+  height: 15px;
+  border-radius: 2px;
+  animation: ks-fall 3s linear forwards;
+}
+.ks-confetti__piece.is-round {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+}
+@keyframes ks-fall {
+  0% { transform: translate3d(0, 0, 0) rotate(0); opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translate3d(var(--ks-drift, 0), 108vh, 0) rotate(720deg); opacity: 0; }
+}
+
+/* ── 動きを減らす設定のときは、跳ねる・ゆれる動きを止める ── */
+@media (prefers-reduced-motion: reduce) {
+  .ks-square__pawns .ks-pawn.is-current,
+  .ks-square__pawns .ks-pawn.is-hop,
+  .ks-square.is-bump,
+  .ks-dice.is-rolling,
+  .ks-goal__icon .material-symbols-rounded { animation: none; }
+}

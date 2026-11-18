@@ -4,6 +4,7 @@
 // QUESTIONS は並べ替え・途中の削除をしない（足すのは末尾だけ）。
 import { shuffle, popIn } from '../shared/js/utils.js';
 import * as L from './logic.js?v=20261106';
+import { SCENE_W, sceneHeight, squarePoints, sceneElement } from './art.js?v=20261118look';
 
 const NUMBERS = ['①', '②', '③', '④', '⑤'];
 
@@ -196,36 +197,103 @@ function renderIndicator(items) {
   });
 }
 
-// 蛇行レイアウト・5列グリッド。positions はプレイヤー順のマスの番号
-function renderBoard(total, positions) {
+// サイコロ。数字は読み上げ用に文字で持ち、見た目は目（data-n）で出す
+function setDice(value) {
+  const dice = $('dice');
+  const text = String(value);
+  if (dice.textContent !== text) dice.textContent = text;
+  if (/^[1-6]$/.test(text)) dice.dataset.n = text;
+  else delete dice.dataset.n;
+}
+function setDiceRolling(on) {
+  $('dice').classList.toggle('is-rolling', !!on);
+}
+
+// 盤: 景色の中を通る道（蛇行）。positions はプレイヤー順のマスの番号、current はいまの番の人
+// マスとコマの要素は作りなおさず、動いたコマだけ移す（跳ねる動きをとちゅうで切らないため）
+const boardView = { total: 0, count: 0, squares: [], pawns: [], pos: [] };
+function buildBoard(total, count) {
   const board = $('board');
-  const COLS = 5;
-  const rows = Math.ceil(total / COLS);
-  board.style.setProperty('--ks-rows', rows);
-  board.replaceChildren();
-  for (let i = 0; i < total; i++) {
-    const row = Math.floor(i / COLS);
-    const colInRow = i % COLS;
-    // 偶数段（0,2,…）は左→右、奇数段は右→左
-    const col = row % 2 === 0 ? colInRow : (COLS - 1 - colInRow);
+  const h = sceneHeight(total);
+  board.replaceChildren(sceneElement(total));
+  board.style.setProperty('--ks-ratio', `${SCENE_W} / ${h}`);
+  boardView.squares = squarePoints(total).map((pt, i) => {
     const isGoal = i === total - 1;
-    const sq = makeElement('div', 'ks-square' + (isGoal ? ' is-goal' : '') + (i === 0 ? ' is-start' : ''));
-    sq.style.gridRow = row + 1;
-    sq.style.gridColumn = col + 1;
+    const sq = makeElement('div', `ks-square ks-square--c${i % 4}` + (isGoal ? ' is-goal' : '') + (i === 0 ? ' is-start' : ''));
+    sq.style.left = `${(pt.x / SCENE_W) * 100}%`;
+    sq.style.top = `${(pt.y / h) * 100}%`;
     sq.appendChild(makeElement('span', 'ks-square__num', isGoal ? 'G' : i === 0 ? 'S' : i));
-    const pawns = makeElement('span', 'ks-square__pawns');
-    positions.forEach((pos, idx) => {
-      if (pos === i) pawns.appendChild(makeElement('span', `ks-pawn ks-pawn--${idx}`, idx + 1));
-    });
-    sq.appendChild(pawns);
+    sq.appendChild(makeElement('span', 'ks-square__pawns'));
+    sq.addEventListener('animationend', (e) => { if (e.animationName === 'ks-bump') sq.classList.remove('is-bump'); });
     board.appendChild(sq);
+    return sq;
+  });
+  boardView.pawns = Array.from({ length: count }, (_, idx) => {
+    const pawn = makeElement('span', `ks-pawn ks-pawn--${idx}`, idx + 1);
+    pawn.dataset.idx = String(idx);
+    pawn.addEventListener('animationend', (e) => { if (e.animationName === 'ks-hop') pawn.classList.remove('is-hop'); });
+    return pawn;
+  });
+  boardView.pos = Array(count).fill(null);
+  boardView.total = total;
+  boardView.count = count;
+}
+function restartAnimation(el, name) {
+  el.classList.remove(name);
+  void el.offsetWidth;
+  el.classList.add(name);
+}
+function renderBoard(total, positions, current = -1) {
+  if (boardView.total !== total || boardView.count !== positions.length || !$('board').firstChild) {
+    buildBoard(total, positions.length);
   }
+  positions.forEach((raw, idx) => {
+    const pos = Math.max(0, Math.min(total - 1, Number(raw) || 0));
+    const pawn = boardView.pawns[idx];
+    const prev = boardView.pos[idx];
+    if (prev !== pos) {
+      // 同じマスの中は、いつも番号の順に並べる
+      const box = boardView.squares[pos].lastElementChild;
+      const after = [...box.children].find((el) => Number(el.dataset.idx) > idx) || null;
+      box.insertBefore(pawn, after);
+      boardView.pos[idx] = pos;
+      // 進んだときだけ跳ねる（はじめの配置・最初にもどるときは動かさない）
+      if (prev != null && pos > prev) {
+        restartAnimation(pawn, 'is-hop');
+        restartAnimation(boardView.squares[pos], 'is-bump');
+      } else {
+        pawn.classList.remove('is-hop');
+      }
+    }
+    pawn.classList.toggle('is-current', idx === current);
+  });
+}
+
+// ゴールの紙ふぶき（動きを減らす設定の人には出さない）
+const CONFETTI_COLORS = ['#F2A65A', '#F7A1B5', '#8FCBE0', '#8AC76A', '#F6D25A', '#C7A5E8'];
+function celebrate() {
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+  document.querySelector('.ks-confetti')?.remove();
+  const layer = makeElement('div', 'ks-confetti');
+  layer.setAttribute('aria-hidden', 'true');
+  for (let i = 0; i < 44; i++) {
+    const piece = makeElement('span', 'ks-confetti__piece' + (i % 3 === 0 ? ' is-round' : ''));
+    piece.style.left = `${Math.random() * 100}%`;
+    piece.style.background = CONFETTI_COLORS[i % CONFETTI_COLORS.length];
+    piece.style.animationDelay = `${Math.random() * 0.9}s`;
+    piece.style.animationDuration = `${2.2 + Math.random() * 1.6}s`;
+    piece.style.setProperty('--ks-drift', `${Math.round((Math.random() - 0.5) * 160)}px`);
+    layer.appendChild(piece);
+  }
+  document.body.appendChild(layer);
+  setTimeout(() => layer.remove(), 5000);
 }
 
 // 質問のカード。1台の画面ではモーダルの中、ルームでは画面の中（#roomStage）に置く
 // opts: { playerIndex, dice, canPress, onChoose, showNext, showSkip, waitText }
 function fillQuestion(themeKey, item, playerName, opts) {
   const t = THEMES[themeKey];
+  $('questionCard').dataset.theme = themeKey;
   $('modal-theme').replaceChildren(msIcon(t.icon), document.createTextNode(' ' + t.label));
   // 宛先は、その人のコマの色の番号を添えて出す（盤のコマと見比べられるように）
   $('modal-player').replaceChildren(
@@ -449,7 +517,7 @@ function renderLocalGame() {
   $('turnNote').hidden = local.ended;
   $('turnNote').textContent = local.rolling ? `${name}さんがサイコロを振ったよ` : `${name}さんの番だよ`;
   renderPick(local.lastPick);
-  renderBoard(local.totalSquares, local.players.map((p) => p.pos));
+  renderBoard(local.totalSquares, local.players.map((p) => p.pos), local.ended ? -1 : local.currentIndex);
   $('btn-roll').disabled = local.rolling || local.ended;
 }
 
@@ -458,15 +526,16 @@ function rollLocalDice() {
   local.rolling = true;
   local.lastPick = null; // 前の人が選んだものは、次のサイコロで消す
   renderLocalGame();
-  const diceEl = $('dice');
   let ticks = 0;
+  setDiceRolling(true);
   local.diceTimer = setInterval(() => {
-    diceEl.textContent = Math.floor(Math.random() * 6) + 1;
+    setDice(Math.floor(Math.random() * 6) + 1);
     if (++ticks >= 10) {
       clearInterval(local.diceTimer);
       local.diceTimer = null;
       const n = Math.floor(Math.random() * 6) + 1;
-      diceEl.textContent = n;
+      setDice(n);
+      setDiceRolling(false);
       moveLocalPawn(n);
     }
   }, 60);
@@ -547,7 +616,8 @@ function closeLocalQuestion() {
   $('modal').style.display = 'none';
   local.currentIndex = (local.currentIndex + 1) % local.players.length;
   local.rolling = false;
-  $('dice').textContent = '?';
+  setDiceRolling(false);
+  setDice('?');
   renderLocalGame();
 }
 
@@ -567,6 +637,7 @@ function showLocalGoal(winner) {
   const m = $('goal-modal');
   m.style.display = 'flex';
   popIn($('goalCard'));
+  celebrate();
 }
 
 function resetLocal() {
@@ -576,7 +647,8 @@ function resetLocal() {
   local.lastPick = null;
   $('modal').style.display = 'none';
   $('goal-modal').style.display = 'none';
-  $('dice').textContent = '?';
+  setDiceRolling(false);
+  setDice('?');
 }
 
 // 設定に戻る（人数・名前・マス数・テーマは残る）
@@ -781,7 +853,8 @@ function cleanupRoom() {
   $('lastPick').hidden = true;
   $('turnNote').hidden = true;
   $('diceArea').hidden = false;
-  $('dice').textContent = '?';
+  setDiceRolling(false);
+  setDice('?');
   placeCards(false);
 }
 
@@ -1344,7 +1417,7 @@ function renderRoomGame(room, game) {
     item: normalizeQ(QUESTIONS[pick.theme][pick.idx]),
     choice: pick.choice,
   });
-  renderBoard(L.squaresOf(game.squares), positions);
+  renderBoard(L.squaresOf(game.squares), positions, goal && !anim ? -1 : current);
 
   const uid = currentUid();
   const act = L.canAct(room, uid, net.nickname, net.role);
@@ -1353,10 +1426,11 @@ function renderRoomGame(room, game) {
   const rolling = game.step === L.STEP.ROLL && !goal;
 
   // サイコロ
-  const dice = $('dice');
-  if (anim && performance.now() - anim.start < DICE_MS) dice.textContent = Math.floor(Math.random() * 6) + 1;
-  else if (anim || !rolling) dice.textContent = game.last?.dice || '?';
-  else dice.textContent = '?';
+  const diceRolling = !!anim && performance.now() - anim.start < DICE_MS;
+  setDiceRolling(diceRolling);
+  if (diceRolling) setDice(Math.floor(Math.random() * 6) + 1);
+  else if (anim || !rolling) setDice(game.last?.dice || '?');
+  else setDice('?');
   $('btn-roll').hidden = !rolling || !act;
   $('btn-roll').disabled = !!anim || net.busy;
 
@@ -1408,7 +1482,10 @@ function renderRoomGame(room, game) {
   }
   stage.hidden = key == null;
   $('diceArea').hidden = key != null;
-  if (key && key !== net.shownKey) popIn(key.startsWith('goal') ? $('goalCard') : $('questionCard'));
+  if (key && key !== net.shownKey) {
+    popIn(key.startsWith('goal') ? $('goalCard') : $('questionCard'));
+    if (key.startsWith('goal')) celebrate();
+  }
   net.shownKey = key;
 }
 
