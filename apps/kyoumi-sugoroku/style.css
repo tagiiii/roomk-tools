@@ -1049,3 +1049,69 @@
 @media (max-width: 600px) {
   .ks-board__label { font-size: 10px; padding: 1px 8px; }
 }
+
+/* ── サイコロを2つ振って、進む目を選ぶ ── */
+.ks-dicepick {
+  max-width: 480px;
+  margin: 0 auto 18px;
+  padding: 16px;
+  background: #fff;
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius-box);
+  text-align: center;
+}
+.ks-dicepick[hidden] { display: none; }
+.ks-dicepick__lead {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 12px;
+}
+.ks-dicepick__row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.ks-dicepick__btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 8px 12px;
+  border: 2px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-primary-soft);
+  font-family: inherit;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.ks-dicepick__btn:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+.ks-dicepick__btn:disabled { cursor: default; }
+.ks-dice.ks-dice--sm {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  box-shadow: inset 0 -5px 0 rgba(106, 79, 53, 0.13), 0 3px 0 #CDB894, 0 6px 10px rgba(63, 54, 45, 0.18);
+}
+.ks-dicepick__steps {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+.ks-dicepick__dest {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 12px 3px 8px;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+.ks-dicepick__dest .material-symbols-rounded { font-size: 17px; }
+.ks-modal[data-theme="life-cheer"] { --ks-theme: #D9577A; --ks-theme-soft: #FDE9EE; }
