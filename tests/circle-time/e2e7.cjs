@@ -1,4 +1,4 @@
-// サークルタイム E2E その7: 参加者の「ルームにいる人・これまでの画面」（ルームにいる人・ここまでの画面・心のわけ・ふりかえりの自由記述）
+// サークルタイム E2E その7: 参加者の「ルームにいる人・これまでの画面」（ルームにいる人・ここまでの画面・心のわけ・ふりかえりの自由記述・みんなの画面で名前を押すと出る）
 const L = require('./lib.cjs');
 const { check, sleep } = L;
 const lookText = (c) => c.page.evaluate(() => document.querySelector('#player-look')?.innerText || '');
@@ -68,5 +68,12 @@ const lookText = (c) => c.page.evaluate(() => document.querySelector('#player-lo
   check('G13 書く欄の上に、ルームにいる人も見られると出る', (await L.text(C, '#player-card')).includes('ルームにいる人も自分の端末で見られるよ'));
   check('G14 ボタンの名前', (await L.text(C, '#btn-look')).includes('ルームにいる人・これまでの画面'));
   await L.shot(C, '72-look-review');
+  await H2.page.waitForFunction(() => document.querySelectorAll('#host-preview .chip.has-note').length === 1).catch(() => {});
+  check('G15 みんなの画面（プレビュー）で、書いた人の名前に印', (await L.hostStage(H2)).includes('書いたことが出るよ') && await H2.page.evaluate(() => document.querySelectorAll('#host-preview .chip.has-note').length === 1));
+  check('G16 押すまで書いたことは出ない', !(await L.hostStage(H2)).includes('ないしょのはなし'));
+  await H2.page.locator('#host-preview .chip.has-note', { hasText: 'そら' }).click();
+  await L.waitText(H2, '#host-preview', 'ないしょのはなし');
+  check('G17 名前を押すと、書いたことが出る', await L.visible(H2, '#host-preview .note-pop'));
+  await L.shot(H2, '73-review-note', false);
   await L.finishAll(server);
 })().catch((e) => { console.error(e); process.exit(1); });
