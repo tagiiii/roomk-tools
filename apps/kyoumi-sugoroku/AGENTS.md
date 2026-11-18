@@ -46,7 +46,8 @@ apps/kyoumi-sugoroku/
 ├── app.js      # 質問データ（THEMES・QUESTIONS）・1台の画面・ルームの通信と画面（ES module）
 ├── logic.js    # ルームの決まり（DOM も Firebase も使わない。transaction の中から呼ぶ）
 ├── art.js      # 盤の景色（SVG）とマスの位置。決まった文字列と数だけで作る（ES module）
-└── style.css   # 固有スタイル（prefix: .ks-）
+├── style.css   # 固有スタイル（prefix: .ks-）
+└── slides.html # 画面共有用の説明スライド（17枚。2つのあそびかた → 人生の道の決まり。決まりを変えたらここも直す）
 ```
 
 - index.html・app.js・logic.js・art.js・style.css はセットで変わるので、変えたら `?v=` をそろえて上げる（app.js の `import ... from './logic.js?v=…'`・`'./art.js?v=…'` も）
