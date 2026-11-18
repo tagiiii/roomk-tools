@@ -43,7 +43,7 @@ const { check, sleep } = L;
       if (await O.page.evaluate(() => document.getElementById('goal-modal').style.display === 'flex')) {
         check('A9b ゴールに「もう一度あそぶ」と「設定に戻る」', await L.visible(O, '#btn-restart') && await L.visible(O, '#btnGoalSettings'));
         await O.page.click('#btn-restart');
-        check('A9c もう一度あそぶは同じ設定ですぐはじまる', (await L.indicator(O)).length === 6 && await L.visible(O, '#btn-roll'));
+        check('A9c もう一度あそぶは同じ設定ですぐはじまる', (await L.indicator(O)).length === 10 && await L.visible(O, '#btn-roll'));
         continue;
       }
     }

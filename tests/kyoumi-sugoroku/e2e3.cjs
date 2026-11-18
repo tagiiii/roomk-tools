@@ -59,7 +59,7 @@ const { check, sleep } = L;
   check('B5 mode-life を数える', await L.waitStats(H, 'mode-life', 1));
 
   // ── C. えらぶ（ほすとの番） ──
-  await set({ step: 'life-talk', rollNo: 1, turn: 0, pos: { 0: 1 }, q: { kind: 'erabu', scene: 'chiisai', idx: 0, n: 1 } });
+  await set({ step: 'life2-talk', rollNo: 1, turn: 0, pos: { 0: 1 }, q: { kind: 'erabu', scene: 'chiisai', idx: 0, n: 1 } });
   await cardWhen(A, '小さいころ、よく遊んだのは？');
   let hc = await L.card(H);
   let ac = await L.card(A);
@@ -67,13 +67,13 @@ const { check, sleep } = L;
   check('C2 番の人は選べる・ほかの人は選べない', hc.choices.length === 4 && hc.choices.every((x) => !x.disabled) && ac.choices.every((x) => x.disabled), { hc, ac });
   check('C3 ほかの人には、選ぶと次の人の番になる案内', ac.wait.includes('ほすとさんが選ぶと'), ac.wait);
   await H.page.click('#modal-choices .ks-choice >> nth=1');
-  room = await gameWhen((g) => g.turn === 1 && g.step === 'life-roll');
+  room = await gameWhen((g) => g.turn === 1 && g.step === 'life2-roll');
   check('C4 選ぶと次の人の番・選んだものを置く', room.game.picked?.life === true && room.game.picked.choice === 1, room.game.picked);
   await L.waitVisible(A, '#lastPick');
   check('C5 選んだものがみんなの画面に出る', (await L.text(A, '#pickA')).includes('家の中でじっくり') && (await L.text(B, '#pickQ')).includes('よく遊んだのは'), await L.text(A, '#pickA'));
 
   // ── D. きく（あおの番）: 相手 → 3枚の質問から1枚 → 聞かれた人が答える ──
-  await set({ step: 'life-talk', turn: 1, pos: { 1: 8 }, q: { kind: 'kiku', scene: 'ima', n: 1 }, picked: null });
+  await set({ step: 'life2-talk', turn: 1, pos: { 1: 8 }, q: { kind: 'kiku', scene: 'ima', n: 1 }, picked: null });
   await cardWhen(B, 'だれに聞く？');
   ac = await L.card(A);
   let bc = await L.card(B);
@@ -81,7 +81,7 @@ const { check, sleep } = L;
   check('D2 番の人だけが選べる・ほかの人には待つ案内', ac.choices.every((x) => !x.disabled) && bc.choices.every((x) => x.disabled) && bc.wait.includes('聞く相手を選んでいるよ'), bc);
   await A.page.click('#modal-choices .ks-choice >> nth=1');
   room = await gameWhen((g) => g.q && g.q.target === 2 && g.q.opts);
-  check('D3 相手を選ぶと、質問が3枚出る（相手は順番の番号）', room.game.q.opts.length === 3 && room.game.turn === 1 && room.game.step === 'life-talk', room.game.q);
+  check('D3 相手を選ぶと、質問が3枚出る（相手は順番の番号）', room.game.q.opts.length === 3 && room.game.turn === 1 && room.game.step === 'life2-talk', room.game.q);
   await cardWhen(B, 'どの質問にする？');
   ac = await L.card(A);
   bc = await L.card(B);
@@ -108,37 +108,37 @@ const { check, sleep } = L;
   await sleep(300);
   const answerText = (await L.card(B)).choices[1].text.replace(/^②/, '');
   await B.page.click('#modal-choices .ks-choice >> nth=1');
-  room = await gameWhen((g) => g.step === 'life-roll' && !g.q);
+  room = await gameWhen((g) => g.step === 'life2-roll' && !g.q);
   check('D13 答えると次の人の番。答えは聞かれた人のものとして置く', room.game.turn === 2 && room.game.picked.kiku === true && room.game.picked.turn === 2 && room.game.picked.by === 1 && room.game.picked.choice === 1, room.game.picked);
   await L.waitVisible(H, '#lastPick');
   check('D14 答えがみんなの画面に出る（だれの答えか・だれの質問か）', (await L.text(H, '#pickWho')).includes('みどり さんの答え（あお さんの質問）') && (await L.text(H, '#pickA')).includes(answerText), await L.text(H, '#pickWho'));
 
   // ── E. できごと ──
   // みんな1マス進む（みどりの番）
-  await set({ step: 'life-talk', turn: 2, pos: { 0: 3, 1: 5, 2: 7 }, q: { kind: 'dekigoto', idx: 6, n: 1 } });
+  await set({ step: 'life2-talk', turn: 2, pos: { 0: 3, 1: 5, 2: 7 }, q: { kind: 'dekigoto', idx: 6, n: 1 } });
   await cardWhen(A, 'みんなでおやつタイム');
   bc = await L.card(B);
   ac = await L.card(A);
   check('E1 できごとの中身と「進む」・「別の質問」はない', (await L.text(B, '#modal-effect')) === 'みんな1マス進む' && bc.next && !bc.skip && (await L.text(B, '#btn-next')).includes('進む'), bc);
   check('E2 ほかの人にはボタンがなく、待つ案内', !ac.next && !ac.skip && ac.wait.includes('みどりさんが進めるのを待ってね'), ac);
   await B.page.click('#btn-next');
-  room = await gameWhen((g) => g.step === 'life-roll' && g.turn === 0);
+  room = await gameWhen((g) => g.step === 'life2-roll' && g.turn === 0);
   check('E3 みんな1マス進んで、次の人の番', JSON.stringify(room.game.pos) === '[4,6,8]', room.game.pos);
   await sleep(400);
   check('E4 盤のコマも進む', JSON.stringify(await L.pawnsAt(A)) === JSON.stringify(await L.pawnsAt(H)) && (await L.pawnsAt(A)).length === 3, await L.pawnsAt(A));
   // もう一度サイコロ（ほすとの番）
-  await set({ step: 'life-talk', turn: 0, q: { kind: 'dekigoto', idx: 5, n: 1 } });
+  await set({ step: 'life2-talk', turn: 0, q: { kind: 'dekigoto', idx: 5, n: 1 } });
   await cardWhen(H, '四つ葉のクローバー');
   check('E5 「もう一度サイコロを振る」', (await L.text(H, '#btn-next')).includes('もう一度サイコロを振る'));
   await H.page.click('#btn-next');
-  room = await gameWhen((g) => g.step === 'life-roll' && !g.q);
+  room = await gameWhen((g) => g.step === 'life2-roll' && !g.q);
   check('E6 同じ人がもう一度振る', room.game.turn === 0 && JSON.stringify(room.game.pos) === '[4,6,8]', room.game);
   await L.waitVisible(H, '#btn-roll');
 
   // ── F. 本物のサイコロ: 2つ振って進む目を選ぶ。止まったマスの種類のカードが、みんなに出る ──
   await H.page.click('#btn-roll');
-  room = await gameWhen((g) => g.step === 'life-pick' || g.rollNo === 2);
-  if (room.game.step === 'life-pick') {
+  room = await gameWhen((g) => g.step === 'life2-pick' || g.rollNo === 2);
+  if (room.game.step === 'life2-pick') {
     const dice = room.game.dice;
     check('F0a ちがう目なら、まだ進まずに目を選ぶ', dice.length === 2 && dice[0] !== dice[1] && room.game.rollNo === 1 && room.game.pos[0] === 4, room.game);
     await L.waitVisible(H, '#dicePick button:not([disabled])'); // 書きこみが済むまでの一瞬は押せない
@@ -151,7 +151,7 @@ const { check, sleep } = L;
     room = await gameWhen((g) => g.rollNo === 2);
     check('F0d 選んだ目のぶん進む', room.game.pos[0] === 4 + dice[1] && room.game.last.dice === dice[1] && !room.game.dice, room.game);
   }
-  room = await gameWhen((g) => g.rollNo === 2 && g.step === 'life-talk');
+  room = await gameWhen((g) => g.rollNo === 2 && g.step === 'life2-talk');
   const landed = room.game.pos[0];
   const KINDS = ['erabu', 'kiku', 'erabu', 'dekigoto', 'erabu', 'kiku', 'erabu', 'dekigoto', 'kiku', 'erabu'];
   check('F1 出目のぶん進み、そのマスの種類のカード', landed === 4 + room.game.last.dice && room.game.q.kind === KINDS[(landed - 1) % 10], room.game);
@@ -161,11 +161,11 @@ const { check, sleep } = L;
 
   // ── F2. レビューの指摘から: 退出・壊れた値・いない相手 ──
   // 読めないカードで止まったら、ホストの見はりが次の人へ進める
-  await set({ step: 'life-talk', turn: 0, q: { kind: 'map', idx: 0, n: 1 }, pos: { 0: 5, 1: 6, 2: 8 } });
-  room = await L.roomWhen(code, (r) => r.game && r.game.step === 'life-roll' && r.game.turn === 1, 12000);
-  check('F3 読めないカードは、ホストの画面が次の人へ進めて立て直す', room.game.step === 'life-roll' && room.game.turn === 1 && !room.game.q, room.game);
+  await set({ step: 'life2-talk', turn: 0, q: { kind: 'map', idx: 0, n: 1 }, pos: { 0: 5, 1: 6, 2: 8 } });
+  room = await L.roomWhen(code, (r) => r.game && r.game.step === 'life2-roll' && r.game.turn === 1, 12000);
+  check('F3 読めないカードは、ホストの画面が次の人へ進めて立て直す', room.game.step === 'life2-roll' && room.game.turn === 1 && !room.game.q, room.game);
   // きく: 選んだ相手がいなくなったら、いまいる人から選びなおす
-  await set({ step: 'life-talk', turn: 0, q: { kind: 'kiku', scene: 'ima', n: 1 } });
+  await set({ step: 'life2-talk', turn: 0, q: { kind: 'kiku', scene: 'ima', n: 1 } });
   await cardWhen(H, 'だれに聞く？');
   await H.page.click('#modal-choices .ks-choice >> nth=1'); // みどり
   room = await gameWhen((g) => g.q && g.q.target === 2 && g.q.opts);
@@ -186,49 +186,68 @@ const { check, sleep } = L;
   room = await gameWhen((g) => g.q && g.q.phase === 'answer');
   await A.page.waitForFunction(() => [...document.querySelectorAll('#modal-choices .ks-choice')].some((b) => !b.disabled), null, { timeout: 8000 });
   await A.page.click('#modal-choices .ks-choice >> nth=0');
-  room = await gameWhen((g) => g.step === 'life-roll' && !g.q);
+  room = await gameWhen((g) => g.step === 'life2-roll' && !g.q);
   check('F6 答えたら、次にいる人（あお）の番', room.game.turn === 1 && room.game.picked.turn === 1 && room.game.picked.by === 0, room.game);
   // できごとの途中で番の人が退出しても、できごとは確定しない
   await rejoin(B, 'みどり');
-  await set({ step: 'life-talk', turn: 2, q: { kind: 'dekigoto', idx: 6, n: 1 }, pos: { 0: 5, 1: 6, 2: 8 } });
+  await set({ step: 'life2-talk', turn: 2, q: { kind: 'dekigoto', idx: 6, n: 1 }, pos: { 0: 5, 1: 6, 2: 8 } });
   await cardWhen(B, 'みんなでおやつタイム');
   await B.page.click('#btnLeave');
   await L.waitScreen(B, 'top');
-  room = await gameWhen((g) => g.step === 'life-roll' && !g.q);
+  room = await gameWhen((g) => g.step === 'life2-roll' && !g.q);
   check('F7 できごとの途中で退出しても、だれも進まない・次にいる人の番', JSON.stringify(room.game.pos) === '[5,6,8]' && room.game.turn === 0, room.game);
   await rejoin(B, 'みどり');
+
+  // ── F8. 進む目が読めないとき（壊れた値）は、ホストの画面が振りなおすところにもどす ──
+  await set({ step: 'life2-pick', turn: 0, q: null, picked: null, dice: { 0: 3 } });
+  room = await L.roomWhen(code, (r) => r.game && r.game.step === 'life2-roll' && !r.game.dice, 12000);
+  check('F8 読めない目は捨てて、同じ人が振りなおす', room.game.step === 'life2-roll' && room.game.turn === 0 && !room.game.dice, room.game);
+  // 記録（last）が壊れていても、画面が長いアニメーションで止まらない
+  const cur = (await L.roomOf(code)).game;
+  await set({ rollNo: cur.rollNo + 1, last: { dice: 1, from: 0, to: 1000000000, turn: 0 } });
+  await sleep(1500);
+  check('F9 壊れた記録ではアニメーションせず、サイコロを振れるまま', await L.visible(H, '#btn-roll') && !(await H.page.isDisabled('#btn-roll')), await L.text(H, '#turnNote'));
+  await set({ rollNo: cur.rollNo, last: null });
+  await sleep(300);
 
   // ── G. ゴール: 着いた人の番は「おうえん」・みんな着いたらおわり ──
   // サイコロを振って、目を選ぶ欄が出たら1つ目を選ぶ
   const rollNow = async (c, rollNo) => {
     await L.waitVisible(c, '#btn-roll');
     await c.page.click('#btn-roll');
-    const r = await L.roomWhen(code, (x) => x.status === 'goal' || (x.game && (x.game.step === 'life-pick' || x.game.rollNo === rollNo + 1)));
-    if (r.status !== 'goal' && r.game.step === 'life-pick') {
+    const r = await L.roomWhen(code, (x) => x.status === 'goal' || (x.game && (x.game.step === 'life2-pick' || x.game.rollNo === rollNo + 1)));
+    if (r.status !== 'goal' && r.game.step === 'life2-pick') {
       await L.waitVisible(c, '#dicePick button:not([disabled])');
       await c.page.click('#dicePick button >> nth=0');
     }
   };
-  await set({ step: 'life-roll', turn: 0, q: null, picked: null, dice: null, pos: { 0: 22, 1: 9, 2: 10 } });
+  await set({ step: 'life2-roll', turn: 0, q: null, picked: null, dice: null, pos: { 0: 22, 1: 9, 2: 10 } });
   room = await L.roomOf(code);
   await rollNow(H, room.game.rollNo);
   room = await gameWhen((g) => g.done && g.done[0] === true);
-  check('G1 ゴールでとまり、ゲームは続く・次の人の番', room.status === 'playing' && room.game.pos[0] === 23 && room.game.turn === 1 && room.game.step === 'life-roll', room.game);
+  check('G1 ゴールでとまり、ゲームは続く・次の人の番', room.status === 'playing' && room.game.pos[0] === 23 && room.game.turn === 1 && room.game.step === 'life2-roll', room.game);
   await L.waitText(A, '#turnNote', 'ほすとさんがゴール！');
   check('G2 着いた人を知らせる・「ゴール」の印', (await L.indicator(A)).find((p) => p.name === 'ほすと').tags.includes('ゴール'), await L.indicator(A));
   // ゴールした人にも番が回り、サイコロのかわりに「おうえん」
-  await set({ step: 'life-roll', turn: 0, q: null, arrived: null });
+  await set({ step: 'life2-roll', turn: 0, q: null, arrived: null });
   await cardWhen(A, 'だれを1マス進める？');
   hc = await L.card(H);
   ac = await L.card(A);
   check('G3 おうえんは、まだゴールしていない人から選ぶ（「自由に話す」はない）', hc.theme.includes('おうえん') && hc.choices.map((x) => x.text).join('|') === '①あお さん|②みどり さん' && hc.choices.every((x) => !x.disabled), hc);
   check('G4 ほかの人は押せず、待つ案内。サイコロを振るボタンは出ない', ac.choices.every((x) => x.disabled) && ac.wait.includes('おうえんする人を選んでいるよ') && !(await L.visible(H, '#btn-roll')), ac);
+  // いない人は、おうえんの相手に出ない
+  await B.page.click('#btnLeave');
+  await L.waitScreen(B, 'top');
+  await H.page.waitForFunction(() => document.querySelectorAll('#modal-choices .ks-choice').length === 1, null, { timeout: 8000 });
+  check('G4b いない人は、おうえんの相手に出ない', (await L.card(H)).choices.map((x) => x.text).join('|') === '①あお さん', (await L.card(H)).choices);
+  await rejoin(B, 'みどり');
+  await H.page.waitForFunction(() => document.querySelectorAll('#modal-choices .ks-choice').length === 2, null, { timeout: 8000 });
   const before = (await L.roomOf(code)).game;
   await H.page.click('#modal-choices .ks-choice >> nth=1');
   room = await gameWhen((g) => g.rollNo === before.rollNo + 1);
   check('G5 選んだ人が1マス進み、次の人の番', room.game.pos[2] === before.pos[2] + 1 && room.game.pos[1] === before.pos[1] && room.game.turn === 1 && room.game.last.cheerBy === 0, room.game);
   // みんな着く
-  await set({ step: 'life-roll', turn: 1, q: null, dice: null, pos: { 0: 23, 1: 22, 2: 23 }, done: { 0: true, 1: false, 2: true } });
+  await set({ step: 'life2-roll', turn: 1, q: null, dice: null, pos: { 0: 23, 1: 22, 2: 23 }, done: { 0: true, 1: false, 2: true } });
   room = await L.roomOf(code);
   await rollNow(A, room.game.rollNo);
   room = await L.roomWhen(code, (r) => r.status === 'goal');
@@ -256,6 +275,19 @@ const { check, sleep } = L;
   await H.page.click('#btn-roll');
   await L.waitQuestion(A);
   check('H4 今までの質問のカードが出る', !(await L.card(A)).theme.includes('・') && (await L.text(A, '#btn-next')).includes('話せた！次の人へ'), await L.card(A));
+  // ── I. 前の版が作った人生の道のゲームは、この版では進めず、ホストの画面が待合室にもどす ──
+  await H.page.click('#btnRoomBack');
+  await L.waitScreen(A, 'waiting');
+  await H.page.click('#roomMode [data-value="life"]');
+  await L.roomWhen(code, (r) => r.mode === 'life');
+  await H.page.click('#btnStartGame');
+  await L.waitScreen(A, 'game');
+  await set({ step: 'life-talk', rollNo: 1, turn: 0, q: { kind: 'hanasu', scene: 'ima', idx: 6, n: 1 } });
+  room = await L.roomWhen(code, (r) => r.status === 'waiting', 8000);
+  check('I1 前の版のゲームは待合室にもどす', room.status === 'waiting' && !room.game, room);
+  await L.waitScreen(A, 'waiting');
+  await L.waitToast(H, '新しくなった');
+  check('I2 ホストに理由を知らせる', true);
   await H.page.click('#btnLeave');
   await L.waitScreen(A, 'top');
   check('H5 ルームを閉じる', (await L.roomOf(code)) === null);

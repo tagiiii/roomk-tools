@@ -19,11 +19,14 @@ export const STATUS = {
 export const STEP = {
   ROLL: 'roll',  // 番の人がサイコロを振るのを待っている
   TALK: 'talk',  // 質問が出ている
-  // 「人生の道」の段階。名前を分けて、モードを知らない古い版の画面からの操作（step が roll / talk のときだけ動く）を通さない
-  LIFE_ROLL: 'life-roll',
-  LIFE_PICK: 'life-pick', // サイコロを2つ振って、進む目を選んでいる
-  LIFE_TALK: 'life-talk',
+  // 「人生の道」の段階。名前を分けて、ちがう決まりの版の画面からの操作を通さない。
+  // 今までの遊び方は roll / talk、公開済みの前の版の人生の道は life-roll / life-talk（サイコロ1つ・「はなす」あり）
+  LIFE_ROLL: 'life2-roll',
+  LIFE_PICK: 'life2-pick', // サイコロを2つ振って、進む目を選んでいる
+  LIFE_TALK: 'life2-talk',
 };
+// 前の版が作った人生の道のゲーム（この版では進められない。ホストの画面が待合室にもどす）
+const OLD_LIFE_STEPS = ['life-roll', 'life-talk', 'roll', 'talk'];
 
 /* ── 「人生の道」モード（2026-11-18） ──
    盤は4段で、1段が1つの場面。マスの種類で起きることが決まる。みんながゴールしたらおわり。
@@ -67,6 +70,17 @@ export function isLife(game) { return game?.mode === MODE.LIFE; }
 export function isRollStep(game) { return !!game && game.step === (isLife(game) ? STEP.LIFE_ROLL : STEP.ROLL); }
 export function isTalkStep(game) { return !!game && game.step === (isLife(game) ? STEP.LIFE_TALK : STEP.TALK); }
 export function isPickStep(game) { return isLife(game) && game.step === STEP.LIFE_PICK; }
+export function isOldLife(game) { return isLife(game) && OLD_LIFE_STEPS.includes(game.step); }
+// 進む目を選んでいるときの2つの目（ちがう 1〜6 の数が2つ）。壊れた値は null
+export function pickDice(game) {
+  if (!isPickStep(game) || game.dice == null || typeof game.dice !== 'object') return null;
+  const a = Number(game.dice[0]);
+  const b = Number(game.dice[1]);
+  const ok = (n) => Number.isInteger(n) && n >= 1 && n <= 6;
+  return ok(a) && ok(b) && a !== b ? [a, b] : null;
+}
+// 進む目を選ぶ段階なのに、目が読めない（壊れた値）
+export function pickBroken(game) { return isPickStep(game) && !pickDice(game); }
 
 export function validNickname(value) {
   if (!value) return '名前を入れてね';
@@ -405,9 +419,13 @@ export function pickDie(room, gameId, rollNo, which, seed) {
   const game = gameOf(room);
   if (room?.status !== STATUS.PLAYING || !game || game.id !== gameId || !isPickStep(game)) return null;
   if ((Number(game.rollNo) || 0) !== rollNo || (which !== 0 && which !== 1)) return null;
-  const dice = Number(asList(game.dice)[which]);
-  if (!Number.isInteger(dice) || dice < 1 || dice > 6) return null;
-  return lifeAdvance(room, game, dice, seededRandom(seed), true);
+  const pair = pickDice(game);
+  if (!pair) return null;
+  return lifeAdvance(room, game, pair[which], seededRandom(seed), true);
+}
+// おうえんできる相手（まだゴールしていない、いまいる人）の順番の番号
+export function cheerTargets(room, game) {
+  return orderOf(game).map((_, i) => i).filter((i) => !doneOf(game, i) && present(room, game, orderOf(game)[i]));
 }
 // ゴールした人の番: まだゴールしていない人を1人選んで、1マス進める
 export function cheer(room, gameId, rollNo, target) {
@@ -417,7 +435,8 @@ export function cheer(room, gameId, rollNo, target) {
   const turn = turnOf(game);
   const order = orderOf(game);
   if (!doneOf(game, turn)) return null;
-  if (!Number.isInteger(target) || target < 0 || target >= order.length || doneOf(game, target)) return null;
+  // まだゴールしていない、いまいる人だけ（いない人を進めて、いる人だけでゲームを終わらせない）
+  if (!cheerTargets(room, game).includes(target)) return null;
   const max = boardSize(game) - 1;
   const pos = order.map((_, i) => posOf(game, i));
   const from = pos[target];
@@ -631,6 +650,12 @@ export function dropTalk(room) {
     ...room,
     game: { ...game, step: isLife(game) ? STEP.LIFE_ROLL : STEP.ROLL, q: null, dice: null, picked: null, turn: nextTurn(room, game) },
   };
+}
+// 進む目を選ぶ段階で目が読めないとき、同じ人がサイコロを振りなおすところにもどす（ホストの見はりから）
+export function dropPick(room) {
+  const game = gameOf(room);
+  if (room?.status !== STATUS.PLAYING || !game || !pickBroken(game)) return null;
+  return { ...room, game: { ...game, step: STEP.LIFE_ROLL, dice: null } };
 }
 // カードが出ている段階なのに、読めるカードがない（壊れた値）
 export function talkBroken(game, counts) {

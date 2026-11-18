@@ -897,8 +897,8 @@ function fillLifeCard(c) {
 // サイコロを2つ振ったあと、進む目を選ぶ欄（1台の画面・ルーム共通）
 function renderDicePick(game, act, lead) {
   const box = $('dicePick');
-  const dice = L.asList(game?.dice).map(Number);
-  const show = !!game && L.isPickStep(game) && dice.length === 2;
+  const dice = game ? L.pickDice(game) : null;
+  const show = !!dice;
   box.hidden = !show;
   if (!show) { net.pickKey = null; return; }
   $('dicePickLead').textContent = lead;
@@ -932,11 +932,15 @@ function renderDicePick(game, act, lead) {
    遊ぶ人はみんな「端末のない人」で、押すのはいつもこの画面（ホストの代わり）。 */
 function startLocalLife(names) {
   // 名前は順番の見出しにもなるので、同じ名前は番号を付けて分ける
-  const seen = new Map();
+  const used = new Set();
   const unique = names.map((name) => {
-    const n = (seen.get(name) || 0) + 1;
-    seen.set(name, n);
-    return n === 1 ? name : `${name}${n}`;
+    let label = name;
+    for (let n = 2; used.has(label); n++) {
+      const tail = String(n);
+      label = name.slice(0, Math.max(1, L.NAME_MAX - tail.length)) + tail;
+    }
+    used.add(label);
+    return label;
   });
   const waiting = {
     status: L.STATUS.WAITING,
@@ -1622,13 +1626,13 @@ function trackRoll(room) {
   const rollNo = Number(game.rollNo) || 0;
   const seen = net.seen;
   const last = game.last;
-  if (seen && seen.id === game.id && rollNo === seen.rollNo + 1 && last && Number.isInteger(last.turn)) {
+  if (seen && seen.id === game.id && rollNo === seen.rollNo + 1 && validLast(game, last)) {
     stopAnim();
     net.anim = {
       key: game.id + ':' + rollNo,
       turn: last.turn,
-      from: Number(last.from) || 0,
-      to: Number(last.to) || 0,
+      from: last.from,
+      to: last.to,
       dice: Number(last.dice) || 1,
       cheerBy: Number.isInteger(last.cheerBy) ? last.cheerBy : null,
       start: performance.now() - (last.quick ? DICE_MS : 0),
@@ -1641,6 +1645,15 @@ function trackRoll(room) {
     stopAnim();
   }
   net.seen = { id: game.id, rollNo };
+}
+
+// いちばん新しいサイコロの記録が、盤の中の正しい動きか（壊れた値ではアニメーションせず、いまの形をすぐ出す）
+function validLast(game, last) {
+  if (!last || typeof last !== 'object') return false;
+  const max = L.boardSize(game) - 1;
+  const inBoard = (n) => Number.isInteger(n) && n >= 0 && n <= max;
+  return Number.isInteger(last.turn) && last.turn >= 0 && last.turn < L.orderOf(game).length
+    && inBoard(last.from) && inBoard(last.to) && last.to >= last.from && last.to - last.from <= 6;
 }
 
 function animRunning() {
@@ -1828,6 +1841,7 @@ function renderRoomGame(room, game) {
     if (net.arrivedKey !== arrivedKey) { net.arrivedKey = arrivedKey; celebrate(); }
   }
 
+  if (L.isOldLife(game) && !goal) note.textContent = 'ツールが新しくなったよ。ホストの画面が待合室にもどすのを待ってね';
   $('btnRoomBack').hidden = net.offline || !(net.role === 'host' && !goal);
   $('btn-back').hidden = !net.offline;
 
@@ -1849,8 +1863,8 @@ function renderRoomGame(room, game) {
     key = 'c:' + game.id + ':' + game.rollNo + ':' + turn;
     $('goalCard').hidden = true;
     $('questionCard').hidden = false;
-    const rest = order.filter((_, i) => !L.doneOf(game, i));
-    fillQuestion(null, { q: 'だれを1マス進める？', choices: rest.map((name) => `${name} さん`) }, actor, {
+    const rest = L.cheerTargets(room, game).map((i) => order[i]);
+    fillQuestion(null, { q: rest.length ? 'だれを1マス進める？' : 'おうえんできる人が、いまいないよ', choices: rest.map((name) => `${name} さん`) }, actor, {
       head: { key: 'life-cheer', icon: 'favorite', label: 'おうえん' },
       toText: `${actor} さんのおうえん`,
       playerIndex: turn,
@@ -1860,7 +1874,7 @@ function renderRoomGame(room, game) {
       noFree: true,
       showNext: false,
       showSkip: false,
-      waitText: act ? 'ゴールした人は、自分の番にだれかを1マス進められるよ' : `${actor}さんが、おうえんする人を選んでいるよ`,
+      waitText: !rest.length ? 'ほかの人がもどるのを待ってね' : act ? 'ゴールした人は、自分の番にだれかを1マス進められるよ' : `${actor}さんが、おうえんする人を選んでいるよ`,
     });
   } else if (!anim && L.isTalkStep(game) && life && L.lifeQuestionOf(game)) {
     const lq = L.lifeQuestionOf(game);
@@ -2029,8 +2043,7 @@ async function roomCheer(choice) {
   const now = currentTurn();
   const game = L.gameOf(net.room);
   if (!now || !game || animRunning()) return;
-  const rest = L.orderOf(game).map((_, i) => i).filter((i) => !L.doneOf(game, i));
-  const target = rest[choice];
+  const target = L.cheerTargets(net.room, game)[choice];
   if (target == null) return;
   let goal = false;
   const ok = await roomAct((room) => {
@@ -2073,12 +2086,16 @@ async function hostTransaction(update, failMessage) {
 function hostWatchAbsent(room) {
   const game = L.gameOf(room);
   const playing = game && room.status === L.STATUS.PLAYING;
+  // 前の版が作った人生の道のゲームは、この版では進められない → 待合室にもどす
+  const old = playing && L.isOldLife(game);
   const actor = playing && (L.isRollStep(game) || L.isPickStep(game)) ? L.actorOf(game) : null;
   // サイコロを振る・進む目を選ぶ番の人がいないとき → 次の人へとばす
   const skip = actor != null && !L.present(room, game, actor);
-  // カードが出ている段階なのに読めるカードがないとき（壊れた値）→ 次の人へ進めて立て直す
+  // カードが出ている段階なのに読めるカードがない・目を選ぶ段階なのに目が読めないとき（壊れた値）→ 立て直す
   const broken = playing && L.talkBroken(game, COUNTS);
-  const key = skip || broken ? `${game.id}:${game.rollNo}:${L.turnOf(game)}:${broken ? 'b' : 's'}` : null;
+  const badPick = playing && L.pickBroken(game);
+  const kind = old ? 'o' : broken ? 'b' : badPick ? 'p' : skip ? 's' : '';
+  const key = kind ? `${game.id}:${game.rollNo}:${L.turnOf(game)}:${kind}` : null;
   if (key === net.skipKey) return;
   clearTimeout(net.skipTimer);
   net.skipTimer = null;
@@ -2090,11 +2107,15 @@ function hostWatchAbsent(room) {
     const ok = await hostTransaction((r) => {
       const g = L.gameOf(r);
       if (!g || `${g.id}:${g.rollNo}:${L.turnOf(g)}` !== key.slice(0, -2)) return;
-      return broken ? (L.talkBroken(g, COUNTS) ? L.dropTalk(r) : undefined) : L.skipAbsent(r);
+      if (kind === 'o') return L.isOldLife(g) ? L.backToWaiting(r, g.id) : undefined;
+      if (kind === 'b') return L.talkBroken(g, COUNTS) ? L.dropTalk(r) : undefined;
+      if (kind === 'p') return L.dropPick(r);
+      return L.skipAbsent(r);
     }, '');
+    if (ok && kind === 'o') toast('ツールが新しくなったので、待合室にもどりました。「はじめる」でもう一度あそべます', false);
     // 進めなかったら（処理中など）、次のルームの変化でまた見る
     if (!ok && net.skipKey === key) net.skipKey = null;
-  }, ABSENT_GRACE_MS);
+  }, kind === 'o' ? 500 : ABSENT_GRACE_MS);
 }
 
 async function setHostPlays(value) {
