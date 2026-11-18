@@ -573,6 +573,30 @@
   color: var(--color-text);
   margin-bottom: 24px;
 }
+/* 「道中すごろく」で順位を出すとき: ゴールした順 */
+.ks-goal__ranks {
+  list-style: none;
+  margin: -12px auto 24px;
+  padding: 0;
+  max-width: 360px;
+  text-align: left;
+}
+.ks-goal__rank {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 16px;
+  color: var(--color-text);
+}
+.ks-goal__rank:last-child { border-bottom: none; }
+.ks-goal__place {
+  flex: none;
+  min-width: 3em;
+  font-weight: 700;
+  color: var(--color-primary);
+}
 
 /* ── 画面の切り替え ── */
 .ks-screen[hidden] { display: none; }
