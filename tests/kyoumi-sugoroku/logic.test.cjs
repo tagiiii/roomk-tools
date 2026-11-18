@@ -305,7 +305,7 @@ function test(name, fn) {
       const to = next.game.pos[0];
       const q = L.lifeQuestionOf(next.game);
       assert.strictEqual(next.game.step, L.STEP.LIFE_TALK);
-      assert.strictEqual(q.kind, L.lifeKinds(24)[to]);
+      assert.strictEqual(q.kind, L.lifeKindsOf(next.game)[to]);
       if (q.kind !== 'dekigoto') assert.strictEqual(q.scene, to < 6 ? 's0' : 's1'); // 6列なので、6マス目から次の場面
       if (q.kind === 'kiku') assert.strictEqual(q.phase, L.PHASE.WHO);
       assert.strictEqual(L.questionOf(next.game, COUNTS), null);
@@ -498,7 +498,7 @@ function test(name, fn) {
 
   test('人生の道: 段階の名前は今までの遊び方と分ける（古い版の画面からの操作を通さない）', () => {
     const room = lifeRoom();
-    assert.strictEqual(room.game.step, 'life2-roll');
+    assert.strictEqual(room.game.step, 'life3-roll');
     assert.ok(L.isRollStep(room.game));
     // 古い版が見る名前（roll / talk）になっていたら、振れない・進めない
     assert.strictEqual(L.roll({ ...room, game: { ...room.game, step: 'roll' } }, 1, 0, 3, COUNTS), null);
@@ -506,8 +506,8 @@ function test(name, fn) {
     // 今までの遊び方は roll / talk のまま
     const theme = L.startGame(waitingRoom(), COUNTS);
     assert.strictEqual(theme.game.step, 'roll');
-    assert.strictEqual(L.roll({ ...theme, game: { ...theme.game, step: 'life2-roll' } }, 1, 0, 3, COUNTS), null);
-    assert.strictEqual(L.isPickStep({ ...theme.game, step: 'life2-pick' }), false);
+    assert.strictEqual(L.roll({ ...theme, game: { ...theme.game, step: 'life3-roll' } }, 1, 0, 3, COUNTS), null);
+    assert.strictEqual(L.isPickStep({ ...theme.game, step: 'life3-pick' }), false);
   });
 
   test('人生の道: 番の人がいなくなったとき（できごとは確定しない・選びかけの目は捨てる）', () => {
@@ -517,16 +517,16 @@ function test(name, fn) {
     assert.deepStrictEqual(next.game.pos, [22, 22, 22]);
     assert.strictEqual(next.status, L.STATUS.PLAYING);
     assert.strictEqual(next.game.turn, 1);
-    assert.strictEqual(next.game.step, 'life2-roll');
+    assert.strictEqual(next.game.step, 'life3-roll');
     assert.strictEqual(next.game.q, null);
     assert.strictEqual(L.dropTalk(base), null); // サイコロを振る段階では何もしない
     // 進む目を選んでいる途中でいなくなったら、その目は捨てて次の人へ
-    const picking = { ...base, game: { ...base.game, step: 'life2-pick', dice: [2, 5] } };
+    const picking = { ...base, game: { ...base.game, step: 'life3-pick', dice: [2, 5] } };
     assert.strictEqual(L.skipAbsent(picking), null); // いるうちはとばさない
     const { 'ホスト': _h, ...rest } = picking.players;
     const skipped = L.skipAbsent({ ...picking, players: rest });
     assert.strictEqual(skipped.game.turn, 1);
-    assert.strictEqual(skipped.game.step, 'life2-roll');
+    assert.strictEqual(skipped.game.step, 'life3-roll');
     assert.strictEqual(skipped.game.dice, null);
     // ゴールした人は、いるかぎりとばさない（おうえんの番）
     const done = { ...base, game: { ...base.game, pos: [23, 3, 4], done: [true, false, false], turn: 0 } };
@@ -586,9 +586,9 @@ function test(name, fn) {
 
   test('人生の道: 前の版が作ったゲームは見分けて、この版の操作を通さない', () => {
     const room = lifeRoom();
-    assert.strictEqual(room.game.step, 'life2-roll');
+    assert.strictEqual(room.game.step, 'life3-roll');
     assert.strictEqual(L.isOldLife(room.game), false);
-    for (const step of ['life-roll', 'life-talk', 'roll', 'talk', 'zzz', '', null, 7]) { // 前の版の名前と、知らない値
+    for (const step of ['life-roll', 'life-talk', 'life2-roll', 'life2-pick', 'life2-talk', 'roll', 'talk', 'zzz', '', null, 7]) { // 前の版の名前と、知らない値
       const old = { ...room, game: { ...room.game, step, rollNo: 1, q: { kind: 'hanasu', scene: 's0', idx: 2, n: 1 } } };
       assert.strictEqual(L.isOldLife(old.game), true);
       assert.strictEqual(L.isRollStep(old.game), false);
@@ -605,7 +605,7 @@ function test(name, fn) {
 
   test('人生の道: 進む目が読めないときは、振りなおすところにもどせる', () => {
     const base = lifeRoom();
-    const pick = (dice) => ({ ...base, game: { ...base.game, step: 'life2-pick', dice } });
+    const pick = (dice) => ({ ...base, game: { ...base.game, step: 'life3-pick', dice } });
     assert.deepStrictEqual(L.pickDice(pick([2, 5]).game), [2, 5]);
     assert.deepStrictEqual(L.pickDice(pick({ 0: 2, 1: 5 }).game), [2, 5]); // RTDB の数値キーの形
     for (const bad of [null, undefined, [3], [3, 3], [0, 4], [2, 7], { 1: 5 }, 'x', [2, 'a'], [true, 2], ['3', 4]]) {
@@ -614,7 +614,7 @@ function test(name, fn) {
       assert.strictEqual(L.pickBroken(room.game), true);
       assert.strictEqual(L.pickDie(room, 1, 0, 0, 3), null);
       const fixed = L.dropPick(room);
-      assert.strictEqual(fixed.game.step, 'life2-roll');
+      assert.strictEqual(fixed.game.step, 'life3-roll');
       assert.strictEqual(fixed.game.turn, 0); // 同じ人が振りなおす
       assert.strictEqual(fixed.game.dice, null);
     }
@@ -637,6 +637,160 @@ function test(name, fn) {
     assert.deepStrictEqual(L.cheerTargets(alone, alone.game), []);
     assert.strictEqual(L.cheer(alone, 1, 2, 1), null);
     assert.strictEqual(L.cheer(alone, 1, 2, 2), null);
+  });
+
+  /* ── みんなが同時に選ぶマス（いっしょ・よそう） ── */
+  const voteCard = (kind, room = lifeRoom(), turn = 1) => ({ ...withCard(room, { kind, scene: 's0', idx: 1, n: 1 }), game: { ...withCard(room, { kind, scene: 's0', idx: 1, n: 1 }).game, turn } });
+
+  test('みんなで選ぶマス: ルームで2人以上のときだけ盤に出る', () => {
+    const room = lifeRoom();
+    assert.strictEqual(room.game.votes, true);
+    const kinds = L.lifeKindsOf(room.game);
+    assert.ok(kinds.includes('issho') && kinds.includes('yosou'));
+    assert.deepStrictEqual(L.lifeKinds(12, true).slice(1, 11), ['erabu', 'kiku', 'issho', 'dekigoto', 'erabu', 'yosou', 'kiku', 'erabu', 'dekigoto', 'issho']);
+    // 1人のルームと、1台の画面（通信しないルーム）には出ない
+    const solo = lifeRoom({ players: { 'ホスト': { isHost: true, uid: 'uH', joinedAt: 1 } } });
+    assert.strictEqual(solo.game.votes, undefined);
+    assert.ok(!L.lifeKindsOf(solo.game).includes('issho'));
+    const offline = lifeRoom({ offline: true });
+    assert.strictEqual(offline.game.votes, undefined);
+    assert.ok(!L.lifeKindsOf(offline.game).some((k) => L.isVoteKind(k)));
+    // 止まると、質問つきのカードが出る（まだだれも選んでいない・開いていない）
+    let seen = false;
+    for (let seed = 1; seed <= 120 && !seen; seed++) {
+      const next = rollAndPick(room, seed);
+      const q = L.lifeQuestionOf(next.game);
+      if (L.isVoteKind(q.kind)) {
+        seen = true;
+        assert.deepStrictEqual(q.votes, {});
+        assert.strictEqual(q.open, false);
+        assert.ok(Number.isInteger(q.idx));
+      }
+    }
+    assert.ok(seen);
+  });
+
+  test('みんなで選ぶマス: 自分のぶんだけ選べる。ホストは、自分・端末のない人・つながっていない人のぶん', () => {
+    const room = voteCard('issho', lifeRoom({ proxies: { 'きいろ': { joinedAt: 4 } } }));
+    // 順番: ホスト0・あお1・みどり2・きいろ3（端末なし）
+    assert.strictEqual(L.canVote(room, 'uA', 'あお', 'guest', 1), true);
+    assert.strictEqual(L.canVote(room, 'uA', 'あお', 'guest', 2), false);
+    assert.strictEqual(L.canVote(room, 'uA', 'あお', 'guest', 3), false);
+    assert.strictEqual(L.canVote(room, 'uX', 'あお', 'guest', 1), false); // ちがう端末
+    assert.strictEqual(L.canVote(room, 'uH', 'ホスト', 'host', 0), true);
+    assert.strictEqual(L.canVote(room, 'uH', 'ホスト', 'host', 3), true); // 端末のない人
+    assert.strictEqual(L.canVote(room, 'uH', 'ホスト', 'host', 1), false); // つながっている人のぶんは本人
+    assert.strictEqual(L.canVote(room, 'uH', 'ホスト', 'host', 9), false);
+    const { 'あお': _a, ...rest } = room.players;
+    assert.strictEqual(L.canVote({ ...room, players: rest }, 'uH', 'ホスト', 'host', 1), true); // つながっていない人
+    // 進行だけのホストは、自分のぶんがない
+    const hostOnly = voteCard('issho', lifeRoom({ hostPlays: false }), 0);
+    assert.deepStrictEqual(L.orderOf(hostOnly.game), ['あお', 'みどり']);
+    assert.strictEqual(L.canVote(hostOnly, 'uH', 'ホスト', 'host', 0), false);
+    // みんなで選ぶマスでないとき・開いたあとは選べない
+    assert.strictEqual(L.canVote(withCard(lifeRoom(), { kind: 'erabu', scene: 's0', idx: 1, n: 1 }), 'uA', 'あお', 'guest', 1), false);
+    const opened = { ...room, game: { ...room.game, q: { ...room.game.q, open: true } } };
+    assert.strictEqual(L.canVote(opened, 'uA', 'あお', 'guest', 1), false);
+  });
+
+  test('みんなで選ぶマス: みんな選んだら開く。開くまでは選びなおせる', () => {
+    const room = voteCard('issho');
+    assert.strictEqual(L.vote(room, 1, 1, 1, 1, 3), null); // 3択の外
+    assert.strictEqual(L.vote(room, 1, 1, 1, 9, 0), null);
+    assert.strictEqual(L.vote(room, 1, 1, 2, 1, 0), null); // 古い質問
+    let r = L.vote(room, 1, 1, 1, 1, 0);
+    assert.deepStrictEqual(L.lifeQuestionOf(r.game).votes, { 1: 0 });
+    assert.strictEqual(L.lifeQuestionOf(r.game).open, false);
+    r = L.vote(r, 1, 1, 1, 1, 2); // 選びなおし
+    assert.deepStrictEqual(L.lifeQuestionOf(r.game).votes, { 1: 2 });
+    r = L.vote(r, 1, 1, 1, 0, 2);
+    assert.strictEqual(L.lifeQuestionOf(r.game).open, false);
+    assert.strictEqual(L.nextPlayer(r, 1, 1), null); // 開く前には進めない
+    r = L.vote(r, 1, 1, 1, 2, 1);
+    assert.strictEqual(L.lifeQuestionOf(r.game).open, true); // 3人とも選んだ
+    assert.strictEqual(L.vote(r, 1, 1, 1, 2, 0), null); // 開いたあとは選べない
+    assert.strictEqual(L.reask(r, 1, 1, 1, 5, COUNTS), null); // 開いたあとは質問を変えられない
+    // いない人のぶんは待たない
+    const { 'みどり': _m, ...rest } = room.players;
+    let two = L.vote({ ...room, players: rest }, 1, 1, 1, 1, 0);
+    two = L.vote(two, 1, 1, 1, 0, 0);
+    assert.strictEqual(L.lifeQuestionOf(two.game).open, true);
+    // 番の人かホストが、先に開ける
+    const early = L.openVotes(L.vote(room, 1, 1, 1, 1, 0), 1, 1, 1);
+    assert.strictEqual(L.lifeQuestionOf(early.game).open, true);
+    assert.strictEqual(L.openVotes(early, 1, 1, 1), null);
+    // 別の質問にすると、選んだものは消える
+    const re = L.reask(L.vote(room, 1, 1, 1, 1, 0), 1, 1, 1, 5, COUNTS);
+    assert.deepStrictEqual(L.lifeQuestionOf(re.game).votes, {});
+    assert.notStrictEqual(L.lifeQuestionOf(re.game).idx, 1);
+    assert.strictEqual(L.lifeQuestionOf(re.game).n, 2);
+  });
+
+  test('いっしょ: 番の人と同じだった人が1マス。みんな同じなら、みんなもう1マス', () => {
+    const base = voteCard('issho'); // 番は あお（1）
+    const withVotes = (votes, pos) => ({ ...base, game: { ...base.game, pos: pos || [3, 4, 5], q: { ...base.game.q, votes, open: true } } });
+    let room = withVotes({ 0: 2, 1: 2, 2: 0 });
+    let res = L.voteResult(room.game, L.lifeQuestionOf(room.game));
+    assert.deepStrictEqual(res, { answer: 2, same: [0], all: false, moves: { 0: 1 } });
+    let next = L.nextPlayer(room, 1, 1);
+    assert.deepStrictEqual(next.game.pos, [4, 4, 5]);
+    assert.strictEqual(next.game.turn, 2);
+    assert.strictEqual(next.game.step, 'life3-roll');
+    assert.strictEqual(L.nextPlayer(next, 1, 1), null); // 二度押し
+    // みんな同じ
+    room = withVotes({ 0: 1, 1: 1, 2: 1 });
+    res = L.voteResult(room.game, L.lifeQuestionOf(room.game));
+    assert.strictEqual(res.all, true);
+    assert.deepStrictEqual(res.moves, { 0: 2, 1: 1, 2: 2 });
+    assert.deepStrictEqual(L.nextPlayer(room, 1, 1).game.pos, [5, 5, 7]);
+    // だれも同じでない・番の人が選んでいない
+    assert.deepStrictEqual(L.voteResult(withVotes({ 0: 0, 1: 1, 2: 2 }).game, L.lifeQuestionOf(withVotes({ 0: 0, 1: 1, 2: 2 }).game)).moves, {});
+    room = withVotes({ 0: 0, 2: 0 });
+    assert.deepStrictEqual(L.voteResult(room.game, L.lifeQuestionOf(room.game)), { answer: null, same: [], all: false, moves: {} });
+    assert.deepStrictEqual(L.nextPlayer(room, 1, 1).game.pos, [3, 4, 5]);
+    // 1人しか選んでいないときは、「みんな同じ」にしない
+    assert.strictEqual(L.voteResult(withVotes({ 1: 0 }).game, L.lifeQuestionOf(withVotes({ 1: 0 }).game)).all, false);
+    // 進んでゴールに着く・ゴールした人は進まない
+    room = withVotes({ 0: 1, 1: 1, 2: 1 }, [22, 5, 23]);
+    room = { ...room, game: { ...room.game, done: [false, false, true] } };
+    next = L.nextPlayer(room, 1, 1);
+    assert.deepStrictEqual(next.game.pos, [23, 6, 23]);
+    assert.deepStrictEqual(next.game.done, [true, false, true]);
+    assert.deepStrictEqual(next.game.arrived.who, [0]);
+  });
+
+  test('よそう: 番の人の答えを当てた人が1マス。当ててもらえたら番の人も1マス', () => {
+    const base = voteCard('yosou');
+    const withVotes = (votes) => ({ ...base, game: { ...base.game, pos: [3, 4, 5], q: { ...base.game.q, votes, open: true } } });
+    let room = withVotes({ 0: 2, 1: 2, 2: 0 });
+    assert.deepStrictEqual(L.voteResult(room.game, L.lifeQuestionOf(room.game)), { answer: 2, same: [0], all: false, moves: { 0: 1, 1: 1 } });
+    assert.deepStrictEqual(L.nextPlayer(room, 1, 1).game.pos, [4, 5, 5]);
+    // みんな当てても、おまけはない（1マスずつ）
+    room = withVotes({ 0: 1, 1: 1, 2: 1 });
+    assert.deepStrictEqual(L.voteResult(room.game, L.lifeQuestionOf(room.game)).moves, { 0: 1, 2: 1, 1: 1 });
+    // だれも当たらなければ、だれも進まない
+    room = withVotes({ 0: 0, 1: 1, 2: 2 });
+    assert.deepStrictEqual(L.nextPlayer(room, 1, 1).game.pos, [3, 4, 5]);
+  });
+
+  test('みんなで選ぶマス: 壊れた値は読み飛ばす・番の人がいなくなったら捨てられる', () => {
+    const base = voteCard('issho');
+    const q = (votes) => L.lifeQuestionOf({ ...base.game, q: { ...base.game.q, votes } });
+    assert.deepStrictEqual(q({ 0: 1, 1: 5, 2: 'a', 7: 0, x: 1 }).votes, { 0: 1 });
+    assert.deepStrictEqual(q([1, null, 2]).votes, { 0: 1, 2: 2 }); // 配列で返ってきても読める
+    assert.deepStrictEqual(q('zzz').votes, {});
+    assert.deepStrictEqual(q([true, 1]).votes, { 1: 1 });
+    assert.strictEqual(L.lifeQuestionOf({ ...base.game, q: { kind: 'issho', scene: 's0', idx: 99, n: 1 } }), null);
+    assert.strictEqual(L.talkBroken({ ...base.game, q: { kind: 'issho', scene: 's0', idx: 99, n: 1 } }, COUNTS), true);
+    // 番の人の退出: 選んだものは確定させず、だれも進まない
+    const voted = L.vote(L.vote(base, 1, 1, 1, 1, 0), 1, 1, 1, 0, 0);
+    const dropped = L.dropTalk(voted);
+    assert.deepStrictEqual(dropped.game.pos, voted.game.pos);
+    assert.strictEqual(dropped.game.q, null);
+    // 押せる人（開く・進む・別の質問）は、番の人とホスト
+    assert.strictEqual(L.canAct(base, 'uA', 'あお', 'guest'), true);
+    assert.strictEqual(L.canAct(base, 'uM', 'みどり', 'guest'), false);
+    assert.strictEqual(L.canAct(base, 'uH', 'ホスト', 'host'), true);
   });
 
   console.log(`logic: ${passed} passed`);
