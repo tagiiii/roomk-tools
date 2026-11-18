@@ -88,7 +88,8 @@ apps/gomoku/
 ├── index.html   # 画面の骨組み・howto.js の設定
 ├── app.js       # 進行・描画（ES module。リバーシの app.js をもとにした）
 ├── engine.js    # 盤のルールと CPU（window.GomokuEngine。node では module.exports）
-└── style.css    # 固有スタイル
+├── style.css    # 固有スタイル
+└── slides.html  # 画面共有用説明スライド（15枚）
 ```
 
 - 分割型。index.html・app.js・engine.js・style.css を変えたら `?v=` をそろえて上げる
@@ -110,7 +111,8 @@ apps/gomoku/
 - `apps/updates.json` 先頭に `type: "new"`
 - `apps/guide/index.html` の「すごろく・ボードゲーム系」に1行
 - `apps/guide/feedback/index.html` の `APPS` に1つ
-- 説明スライド・イラスト・サムネイルはまだない（ポータルのカードはアイコンだけ）
+- 説明スライド `slides.html`（15枚。リバーシのスライドと同じエンジン。チャンネル `gomoku_deck`・保存キー `gms_`）。「？」の「説明スライドを見る」とポータルの「スライド」から開ける（2026-11-18）
+- イラスト・サムネイルはまだない（ポータルのカードはアイコンだけ）
 
 ## 画面構成・フロー
 
