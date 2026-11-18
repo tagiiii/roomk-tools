@@ -85,6 +85,10 @@
         <p class="nr-field__label" id="lblLocalStage">ステージ</p>
         <div class="nr-seg nr-seg--col" id="localStageSeg" role="group" aria-labelledby="lblLocalStage"></div>
       </div>
+      <label class="nr-check">
+        <input type="checkbox" id="localTimer">
+        <span>タイムアタック（クリアまでの時間をはかる）</span>
+      </label>
       <button type="button" class="btn btn-primary btn-full mt-md" id="btnLocalStart">はじめる</button>
     </div>
   </section>
@@ -119,6 +123,11 @@
         <h2 class="nr-h2">ステージ</h2>
         <div id="lobbySet" class="nr-seg nr-seg--col" role="group" aria-label="ステージ" hidden></div>
         <p id="lobbySetNote" class="nr-note"></p>
+        <label id="timerBox" class="nr-check" hidden>
+          <input type="checkbox" id="timerOn">
+          <span>タイムアタック（みんなでクリアするまでの時間をはかる）</span>
+        </label>
+        <p id="lobbyTimerNote" class="nr-note" hidden>タイムアタック: みんなでクリアするまでの時間をはかるよ</p>
       </div>
 
       <button id="btnStartGame" type="button" class="btn btn-primary btn-full btn-lg" hidden>はじめる</button>
@@ -132,6 +141,7 @@
       <div class="nr-head">
         <p class="nr-stage" id="stageName"></p>
         <p class="nr-you" id="youLine" hidden></p>
+        <p class="nr-time" id="timeLine" hidden></p>
         <button type="button" class="nr-quiet nr-head__hint" id="btnHint" aria-expanded="false" aria-controls="hintText">しかけの説明</button>
         <button type="button" class="nr-quiet" id="btnLocalTop" hidden>トップへ戻る</button>
       </div>
@@ -144,6 +154,7 @@
           <div class="nr-over__card">
             <p class="nr-over__big">クリア！</p>
             <p class="nr-over__sub">みんなでとびらに入れたね。</p>
+            <p class="nr-over__time" id="clearTime" hidden></p>
             <div class="nr-over__btns" id="clearBtns" hidden>
               <button type="button" class="btn btn-primary btn-lg" id="btnNext">次のステージへ</button>
               <button type="button" class="btn btn-secondary" id="btnAgain">もう一回</button>

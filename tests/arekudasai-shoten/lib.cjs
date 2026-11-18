@@ -176,6 +176,15 @@ async function gameOf(code) {
 const clientOf = (list, name) => list.find((c) => c.name === name);
 const shot = (c, name, opts = {}) => c.page.screenshot({ path: path.join(OUT, name + '.png'), fullPage: true, ...opts });
 
+// 結果の札を「次へ」で閉じる（札が出ていない画面は飛ばす。札は自分で閉じるまで残る）
+async function closeCards(list, timeout = 3000) {
+  for (const c of list) {
+    const b = c.page.locator('#stage button:has-text("次へ")');
+    try { await b.first().waitFor({ state: 'visible', timeout }); } catch (e) { continue; }
+    await b.first().click();
+  }
+}
+
 async function finishAll(server) {
   for (const c of clients) {
     check('console errors: ' + c.label, c.errors.length === 0, c.errors.slice(0, 5));
@@ -193,6 +202,6 @@ async function finishAll(server) {
 module.exports = {
   E, T, check, sleep, startServer, rest, roomOf, roomWhen, launch, newContext, newPage, newClient, open,
   text, waitText, visible, waitVisible, screen, waitScreen, overflow, stats, waitStats, waitToast, waitFor,
-  createRoom, joinRoom, gameOf, clientOf, shot, finishAll,
+  createRoom, joinRoom, gameOf, clientOf, shot, finishAll, closeCards,
   BASE, OUT, NS, DB, ROOMS, clients,
 };

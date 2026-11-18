@@ -58,11 +58,16 @@ const { E, check, roomWhen, gameOf, waitScreen, waitText, visible, text, rest, s
   C = byName(g.seats[g.S.turn]);
   O = players.find((c) => c !== C);
   want = g.S.players[g.S.turn].order;
+  // 結果の札を長く見ていても、お客さん本人の端末では、札を閉じたときからヒントを決める時間を数える
+  await waitText(C, '#stage', 'つぎは、あなたがお客さん');
+  await L.sleep(Math.max(0, s2 - Date.now()) + 3000);
+  await L.closeCards(players);
   await waitText(C, '#stage', 'あなたのほしい物', 12000);
+  const leftC = Number((await text(C, '#askCount')).replace(/\D/g, ''));
+  check('customer ask restarts after card', leftC >= 18, leftC);
   const pick = E.item(want).tags[1];
   await C.page.click(`#stage .ak-chip-btn:has-text("${pick}")`);
-  await rest('PUT', `${L.ROOMS}/${code}/play/${g.id}/r/s`, Date.now() - 19500);
-  r = await roomWhen(code, (room) => !!room.play?.[g.id]?.r?.h, 8000);
+  r = await roomWhen(code, (room) => !!room.play?.[g.id]?.r?.h, 25000);
   h = r.play[g.id].r.h.split(',');
   check('auto sends picked', h.length === 1 && h[0] === pick, h);
 

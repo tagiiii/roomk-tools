@@ -81,10 +81,25 @@ async function offer(c, name) {
   await other.page.click('#stage .ak-choice:has-text("お客さんに質問する")');
   const askTag = E.TAGS.find((t) => !tags.includes(t));
   await other.page.click(`#stage .ak-chip-btn:has-text("${askTag}")`);
-  const yes = E.item(want).tags.includes(askTag);
+  // 答えは自動で決めず、お客さんが「はい」「いいえ」をえらぶ（データの特徴とちがう答えでもよい）
+  const yes = !E.item(want).tags.includes(askTag);
+  const ans = yes ? 'はい' : 'いいえ';
+  const os = g.seats.indexOf(other.name);
   await waitText(other, '#stage', 'それは、' + askTag + '？');
-  check('answer right', (await text(other, '#stage')).includes(cust + '「' + (yes ? 'はい' : 'いいえ') + '」'));
-  await waitText(C, '#stage', 'それは、' + askTag);
+  await waitText(other, '#stage', cust + 'が答えているよ');
+  check('ask disabled while waiting', await other.page.evaluate(() => [...document.querySelectorAll('#stage .ak-choice')].find((b) => b.textContent.includes('質問する'))?.disabled === true));
+  check('raw q pending', (await gameOf(code)).r.q[os] === askTag + ':?');
+  await waitText(C, '#stage', 'お店の人から質問がきたよ');
+  check('customer sees wanted to answer', (await text(C, '#stage')).includes(E.item(want).name));
+  check('watch: waiting', (await text(watch, '#stage')).includes('答えているよ'));
+  await shot(C, '03b-customer-answer');
+  await C.page.click('#stage .ak-asked__btns button:has-text("' + ans + '")');
+  await waitText(other, '#stage .ak-asked__a', ans);
+  check('answer chosen by customer', (await text(other, '#stage .ak-asked__a')) === ans);
+  check('raw a', (await gameOf(code)).r.a[os] === (yes ? '1' : '0'));
+  await waitText(watch, '#stage .ak-asked__a', ans);
+  check('customer buttons gone', (await C.page.$$('#stage .ak-asked__btns')).length === 0);
+  await shot(other, '03c-shop-answer');
   check('rest count', (await text(other, '#stage')).includes('あと1回'));
   await other.page.click('#stage .ak-choice:has-text("出さない")');
   // 札には特徴の言葉を出さない・名前にも入っていない
@@ -143,7 +158,10 @@ async function offer(c, name) {
   await L.waitStats(C, 'hit', 1);
 
   // ── 2回目: 時間が来て、だれも出さなかった ──
-  await sleep(6500);   // 結果の札は自動で閉じる
+  // 結果の札は、6秒たっても自動では閉じない（「次へ」で閉じる）
+  await sleep(6500);
+  check('card stays', (await text(C, '#stage')).includes('ぴったり！') && (await text(watch, '#stage')).includes('ぴったり！'));
+  await L.closeCards([...players, watch]);
   cust = g.seats[g.S.turn];
   C = byName(cust);
   want = g.S.players[g.S.turn].order;
@@ -160,7 +178,7 @@ async function offer(c, name) {
   check('none round', g.last.none === true && g.r.n === 3);
 
   // ── 3回目: えらばれなかったけれど、ヒントに合う物を出したお店にも1ポイント ──
-  await sleep(6500);   // 結果の札は自動で閉じる
+  await L.closeCards([...players, watch]);
   g = await gameOf(code);
   const c3 = g.S.turn;
   want = g.S.players[c3].order;
@@ -199,7 +217,7 @@ async function offer(c, name) {
   check('fit item stays', g.S.players[y3].hand.includes(alt.id));
 
   // ── 4回目: ちがう物がえらばれると、出したお店は1ポイント減る（本人の画面にだけ出す） ──
-  await sleep(6500);   // 結果の札は自動で閉じる
+  await L.closeCards([...players, watch]);
   g = await gameOf(code);
   const c4 = g.S.turn;
   const w4 = g.S.players[c4].order;
@@ -235,7 +253,7 @@ async function offer(c, name) {
   check('reload keeps seat', (await text(a, '#myPointsBox')) !== null && await visible(a, '#myPointsBox'));
 
   // ── 退出した人の番は、ホストが飛ばせる ──
-  await sleep(6500);   // 結果の札は自動で閉じる
+  await L.closeCards([...players, watch]);
   await b.page.click('#btnLeave');
   await L.waitScreen(b, 'top');
   await roomWhen(code, (r) => !r.players['みどり']);
