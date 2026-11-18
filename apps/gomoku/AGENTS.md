@@ -112,7 +112,7 @@ apps/gomoku/
 - `apps/guide/index.html` の「すごろく・ボードゲーム系」に1行
 - `apps/guide/feedback/index.html` の `APPS` に1つ
 - 説明スライド `slides.html`（15枚。リバーシのスライドと同じエンジン。チャンネル `gomoku_deck`・保存キー `gms_`）。「？」の「説明スライドを見る」とポータルの「スライド」から開ける（2026-11-18）
-- イラスト・サムネイルはまだない（ポータルのカードはアイコンだけ）
+- イラスト `assets/illustrations/gomoku.webp`（盤と、黒白の石の入った2つの入れもの。5回作って5回目。石の5つのならびは絵の生成でうまく描けなかった）をカードとはじめの画面に、サムネイル `assets/thumbnails/gomoku.png`（撮り方は `tests/gomoku/shot.cjs`）をカードの説明に出す（2026-11-18）
 
 ## 画面構成・フロー
 
