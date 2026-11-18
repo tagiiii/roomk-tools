@@ -1242,3 +1242,84 @@
   color: var(--color-primary);
 }
 .ks-result__person .ks-pawn { width: 22px; height: 22px; font-size: 11px; }
+
+/* ── 「みんなで」のマス: お題に合うものを、順に1つずつ選ぶ ── */
+.ks-square--k-minna { background: #CFEFE6; }
+.ks-legend__item--minna { background: #CFEFE6; }
+.ks-minna {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.ks-minna__item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 48px;
+  padding: 6px 8px;
+  border: 2px solid var(--color-border);
+  border-radius: 10px;
+  background: #fff;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+  cursor: pointer;
+  word-break: auto-phrase;
+}
+.ks-minna__item:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+  color: var(--color-primary);
+}
+.ks-minna__item:disabled { cursor: default; }
+/* だれかが選んだもの: 選んだ人のコマを添える */
+.ks-minna__item.is-taken {
+  background: var(--color-primary-soft);
+  border-style: dashed;
+}
+.ks-minna__item .ks-pawn { width: 22px; height: 22px; font-size: 11px; }
+@media (max-width: 480px) {
+  .ks-minna { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ── おたすけカード ── */
+.ks-cardbadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 8px 1px 5px;
+  border-radius: 999px;
+  background: #FFE9A8;
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 700;
+}
+.ks-cardbadge .material-symbols-rounded { font-size: 15px; }
+#btnHelp[hidden] { display: none; }
+.ks-modal[data-theme="life-help"] { --ks-theme: #C99A22; --ks-theme-soft: #FBF1D3; }
+
+/* ── 「自由に話す」のとき、ひとこと書く欄 ── */
+.ks-write {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 6px;
+  text-align: left;
+}
+.ks-write[hidden] { display: none; }
+.ks-write__label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+.ks-write__actions {
+  display: flex;
+  gap: 10px;
+}
+.ks-write__actions .btn { flex: 1 1 0; }
+/* 書いている間は、選択肢とほかのボタンをかくす */
+.ks-modal.is-writing .ks-modal__choices,
+.ks-modal.is-writing .ks-modal__actions,
+.ks-modal.is-writing .ks-modal__wait { display: none; }
