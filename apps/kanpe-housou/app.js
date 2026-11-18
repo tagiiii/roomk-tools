@@ -22,7 +22,7 @@
 
   const NAME_MAX = 8;
   const WORD_MAX = 12;
-  const PEOPLE_MAX = 12; // ホスト以外の参加者（端末なしの人も入れて）。遊ぶのは8人まで
+  const PEOPLE_MAX = 12; // ホスト以外の参加者（端末なしの人も入れて）。遊ぶのは12人まで
 
   const $ = (id) => document.getElementById(id);
   const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
@@ -119,6 +119,7 @@
       round: Number(g.round) || 0,
       used: asArr(g.used),
       points: asObj(g.points),
+      wrote: asObj(g.wrote),
       history: asArr(g.history).map((h) => ({ reader: h.reader, prog: h.prog, k: Number(h.k) || 0, blanks: normBlanks(h.blanks), success: !!h.success })),
       reader: g.reader || null,
       prog: g.prog || null,
@@ -159,7 +160,10 @@
     return RoomkRTDB.isRoomExpired(room, ORPHAN_TTL_MS) || (!!room && !room.status);
   }
 
-  const writersOf = (g) => g.players.filter((id) => id !== g.reader);
+  // 読む人のほか。空らんより多いときは、書く人とお休みの人に分ける
+  const candsOf = (g) => g.players.filter((id) => id !== g.reader);
+  // その番組で書く人（空らんを持っている人）
+  const writersOf = (g) => candsOf(g).filter((id) => g.blanks.some((b) => b.writer === id));
   const idxOf = (g, id) => g.blanks.map((b, i) => (b.writer === id ? i : -1)).filter((i) => i >= 0);
 
   // だれでも見てよい形にする（まだ読んでいない言葉・だれが書いたかは入れない）
@@ -222,7 +226,7 @@
     R.game = {
       gid: R.lastGameId, step: 0, phase: 'write', players, uids,
       order: E.readOrder(players, normOpts(R.opts).laps, noReadOf(R)),
-      round: 0, used: [], points: {}, history: [],
+      round: 0, used: [], points: {}, wrote: {}, history: [],
       reader: null, prog: null, k: 0, blanks: [], submitted: {}, rev: {}, pos: -1, judges: [], verdicts: {}, success: null,
     };
     R.status = STATUS.PLAY;
@@ -231,7 +235,8 @@
   function startRound(R) {
     const g = R.game;
     g.reader = g.order[g.round];
-    const writers = E.shuffle(writersOf(g));
+    const writers = E.pickWriters(candsOf(g), g.wrote);
+    writers.forEach((id) => { g.wrote[id] = (Number(g.wrote[id]) || 0) + 1; });
     const prog = E.pickProgram(D.PROGRAMS, g.used);
     g.used = g.used.concat(prog.id);
     g.prog = prog.id;
@@ -1278,6 +1283,10 @@
         status = mine.submitted ? '出したよ。みんなを待っているよ' : 'ヒントに合う言葉を書こう';
         sub = mine.submitted ? (waiting.length ? 'まだ：' + listNames(V, waiting) : '') : '文の中身はひみつ。思いつかないときは「おまかせ」';
         if (build) stage.append(writeCard(V, S.me, mine, false));
+      } else if (g.players.includes(S.me) && S.mode !== 'watch') {
+        // 書く人が空らんより多いときの、お休みの人
+        status = 'この番組は、書く番がお休み';
+        sub = nameOf(V, g.reader) + ' が読むのを聞いて、あとで判定してね' + (waiting.length ? '（まだ：' + listNames(V, waiting) + '）' : '');
       } else {
         status = nameOf(V, g.reader) + ' が読む番。みんなが言葉を書いているよ';
         sub = waiting.length ? 'まだ：' + listNames(V, waiting) : '';
@@ -1662,6 +1671,7 @@
       li.append(avatar(V, id), el('span', 'kh-player__name', nameOf(V, id)));
       if (V.phase !== 'end' && id === g.reader) li.append(tagEl('読む人', 'reader', 'mic'));
       if (V.phase === 'write' && g.writers.includes(id)) li.append(g.submitted.includes(id) ? tagEl('出した', 'ok', 'check') : tagEl('書いている', 'muted'));
+      else if (V.phase === 'write' && id !== g.reader) li.append(tagEl('お休み', 'muted'));
       if (V.phase === 'judge' && g.judges.includes(id)) li.append(g.judged.includes(id) ? tagEl('出した', 'ok', 'check') : tagEl('考えている', 'muted'));
       const p = personOf(V, id);
       if (p && p.noRead) li.append(tagEl('書くだけ', 'muted', 'edit'));
