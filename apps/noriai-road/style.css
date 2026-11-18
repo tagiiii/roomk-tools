@@ -88,6 +88,12 @@ body { background: var(--color-bg); }
 .nr-over__card { background: var(--color-surface); border-radius: var(--radius-box); padding: 24px 28px; text-align: center; box-shadow: var(--shadow-lg); max-width: 90%; }
 .nr-over__big { font-size: var(--font-size-xl); font-weight: 700; margin: 0 0 6px; color: var(--color-primary); font-family: 'Zen Maru Gothic', var(--font-base); }
 .nr-over__sub { margin: 0 0 16px; color: var(--color-muted); }
+.nr-over__time { margin: -6px 0 16px; display: grid; gap: 2px; }
+.nr-over__time[hidden] { display: none; }
+.nr-over__time strong { font-size: var(--font-size-lg); color: var(--color-primary); font-variant-numeric: tabular-nums; }
+.nr-over__time span { color: var(--color-muted); font-size: var(--font-size-sm); }
+.nr-time { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--color-text); }
+.nr-time[hidden] { display: none; }
 .nr-over__btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 .nr-over__btns[hidden] { display: none; }
 .nr-over__wait { margin: 0; color: var(--color-muted); }
