@@ -8,7 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c" />
-  <link rel="stylesheet" href="style.css?v=20261106look" />
+  <link rel="stylesheet" href="style.css?v=20261118" />
 </head>
 <body data-genre="kotoba">
 
@@ -32,9 +32,23 @@
       <div class="app-entry__actions">
         <button class="btn btn-primary btn-lg" id="btnStart">
           <span class="material-symbols-rounded">play_arrow</span>
-          スターターを引く
+          <span id="btnStartLabel">スターターを引く</span>
         </button>
       </div>
+      <details class="kr-more" id="settings">
+        <summary>くわしい設定</summary>
+        <fieldset class="kr-setting">
+          <legend class="kr-setting__label">最初の一文</legend>
+          <div class="kr-choice">
+            <label class="kr-choice__item"><input type="radio" name="starterMode" value="random" checked> ランダム</label>
+            <label class="kr-choice__item"><input type="radio" name="starterMode" value="own"> 自分で書く</label>
+          </div>
+          <div class="kr-own" id="ownStarterBox" hidden>
+            <label class="kr-own__label" for="ownStarter">はじめる一文（120文字まで）</label>
+            <textarea class="kr-own__input" id="ownStarter" rows="3" maxlength="120" placeholder="例: 前回の最後の一文"></textarea>
+          </div>
+        </fieldset>
+      </details>
     </section>
 
     <!-- ゲーム中 -->
@@ -71,7 +85,7 @@
 
   </div>
 
-  <script type="module" src="app.js"></script>
+  <script type="module" src="app.js?v=20261118"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -81,6 +95,7 @@
       sections: [
         { heading: 'はじめかた', items: [
           '「スターターを引く」を押して、最初の一文を出す',
+          '最初の一文を自分で書きたいときは、「くわしい設定」で「自分で書く」を選ぶ（前回の続きからはじめるときなど）',
         ] },
         { heading: 'すすめかた', items: [
           '「つなぎ言葉を引く」を押して、出てきたことばに続く一文を考えて話す',

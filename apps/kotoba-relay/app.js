@@ -113,9 +113,34 @@ function showGame() {
   document.getElementById('screenGame').hidden = false;
 }
 
+// ── 最初の一文の決め方（くわしい設定）──
+// 書いた文はどこにも残さない。開き直すとランダムにもどる
+const ownStarterInput = document.getElementById('ownStarter');
+const btnStart = document.getElementById('btnStart');
+
+function starterMode() {
+  return document.querySelector('input[name="starterMode"]:checked').value;
+}
+
+function ownStarterText() {
+  return ownStarterInput.value.trim();
+}
+
+function updateStartButton() {
+  const own = starterMode() === 'own';
+  document.getElementById('ownStarterBox').hidden = !own;
+  document.getElementById('btnStartLabel').textContent = own ? 'この一文ではじめる' : 'スターターを引く';
+  btnStart.disabled = own && ownStarterText() === '';
+}
+
+function pickStarter() {
+  if (starterMode() === 'own' && ownStarterText() !== '') return ownStarterText();
+  return starters[Math.floor(Math.random() * starters.length)];
+}
+
 // ── 開始 ──
 function start() {
-  state.starter = starters[Math.floor(Math.random() * starters.length)];
+  state.starter = pickStarter();
   state.history = [];
   refillPool();
 
@@ -162,7 +187,15 @@ function renderHistory() {
 }
 
 // ── イベント ──
-document.getElementById('btnStart').addEventListener('click', start);
+btnStart.addEventListener('click', start);
+document.querySelectorAll('input[name="starterMode"]').forEach((r) => {
+  r.addEventListener('change', () => {
+    updateStartButton();
+    if (starterMode() === 'own') ownStarterInput.focus();
+  });
+});
+ownStarterInput.addEventListener('input', updateStartButton);
+updateStartButton();
 document.getElementById('btnDraw').addEventListener('click', draw);
 document.getElementById('btnPass').addEventListener('click', pass);
 document.getElementById('btnAgain').addEventListener('click', start);
