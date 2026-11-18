@@ -1072,13 +1072,13 @@ function fillVoteCard(c) {
   let effect;
   if (r.answer == null) effect = `${who}さんが選ばなかったので、だれも進まないよ`;
   else if (issho && r.all) effect = 'みんないっしょ！ みんな進むよ';
-  else if (!r.same.length) effect = '今回は、だれも進まないよ';
+  else if (!r.same.length) effect = issho ? `${who}さんと同じ答えの人はいなかったよ` : '今回は、だれも進まないよ';
   else if (issho) effect = `${names(r.same)}さんがいっしょ！ 1マス進む`;
   else effect = `${names(r.same)}さんが当たり！ ${who}さんもいっしょに1マス進む`;
   const moving = Object.keys(r.moves).length > 0;
   fillQuestion(null, { q: c.question.q, choices: null }, who, {
     ...base,
-    toText: issho ? `${who} さんの答えと、同じだった人` : `${who} さんの答えと、当てた人`,
+    toText: issho ? 'みんなの答え' : `${who} さんの答えと、当てた人`,
     effect,
     showNext: c.act, showSkip: false,
     nextLabel: moving ? '進む' : '次の人へ', nextIcon: 'arrow_forward',
@@ -1088,9 +1088,9 @@ function fillVoteCard(c) {
   votersEl.hidden = true;
   choicesEl.replaceChildren();
   c.question.choices.forEach((text, i) => {
-    // 番の人の答えと、同じだった人（当てた人）だけを出す。ちがう答え・外れた予想は、だれのものかを出さない
-    // （ルート AGENTS.md「判定・投票は、だれが何を出したかを画面に出さない」）
-    const picked = Object.keys(c.votes).map(Number).filter((v) => c.votes[v] === i && r.answer === i);
+    // いっしょ: みんなの自分の答えを選択肢ごとに出す（自分の好みを答えるマス。2026-11-18 オーナー判断）。
+    // よそう: 番の人の答えと、当てた人だけを出す（外れた人の予想は、だれのものかを出さない）
+    const picked = Object.keys(c.votes).map(Number).filter((v) => c.votes[v] === i && (issho || r.answer === i));
     const row = makeElement('div', 'ks-result' + (r.answer === i ? ' is-answer' : ''));
     const head = makeElement('div', 'ks-result__head');
     head.append(makeElement('span', 'ks-choice__num', NUMBERS[i]), makeElement('span', 'ks-choice__text', text));
