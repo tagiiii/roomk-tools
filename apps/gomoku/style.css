@@ -202,7 +202,7 @@ body { background: var(--color-bg); }
 .gm-cell.is-star::after {
   content: ''; position: absolute; width: 20%; height: 20%; border-radius: 50%; background: var(--gm-line);
 }
-.gm-cell:disabled { opacity: 1; color: inherit; }
+.gm-cell[aria-disabled="true"] { cursor: default; }
 .gm-cell.is-playable { cursor: pointer; }
 .gm-cell.is-playable:hover { background-color: rgba(255, 255, 255, 0.3); }
 .gm-cell:focus-visible { outline: 3px solid #1F6FD1; outline-offset: -3px; z-index: 3; }
@@ -313,7 +313,7 @@ body { background: var(--color-bg); }
   .gm-board { border-width: 4px; }
 }
 
-/* 幅の狭い画面: 盤の左右の余白を詰めて、マスを指で押しやすくする（375px で 39px → 42px 台）。
+/* 幅の狭い画面: 盤の左右の余白を詰めて、マスを指で押しやすくする（375px でマスが約 22px）。
    100vw はパソコンでスクロールバーの幅もふくむので、対局の欄の実際の幅（cqw）から盤の大きさを決める */
 @supports (container-type: inline-size) {
   @media (max-width: 600px) {

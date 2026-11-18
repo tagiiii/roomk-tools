@@ -244,11 +244,18 @@ function gameOf(room) {
   const seats = g.seats || {};
   const uids = g.uids || {};
   const proxy = g.proxy || {};
-  // 置いた場所の列。その場所に石がないものは読み飛ばす
-  const hist = asList(g.hist).filter((h) => Number.isInteger(h) && h >= 0 && h < E.CELLS && g.board[h] !== '.');
-  const last = Number.isInteger(g.last) ? g.last : -1;
-  // 勝ち負けと5つのならびは、盤と直前の手から求める（保存しない）
-  const res = g.over === true ? E.result(g.board, last) : null;
+  // 直前の手: 盤の中で、石のある場所だけ
+  const last = Number.isInteger(g.last) && g.last >= 0 && g.last < E.CELLS && g.board[g.last] !== '.' ? g.last : -1;
+  // 置いた場所の列。盤と食いちがう（重なり・黒白が交互でない・石の数と合わない・最後が直前の手でない）ときは、
+  // 1手もどすで直前でない石を消さないよう、空にして「1手もどす」を押せなくする
+  const raw = asList(g.hist);
+  const n = E.count(g.board);
+  const histOk = raw.length === n.b + n.w && new Set(raw).size === raw.length
+    && raw.every((h, k) => Number.isInteger(h) && h >= 0 && h < E.CELLS && g.board[h] === (k % 2 ? 'w' : 'b'))
+    && (raw.length ? raw[raw.length - 1] === last : last === -1);
+  const hist = histOk ? raw : [];
+  // 勝ち負けと5つのならびは、保存した over によらず、盤と直前の手から求める（保存しない）
+  const res = E.result(g.board, last);
   return {
     id: Number(g.id) || 0,
     seats: { b: typeof seats.b === 'string' ? seats.b : null, w: typeof seats.w === 'string' ? seats.w : null },
@@ -257,7 +264,7 @@ function gameOf(room) {
     board: g.board,
     turn: g.turn === 'w' ? 'w' : 'b',
     last,
-    over: g.over === true && !!res,
+    over: !!res,
     win: res ? res.win : null,
     line: res ? res.line : [],
     ply: Number(g.ply) || 0,
@@ -1699,7 +1706,10 @@ function buildBoard(root) {
       b.dataset.i = String(i);
       b.setAttribute('role', 'gridcell');
       b.append(makeElement('span', 'gm-stone'), makeElement('span', 'gm-mark'));
+      b.tabIndex = -1;
       b.addEventListener('click', () => onCell(i));
+      b.addEventListener('keydown', (ev) => moveFocus(root, i, ev));
+      b.addEventListener('focus', () => setRoving(root, i));
       row.append(b);
       cells.push(b);
     }
@@ -1712,6 +1722,8 @@ function buildBoard(root) {
   wrap.append(colsRow, body);
   root.replaceChildren(wrap);
   root._cells = cells;
+  root._focus = null;
+  setRoving(root, E.CENTER);
   root._key = null;
   root._ply = -1;
 }
@@ -1747,10 +1759,13 @@ function renderBoard(root, g, opt) {
     b.classList.remove('is-ghost-b', 'is-ghost-w');
     if (i === opt.pick) b.classList.add('is-ghost-' + g.turn);
     b.classList.toggle('is-playable', opt.canPlay && empty);
-    b.disabled = !opt.canPlay;
+    // 押せないときも盤を読めるよう、disabled にはせず aria-disabled で伝える（押したときは onCell で確かめる）
+    b.setAttribute('aria-disabled', opt.canPlay ? 'false' : 'true');
+    if (showLast && i === g.last && !empty) what += '（直前の手）';
+    if (i === opt.pick) what += '（選択中）';
     b.setAttribute('aria-label', E.coord(i) + ' ' + what + (line.has(i) ? '（5つのならび）' : ''));
   });
-  if (animate && g.last >= 0) {
+  if (animate && g.last >= 0 && g.last < cells.length) {
     const s = cells[g.last].firstChild;
     s.style.animationName = 'none';
     void s.offsetWidth;
@@ -1758,6 +1773,31 @@ function renderBoard(root, g, opt) {
   }
   root._key = opt.key;
   root._ply = g.ply;
+}
+
+// 盤のキーボード操作: Tab で入るのは1マスだけ（roving tabindex）。矢印キーで動き、Home/End で行のはし
+function setRoving(root, i) {
+  const cells = root._cells;
+  if (!cells) return;
+  if (root._focus != null && cells[root._focus]) cells[root._focus].tabIndex = -1;
+  cells[i].tabIndex = 0;
+  root._focus = i;
+}
+function moveFocus(root, i, ev) {
+  const r = Math.floor(i / E.SIZE);
+  const k = i % E.SIZE;
+  const to = {
+    ArrowUp: r > 0 ? i - E.SIZE : i,
+    ArrowDown: r < E.SIZE - 1 ? i + E.SIZE : i,
+    ArrowLeft: k > 0 ? i - 1 : i,
+    ArrowRight: k < E.SIZE - 1 ? i + 1 : i,
+    Home: r * E.SIZE,
+    End: r * E.SIZE + E.SIZE - 1,
+  }[ev.key];
+  if (to == null) return;
+  ev.preventDefault();
+  setRoving(root, to);
+  root._cells[to].focus();
 }
 
 function onCell(i) {

@@ -78,7 +78,7 @@ const freeAt = (board) => board.indexOf('.');
   const V = await L.newClient('hikari');
   await L.joinRoom(V, 'ひかり', code).catch(() => {});
   check('R1 対局中に入った人は観戦', await waitFor(async () => (await L.screen(V)) === 'game' && (await L.text(V, '#barMe')).includes('観戦中')), await L.text(V, '#barMe'));
-  check('R2 観戦の人は押せない', await V.page.isDisabled(cell(0)));
+  check('R2 観戦の人は押せない', (await V.page.getAttribute(cell(0), 'aria-disabled')) === 'true');
 
   // ── D. 切断・代わりに置く・同じ名前の別人・再読み込み ──
   // 時間制限があると CPU が進めてしまうので、ここからは時間を戻しておく（ホストの操作はないので REST で）
@@ -95,7 +95,7 @@ const freeAt = (board) => board.indexOf('.');
   await A.context.close();
   check('D1 通信が切れたことがわかる', await waitFor(async () => (await L.text(H, '#seats')).includes('通信が切れた'), 90000));
   check('D2 ホストに「代わりに置いてね」', (await L.status(H)).includes('黒（あおい）の番。代わりに置いてね'), await L.status(H));
-  check('D3 白の人は押せない', await B.page.isDisabled(cell(0)));
+  check('D3 白の人は押せない', (await B.page.getAttribute(cell(0), 'aria-disabled')) === 'true');
   const ply0 = room.game.ply;
   room = await L.roomOf(code);
   await H.page.click(cell(freeAt(room.game.board)));

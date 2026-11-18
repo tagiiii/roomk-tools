@@ -43,8 +43,8 @@ const at = (s) => E.COLS.indexOf(s[0]) + (Number(s.slice(1)) - 1) * E.SIZE;
     check('turn black', (await turnOf(A)) === 'b');
     check('A status mine', (await status(A)).includes('あなたの番'), await status(A));
     check('B status waiting', (await status(B)).includes('考え中'), await status(B));
-    check('B cells disabled', await B.page.$eval(cell(at('H8')), (b) => b.disabled));
-    check('C cells disabled', await C.page.$eval(cell(at('H8')), (b) => b.disabled));
+    check('B cells disabled', await B.page.$eval(cell(at('H8')), (b) => b.getAttribute('aria-disabled') === 'true'));
+    check('C cells disabled', await C.page.$eval(cell(at('H8')), (b) => b.getAttribute('aria-disabled') === 'true'));
     check('hint on empty board is center', JSON.stringify(await marked(A, 'is-hint')) === JSON.stringify([E.CENTER]), await marked(A, 'is-hint'));
     check('coords A..O', (await H.page.$$eval('.gm-coords-top .gm-coord', (x) => x.map((n) => n.textContent).join(''))) === 'ABCDEFGHIJKLMNO');
 
@@ -73,7 +73,18 @@ const at = (s) => E.COLS.indexOf(s[0]) + (Number(s.slice(1)) - 1) * E.SIZE;
     await shot(H, 'room-host-desktop');
     await shot(W, 'room-watch');
     // 番でない人が押しても置けない（ボタンが押せない）
-    check('A disabled on B turn', await A.page.$eval(cell(at('A1')), (b) => b.disabled));
+    check('A disabled on B turn', await A.page.$eval(cell(at('A1')), (b) => b.getAttribute('aria-disabled') === 'true'));
+    // 押せない人（番でない人）が押しても置けない
+    await A.page.click(cell(at('A1')), { force: true });
+    await sleep(300);
+    check('not-turn click ignored', (await roomOf(code)).game.ply === 7);
+    // 観戦の人も盤をキーボードで読める（Tab で入るのは1マス・矢印で動く）
+    const tabs = await C.page.$$eval('#board .gm-cell', (xs) => xs.filter((x) => x.tabIndex === 0).length);
+    check('roving tabindex one', tabs === 1, tabs);
+    await C.page.focus(cell(at('H8')));
+    await C.page.keyboard.press('ArrowRight');
+    check('arrow moves focus', (await C.page.evaluate(() => document.activeElement?.dataset?.i)) === String(at('I8')));
+    check('label has last', (await C.page.getAttribute(cell(at('K8')), 'aria-label')).includes('直前の手'), await C.page.getAttribute(cell(at('K8')), 'aria-label'));
     // 置いてある所には置けない
     await B.page.click(cell(at('H8')), { force: true });
     await sleep(300);
@@ -153,6 +164,20 @@ const at = (s) => E.COLS.indexOf(s[0]) + (Number(s.slice(1)) - 1) * E.SIZE;
     await roomWhen(code, (r) => r.game?.ply === 2);
     check('placed after confirm', (await roomOf(code)).game.board[at('I9')] === 'w');
 
+    // 置いた場所の列が盤と食いちがうときは、1手もどすを押せない（直前でない石を消さない）
+    const goodHist = (await roomOf(code)).game.hist;
+    await rest('PUT', ROOMS + '/' + code + '/game/hist', [at('I9'), at('H8')]);
+    await waitFor(async () => H.page.isDisabled('#btnUndo'));
+    check('broken hist disables undo', await H.page.isDisabled('#btnUndo'));
+    await rest('PUT', ROOMS + '/' + code + '/game/hist', goodHist);
+    await waitFor(async () => !(await H.page.isDisabled('#btnUndo')));
+    check('good hist enables undo', !(await H.page.isDisabled('#btnUndo')));
+    // 直前の手が空きのマスでも描画が止まらない
+    await rest('PUT', ROOMS + '/' + code + '/game/last', 0);
+    await sleep(400);
+    check('broken last no mark', (await lastMark(A)).length === 0);
+    await rest('PUT', ROOMS + '/' + code + '/game/last', at('I9'));
+
     // 幅 375px（参加者）
     await A.page.setViewportSize({ width: 375, height: 760 });
     await sleep(300);
@@ -187,7 +212,7 @@ const at = (s) => E.COLS.indexOf(s[0]) + (Number(s.slice(1)) - 1) * E.SIZE;
     await H.page.click(cell(at('H9')));
     room = await roomWhen(code, (r) => r.game?.ply === 2);
     check('host places for proxy', room.game.board[at('H9')] === 'w');
-    check('guest cannot place for proxy', await A.page.$eval(cell(at('A1')), (b) => b.disabled));
+    check('guest cannot place for proxy', await A.page.$eval(cell(at('A1')), (b) => b.getAttribute('aria-disabled') === 'true'));
 
     // 退出（観戦の人）・ルームを閉じる
     await C.page.click('#btnLeave');
