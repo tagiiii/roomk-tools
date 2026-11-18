@@ -3,7 +3,7 @@
 // ルームの決まりは logic.js。質問はテーマのキーと QUESTIONS の中の番号で共有するので、
 // QUESTIONS は並べ替え・途中の削除をしない（足すのは末尾だけ）。
 import { shuffle, popIn } from '../shared/js/utils.js';
-import * as L from './logic.js?v=20261118ver';
+import * as L from './logic.js?v=20261118rank';
 import { SCENE_W, sceneHeight, squarePoints, squareWidth, rowCenters, sceneElement } from './art.js?v=20261118more';
 
 const NUMBERS = ['①', '②', '③', '④', '⑤'];
@@ -591,7 +591,24 @@ function clearTimers() {
   if (local.moveTimer) { clearTimeout(local.moveTimer); local.moveTimer = null; }
 }
 
-const settings = { mode: 'theme', lifeLen: 0, playerCount: 2, totalSquares: 15, names: Array(L.MAX_PLAYERS).fill('') };
+const settings = { mode: 'theme', lifeLen: 0, rank: false, playerCount: 2, totalSquares: 15, names: Array(L.MAX_PLAYERS).fill('') };
+
+// 「道中すごろく」の順位（2026-11-18 オーナー: 出してもいい。はじめは出さない）
+const RANK_OPTIONS = [{ value: false, label: '出さない' }, { value: true, label: '出す' }];
+
+// ゴールのカードの順位（同じ順位の人は1行にまとめる）。空なら出さない
+function fillRanks(list) {
+  const el = $('goal-ranks');
+  el.replaceChildren();
+  const places = [...new Set(list.map((r) => r.place).filter((p) => p > 0))].sort((a, b) => a - b);
+  places.forEach((place) => {
+    const li = makeElement('li', 'ks-goal__rank');
+    li.append(makeElement('span', 'ks-goal__place', `${place}位`),
+      makeElement('span', 'ks-goal__who', list.filter((r) => r.place === place).map((r) => r.name + ' さん').join('・')));
+    el.appendChild(li);
+  });
+  el.hidden = places.length === 0;
+}
 
 function buildToggle(containerId, options, selectedValue, onChange) {
   const el = $(containerId);
@@ -679,6 +696,7 @@ function initSettings() {
     settings.lifeLen,
     (v) => { settings.lifeLen = v; renderModeFields(); }
   );
+  buildToggle('life-rank', RANK_OPTIONS, settings.rank, (v) => { settings.rank = v; });
   renderModeFields();
   buildToggle('square-count',
     L.SQUARE_OPTIONS.map((n) => ({ value: n, label: `${n}マス` })),
@@ -698,6 +716,7 @@ function renderModeFields() {
   $('field-squares').hidden = life;
   $('field-themes').hidden = life;
   $('field-length').hidden = !life;
+  $('field-rank').hidden = !life;
   $('mode-note').textContent = life
     ? '小さいころから、おとなになったらまで。4つの場面をたどって、みんながゴールしたらおわり。'
     : '止まったマスで、選んだテーマの質問に答える。だれかがゴールしたらおわり。';
@@ -878,6 +897,7 @@ function skipLocalQuestion() {
 function showLocalGoal(winner) {
   $('goal-title').textContent = 'ゴール！';
   $('goal-name').textContent = `${winner.name} さん、おめでとう！`;
+  fillRanks([]);
   $('goal-wait').hidden = true;
   $('btn-restart').hidden = false;
   $('btnGoalSettings').hidden = false;
@@ -1165,6 +1185,7 @@ function startLocalLife(names) {
     hostPlays: false,
     mode: L.MODE.LIFE,
     lifeLen: settings.lifeLen,
+    rank: settings.rank,
     lastGameId: 0,
     players: {},
     proxies: Object.fromEntries(unique.map((name, i) => [name, { joinedAt: i + 1 }])),
@@ -1953,7 +1974,7 @@ function renderWaiting(room) {
   const life = L.modeOf(room.mode) === L.MODE.LIFE;
   const lifeTotal = L.lifeSizeFor(Math.max(1, playing.length), room.lifeLen);
   $('waitingSettings').textContent = life
-    ? `あそびかた 道中すごろく（${lifeTotal}マス。4つの場面をたどって、みんながゴールしたらおわり）`
+    ? `あそびかた 道中すごろく（${lifeTotal}マス。4つの場面をたどって、みんながゴールしたらおわり${room.rank === true ? '。ゴールした順に順位を出す' : ''}）`
     : `マス数 ${squares}マス・テーマ ${themeLabels(themes)}`;
 
   $('hostWaitingTools').hidden = !host;
@@ -1973,6 +1994,8 @@ function renderWaiting(room) {
     box.disabled = !room.hostPlays && playing.length >= L.MAX_PLAYERS;
     selectToggle($('roomMode'), L.modeOf(room.mode));
     selectToggle($('roomLifeLen'), L.lifeLenOf(room.lifeLen));
+    selectToggle($('roomRank'), room.rank === true);
+    $('fieldRoomRank').hidden = !life;
     $('fieldRoomSquares').hidden = life;
     $('fieldRoomThemes').hidden = life;
     $('fieldRoomLength').hidden = !life;
@@ -1992,7 +2015,8 @@ function renderWaiting(room) {
 function playerTags(room, game, name) {
   const tags = [];
   if (name === net.nickname) tags.push('あなた');
-  if (L.doneOf(game, L.orderOf(game).indexOf(name))) tags.push('ゴール');
+  const at = L.orderOf(game).indexOf(name);
+  if (L.doneOf(game, at)) tags.push(L.showsRank(game) && L.placeOf(game, at) ? `${L.placeOf(game, at)}位でゴール` : 'ゴール');
   if (net.offline) return tags;
   if (net.role === 'host' && L.isProxy(game, name)) tags.push('端末なし');
   else if (!L.present(room, game, name)) tags.push('つながっていない');
@@ -2098,7 +2122,8 @@ function renderRoomGame(room, game) {
   const arrived = life && !goal && !anim && game.arrived && Number(game.arrived.rollNo) === (Number(game.rollNo) || 0)
     ? L.asList(game.arrived.who).filter((i) => Number.isInteger(i) && order[i] != null) : [];
   if (arrived.length && rolling && !cheering) {
-    note.textContent = `${arrived.map((i) => order[i]).join('さん・')}さんがゴール！ ${note.textContent}`;
+    const place = L.showsRank(game) ? L.placeOf(game, arrived[0]) : 0;
+    note.textContent = `${arrived.map((i) => order[i]).join('さん・')}さんが${place ? place + '位で' : ''}ゴール！ ${note.textContent}`;
     const arrivedKey = `${game.id}:${game.rollNo}:${arrived.join()}`;
     if (net.arrivedKey !== arrivedKey) { net.arrivedKey = arrivedKey; celebrate(); }
   }
@@ -2118,6 +2143,7 @@ function renderRoomGame(room, game) {
     $('goalCard').hidden = false;
     $('goal-title').textContent = winner < 0 ? 'みんなゴール！' : 'ゴール！';
     $('goal-name').textContent = winner < 0 ? '4つの場面をたどったね。おつかれさま！' : `${order[winner]} さん、おめでとう！`;
+    fillRanks(L.showsRank(game) ? order.map((name, i) => ({ name, place: L.placeOf(game, i) })) : []);
     $('btn-restart').hidden = net.role !== 'host';
     $('btnGoalSettings').hidden = !net.offline;
     $('goal-wait').hidden = net.role === 'host';
@@ -2518,6 +2544,14 @@ async function setRoomMode(value) {
   if (!ok && net.room) renderRoom(net.room);
 }
 
+async function setRoomRank(value) {
+  const ok = await hostTransaction((room) => {
+    if (room.status !== L.STATUS.WAITING) return;
+    return { ...room, rank: value === true };
+  }, '設定を変えられませんでした。もう一度ためしてね');
+  if (!ok && net.room) renderRoom(net.room);
+}
+
 async function setRoomLifeLen(value) {
   const ok = await hostTransaction((room) => {
     if (room.status !== L.STATUS.WAITING) return;
@@ -2627,6 +2661,7 @@ initSettings();
 buildToggle('roomSquares', L.SQUARE_OPTIONS.map((n) => ({ value: n, label: `${n}マス` })), L.DEFAULT_SQUARES, setSquares);
 buildToggle('roomMode', [{ value: L.MODE.THEME, label: 'テーマで話す' }, { value: L.MODE.LIFE, label: '道中すごろく' }], L.MODE.THEME, setRoomMode);
 buildToggle('roomLifeLen', [{ value: -1, label: 'みじかい' }, { value: 0, label: 'ふつう' }, { value: 1, label: 'ながい' }], 0, setRoomLifeLen);
+buildToggle('roomRank', RANK_OPTIONS, false, setRoomRank);
 buildThemeList('roomThemes', toggleTheme);
 
 $('btnGoLocal').addEventListener('click', () => showScreen('settings'));

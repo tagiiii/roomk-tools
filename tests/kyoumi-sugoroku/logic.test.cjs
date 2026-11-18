@@ -497,6 +497,27 @@ function test(name, fn) {
     assert.strictEqual(both.status, L.STATUS.GOAL);
   });
 
+  test('道中すごろく: ゴールした順（places）・同時に着いたら同じ順位・順位を出すかは「はじめる」の時点で固定', () => {
+    const base = lifeRoom(); // 24マス
+    assert.deepStrictEqual(base.game.places, [0, 0, 0]);
+    assert.strictEqual(L.showsRank(base.game), false); // はじめは出さない
+    const one = L.nextPlayer(withCard(base, { kind: 'dekigoto', idx: 0, n: 1 }, [22, 3, 4]), 1, 1);
+    assert.deepStrictEqual(one.game.places, [1, 0, 0]);
+    assert.strictEqual(L.placeOf(one.game, 0), 1);
+    // みんな進むできごとで、2人がいっしょに着く → 2人とも2位
+    const tie = { ...base, game: { ...base.game, pos: [23, 22, 22], done: [true, false, false], places: [1, 0, 0] } };
+    const end = L.nextPlayer(withCard(tie, { kind: 'dekigoto', idx: 1, n: 1 }, [23, 22, 22]), 1, 1);
+    assert.strictEqual(end.status, L.STATUS.GOAL);
+    assert.deepStrictEqual(end.game.places, [1, 2, 2]);
+    // 着いた人の順位は、あとで変わらない
+    assert.strictEqual(L.placeOf({ places: { 2: 3 } }, 2), 3); // RTDB の数値キーの形
+    assert.strictEqual(L.placeOf({ places: { 2: 'x' } }, 2), 0);
+    // 順位を出す設定
+    const ranked = L.startGame(waitingRoom({ mode: L.MODE.LIFE, rank: true }), COUNTS);
+    assert.strictEqual(L.showsRank(ranked.game), true);
+    assert.strictEqual(L.showsRank(L.startGame(waitingRoom({ rank: true }), COUNTS).game), false); // 今までの遊び方には出さない
+  });
+
   test('道中すごろく: 壊れたカード・選んだものは読み飛ばす', () => {
     const room = lifeRoom();
     assert.strictEqual(L.lifeQuestionOf(withCard(room, { kind: 'erabu', scene: 's0', idx: 4, n: 1 }).game), null); // 範囲の外
@@ -520,7 +541,7 @@ function test(name, fn) {
 
   test('道中すごろく: 段階の名前は今までの遊び方と分ける（古い版の画面からの操作を通さない）', () => {
     const room = lifeRoom();
-    assert.strictEqual(room.game.step, 'life4-roll');
+    assert.strictEqual(room.game.step, 'life5-roll');
     assert.ok(L.isRollStep(room.game));
     // 古い版が見る名前（roll / talk）になっていたら、振れない・進めない
     assert.strictEqual(L.roll({ ...room, game: { ...room.game, step: 'roll' } }, 1, 0, 3, COUNTS), null);
@@ -528,8 +549,8 @@ function test(name, fn) {
     // 今までの遊び方は roll / talk のまま
     const theme = L.startGame(waitingRoom(), COUNTS);
     assert.strictEqual(theme.game.step, 'roll');
-    assert.strictEqual(L.roll({ ...theme, game: { ...theme.game, step: 'life4-roll' } }, 1, 0, 3, COUNTS), null);
-    assert.strictEqual(L.isPickStep({ ...theme.game, step: 'life4-pick' }), false);
+    assert.strictEqual(L.roll({ ...theme, game: { ...theme.game, step: 'life5-roll' } }, 1, 0, 3, COUNTS), null);
+    assert.strictEqual(L.isPickStep({ ...theme.game, step: 'life5-pick' }), false);
   });
 
   test('道中すごろく: 番の人がいなくなったとき（できごとは確定しない・選びかけの目は捨てる）', () => {
@@ -539,16 +560,16 @@ function test(name, fn) {
     assert.deepStrictEqual(next.game.pos, [22, 22, 22]);
     assert.strictEqual(next.status, L.STATUS.PLAYING);
     assert.strictEqual(next.game.turn, 1);
-    assert.strictEqual(next.game.step, 'life4-roll');
+    assert.strictEqual(next.game.step, 'life5-roll');
     assert.strictEqual(next.game.q, null);
     assert.strictEqual(L.dropTalk(base), null); // サイコロを振る段階では何もしない
     // 進む目を選んでいる途中でいなくなったら、その目は捨てて次の人へ
-    const picking = { ...base, game: { ...base.game, step: 'life4-pick', dice: [2, 5] } };
+    const picking = { ...base, game: { ...base.game, step: 'life5-pick', dice: [2, 5] } };
     assert.strictEqual(L.skipAbsent(picking), null); // いるうちはとばさない
     const { 'ホスト': _h, ...rest } = picking.players;
     const skipped = L.skipAbsent({ ...picking, players: rest });
     assert.strictEqual(skipped.game.turn, 1);
-    assert.strictEqual(skipped.game.step, 'life4-roll');
+    assert.strictEqual(skipped.game.step, 'life5-roll');
     assert.strictEqual(skipped.game.dice, null);
     // ゴールした人は、いるかぎりとばさない（おうえんの番）
     const done = { ...base, game: { ...base.game, pos: [23, 3, 4], done: [true, false, false], turn: 0 } };
@@ -608,9 +629,9 @@ function test(name, fn) {
 
   test('道中すごろく: 前の版が作ったゲームは見分けて、この版の操作を通さない', () => {
     const room = lifeRoom();
-    assert.strictEqual(room.game.step, 'life4-roll');
+    assert.strictEqual(room.game.step, 'life5-roll');
     assert.strictEqual(L.isOldLife(room.game), false);
-    for (const step of ['life-roll', 'life-talk', 'life2-roll', 'life2-pick', 'life2-talk', 'life3-roll', 'life3-pick', 'life3-talk', 'roll', 'talk', 'zzz', '', null, 7]) { // 前の版の名前と、知らない値
+    for (const step of ['life-roll', 'life-talk', 'life2-roll', 'life2-pick', 'life2-talk', 'life3-roll', 'life3-pick', 'life3-talk', 'life4-roll', 'life4-pick', 'life4-talk', 'roll', 'talk', 'zzz', '', null, 7]) { // 前の版の名前と、知らない値
       const old = { ...room, game: { ...room.game, step, rollNo: 1, q: { kind: 'hanasu', scene: 's0', idx: 2, n: 1 } } };
       assert.strictEqual(L.isOldLife(old.game), true);
       assert.strictEqual(L.isRollStep(old.game), false);
@@ -627,7 +648,7 @@ function test(name, fn) {
 
   test('道中すごろく: 進む目が読めないときは、振りなおすところにもどせる', () => {
     const base = lifeRoom();
-    const pick = (dice) => ({ ...base, game: { ...base.game, step: 'life4-pick', dice } });
+    const pick = (dice) => ({ ...base, game: { ...base.game, step: 'life5-pick', dice } });
     assert.deepStrictEqual(L.pickDice(pick([2, 5]).game), [2, 5]);
     assert.deepStrictEqual(L.pickDice(pick({ 0: 2, 1: 5 }).game), [2, 5]); // RTDB の数値キーの形
     for (const bad of [null, undefined, [3], [3, 3], [0, 4], [2, 7], { 1: 5 }, 'x', [2, 'a'], [true, 2], ['3', 4]]) {
@@ -636,7 +657,7 @@ function test(name, fn) {
       assert.strictEqual(L.pickBroken(room.game), true);
       assert.strictEqual(L.pickDie(room, 1, 0, 0, 3), null);
       const fixed = L.dropPick(room);
-      assert.strictEqual(fixed.game.step, 'life4-roll');
+      assert.strictEqual(fixed.game.step, 'life5-roll');
       assert.strictEqual(fixed.game.turn, 0); // 同じ人が振りなおす
       assert.strictEqual(fixed.game.dice, null);
     }
@@ -757,7 +778,7 @@ function test(name, fn) {
     let next = L.nextPlayer(room, 1, 1);
     assert.deepStrictEqual(next.game.pos, [4, 4, 5]);
     assert.strictEqual(next.game.turn, 2);
-    assert.strictEqual(next.game.step, 'life4-roll');
+    assert.strictEqual(next.game.step, 'life5-roll');
     assert.strictEqual(L.nextPlayer(next, 1, 1), null); // 二度押し
     // みんな同じ
     room = withVotes({ 0: 1, 1: 1, 2: 1 });
@@ -917,7 +938,7 @@ function test(name, fn) {
     assert.deepStrictEqual(used.game.pos, [3, 4, 7]);
     assert.strictEqual(L.cardsOf(used.game, 0), 1);
     assert.strictEqual(used.game.turn, 0); // 番はそのまま
-    assert.strictEqual(used.game.step, 'life4-roll');
+    assert.strictEqual(used.game.step, 'life5-roll');
     assert.strictEqual(used.game.rollNo, 2);
     assert.strictEqual(L.useHelp(used, 1, 2, 2, 2), null); // 同じ押し方は通らない
     const again = L.useHelp(used, 1, 2, 1, 1);
@@ -981,7 +1002,7 @@ function test(name, fn) {
     const next = L.nextPlayer(r3, 1, 1);
     assert.deepStrictEqual(next.game.pos, [4, 5, 6]);
     assert.strictEqual(next.game.turn, 2);
-    assert.strictEqual(next.game.step, 'life4-roll');
+    assert.strictEqual(next.game.step, 'life5-roll');
     // 途中で進めたら（ホストがとばしたとき）、だれも進まない
     assert.deepStrictEqual(L.nextPlayer(r1, 1, 1).game.pos, [3, 4, 5]);
     // いない人は待たない・ゴールした人は進まない

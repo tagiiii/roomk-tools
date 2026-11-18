@@ -18,7 +18,7 @@ export const STATUS = {
 
 // 画面の版。道中すごろくの決まりを変えて、前の版の画面と混ざると困るときに1つ上げる（段階の名前 life{VER}-* も変わる）。
 // ルームの参加者は players/{名前}/ver に自分の版を書く。版のちがう人がいると、道中すごろくを始められない（staleNames）
-export const VER = 4;
+export const VER = 5; // 5: ゴールした順（places）と順位を出す設定（showRank）を足した
 const LV = 'life' + VER;
 
 export const STEP = {
@@ -26,7 +26,7 @@ export const STEP = {
   TALK: 'talk',  // 質問が出ている
   // 「道中すごろく」の段階。名前を分けて、ちがう決まりの版の画面からの操作を通さない。
   // 今までの遊び方は roll / talk、公開済みの前の版の道中すごろくは life-roll / life-talk（サイコロ1つ・「はなす」あり）と
-  // life2-*（「いっしょ」「よそう」のマスがない）・life3-*（「みんなで」のマスとおたすけカードがない）
+  // life2-*（「いっしょ」「よそう」のマスがない）・life3-*（「みんなで」のマスとおたすけカードがない）・life4-*（ゴールした順を記録しない）
   LIFE_ROLL: LV + '-roll',
   LIFE_PICK: LV + '-pick', // サイコロを2つ振って、進む目を選んでいる
   LIFE_TALK: LV + '-talk',
@@ -95,6 +95,14 @@ export function lifeKindsOf(game) {
   return lifeKinds(boardSize(game), game?.votes === true);
 }
 export function isLife(game) { return game?.mode === MODE.LIFE; }
+// ゴールした順位（1から。まだなら 0）
+export function placeOf(game, i) {
+  const raw = game?.places != null && typeof game.places === 'object' ? game.places[i] : undefined;
+  const n = Number(raw);
+  return Number.isInteger(n) && n > 0 ? n : 0;
+}
+// 順位を出すゲームか（「はじめる」の時点の設定で固定）
+export function showsRank(game) { return isLife(game) && game?.showRank === true; }
 // サイコロを振るのを待っている・カードが出ている（モードごとの段階の名前で見る）
 export function isRollStep(game) { return !!game && game.step === (isLife(game) ? STEP.LIFE_ROLL : STEP.ROLL); }
 export function isTalkStep(game) { return !!game && game.step === (isLife(game) ? STEP.LIFE_TALK : STEP.TALK); }
@@ -468,12 +476,15 @@ function lifeUsedKey(kind, scene) {
   if (kind === KIND.MINNA) return 'life_minna';
   return kind === KIND.DEKIGOTO ? 'life_event' : `life_${kind}_${scene}`;
 }
-// ゴールに着いた人に印を付ける。みんな着いたらおわり（順位は出さない）
+// ゴールに着いた人に印と着いた順（places）を付ける。みんな着いたらおわり。
+// 同時に着いた人は同じ順位（それまでに着いていた人の数 + 1）。順位を画面に出すかは game.showRank
 function lifeSettle(room, game, pos) {
   const max = boardSize(game) - 1;
   const done = orderOf(game).map((_, i) => doneOf(game, i) || pos[i] >= max);
   const arrived = done.map((d, i) => (d && !doneOf(game, i) ? i : -1)).filter((i) => i >= 0);
-  const settled = { ...game, pos, done, arrived: arrived.length ? { who: arrived, rollNo: Number(game.rollNo) || 0 } : null };
+  const before = orderOf(game).filter((_, i) => doneOf(game, i)).length;
+  const places = orderOf(game).map((_, i) => placeOf(game, i) || (arrived.includes(i) ? before + 1 : 0));
+  const settled = { ...game, pos, done, places, arrived: arrived.length ? { who: arrived, rollNo: Number(game.rollNo) || 0 } : null };
   if (done.every(Boolean)) {
     return { all: true, room: { ...room, status: STATUS.GOAL, game: { ...settled, step: STEP.LIFE_ROLL, q: null, dice: null, winner: null } } };
   }
@@ -800,6 +811,8 @@ export function startGame(room, counts) {
     game.step = STEP.LIFE_ROLL;
     game.squares = lifeSizeFor(names.length, room.lifeLen); // 人数と「長さ」から
     game.done = names.map(() => false);
+    game.places = names.map(() => 0);
+    game.showRank = room.rank === true; // 順位を出すか（はじめは出さない）
     if (!room.offline && names.length >= 2) game.votes = true;
   }
   return { ...room, status: STATUS.PLAYING, lastGameId: id, game };
