@@ -151,7 +151,7 @@ const QUESTIONS = {
 
 const COUNTS = Object.fromEntries(Object.entries(QUESTIONS).map(([key, list]) => [key, list.length]));
 
-/* ── 「人生の道」モード（1台の画面だけ。2026-11-18 試作） ──
+/* ── 「道中すごろく」モード（1台の画面だけ。2026-11-18 試作） ──
    盤は4段で、1段が1つの場面。マスの種類（えらぶ・はなす・きく・できごと）で起きることが決まる。
    質問は場面ごとで、どれも3択（チャットで参加する人も、押すだけで答えられるように。2026-11-18 オーナー）。 */
 const LIFE_SCENES = [
@@ -366,7 +366,7 @@ function setDiceRolling(on) {
 // 盤: 景色の中を通る道（蛇行）。positions はプレイヤー順のマスの番号、current はいまの番の人
 // マスとコマの要素は作りなおさず、動いたコマだけ移す（跳ねる動きをとちゅうで切らないため）
 const boardView = { key: '', total: 0, count: 0, squares: [], pawns: [], pos: [] };
-// view: { cols, kinds: [マスの種類…], labels: [段の名前…] }（「人生の道」だけ。ないときは5列・番号のマス）
+// view: { cols, kinds: [マスの種類…], labels: [段の名前…] }（「道中すごろく」だけ。ないときは5列・番号のマス）
 function buildBoard(total, count, view) {
   const board = $('board');
   const cols = view?.cols || 5;
@@ -469,7 +469,7 @@ function celebrate() {
 // 質問のカード。1台の画面ではモーダルの中、ルームでは画面の中（#roomStage）に置く
 // opts: { playerIndex, dice, canPress, onChoose, showNext, showSkip, waitText }
 function fillQuestion(themeKey, item, playerName, opts) {
-  // opts.head: { key, icon, label }（「人生の道」の場面とマスの種類）。ないときはテーマ
+  // opts.head: { key, icon, label }（「道中すごろく」の場面とマスの種類）。ないときはテーマ
   const t = opts.head || { key: themeKey, icon: THEMES[themeKey].icon, label: THEMES[themeKey].label };
   $('questionCard').dataset.theme = t.key;
   $('modal-theme').replaceChildren(msIcon(t.icon), document.createTextNode(' ' + t.label));
@@ -670,7 +670,7 @@ function initSettings() {
   );
   renderNameInputs();
   buildToggle('mode-toggle',
-    [{ value: 'theme', label: 'テーマで話す' }, { value: 'life', label: '人生の道' }],
+    [{ value: 'theme', label: 'テーマで話す' }, { value: 'life', label: '道中すごろく' }],
     settings.mode,
     (v) => { settings.mode = v; renderModeFields(); }
   );
@@ -689,7 +689,7 @@ function initSettings() {
   $('btn-start').addEventListener('click', startLocalGame);
 }
 
-// 「人生の道」のマス数: 人数に合わせた数から、みじかい・ながいで1段階ずらす
+// 「道中すごろく」のマス数: 人数に合わせた数から、みじかい・ながいで1段階ずらす
 function lifeSize() {
   return L.lifeSizeFor(settings.playerCount, settings.lifeLen);
 }
@@ -887,7 +887,7 @@ function showLocalGoal(winner) {
   celebrate();
 }
 
-// 「人生の道」のカード（1台の画面・ルーム共通）
+// 「道中すごろく」のカード（1台の画面・ルーム共通）
 // c: { kind, scene, phase, question, cards: [質問の文…], event, target（聞く相手の文。まだなら null）, answerer（答える人の名前。人のとき）,
 //      others: [名前…], playerName（番の人）, playerIndex, dice, act（この画面で押せるか）, onChoose }
 function fillLifeCard(c) {
@@ -1142,7 +1142,7 @@ function renderDicePick(game, act, lead) {
   });
 }
 
-/* ── 「人生の道」の1台の画面 ──
+/* ── 「道中すごろく」の1台の画面 ──
    通信しないルーム（net.offline）として、ルームと同じ決まり（logic.js）・同じ画面（renderRoomGame）で動かす。
    遊ぶ人はみんな「端末のない人」で、押すのはいつもこの画面（ホストの代わり）。 */
 function startLocalLife(names) {
@@ -1953,16 +1953,16 @@ function renderWaiting(room) {
   const life = L.modeOf(room.mode) === L.MODE.LIFE;
   const lifeTotal = L.lifeSizeFor(Math.max(1, playing.length), room.lifeLen);
   $('waitingSettings').textContent = life
-    ? `あそびかた 人生の道（${lifeTotal}マス。4つの場面をたどって、みんながゴールしたらおわり）`
+    ? `あそびかた 道中すごろく（${lifeTotal}マス。4つの場面をたどって、みんながゴールしたらおわり）`
     : `マス数 ${squares}マス・テーマ ${themeLabels(themes)}`;
 
   $('hostWaitingTools').hidden = !host;
   $('guestWaitingNote').hidden = host;
-  // 版のちがい（人生の道のときだけ。今までの遊び方は、前の版の画面とも遊べる）
+  // 版のちがい（道中すごろくのときだけ。今までの遊び方は、前の版の画面とも遊べる）
   const stale = life ? L.staleNames(room) : [];
   const hostVer = L.hostVer(room);
   const verNote = !life || host ? ''
-    : hostVer < L.VER ? 'ホストの画面が前の版のままです。人生の道をいっしょに遊ぶには、ホストに画面を読みこみなおしてもらってね'
+    : hostVer < L.VER ? 'ホストの画面が前の版のままです。道中すごろくをいっしょに遊ぶには、ホストに画面を読みこみなおしてもらってね'
       : hostVer > L.VER ? 'アプリが新しくなりました。この画面を読みこみなおしてね'
         : '';
   $('verNote').textContent = verNote;
@@ -1984,7 +1984,7 @@ function renderWaiting(room) {
     $('btnStartGame').disabled = playing.length < L.MIN_PLAYERS || stale.length > 0;
     $('startNote').textContent = playing.length < L.MIN_PLAYERS
       ? '遊ぶ人がいません。「自分もプレイヤーとして参加する」にするか、参加する人を待ってね'
-      : stale.length ? `アプリが新しくなったので、${stale.map((name) => name + 'さん').join('、')}に画面を読みこみなおしてもらってください。そろうと人生の道をはじめられます`
+      : stale.length ? `アプリが新しくなったので、${stale.map((name) => name + 'さん').join('、')}に画面を読みこみなおしてもらってください。そろうと道中すごろくをはじめられます`
         : full ? `遊べるのは${L.MAX_PLAYERS}人までです` : '';
   }
 }
@@ -2007,7 +2007,7 @@ function renderRoomGame(room, game) {
   const order = L.orderOf(game);
   const turn = L.turnOf(game);
   const goal = room.status === L.STATUS.GOAL;
-  // 「人生の道」はみんなでゴールするので、ゴールした人を1人にしぼらない
+  // 「道中すごろく」はみんなでゴールするので、ゴールした人を1人にしぼらない
   const winner = goal && Number.isInteger(game.winner) ? game.winner : life && goal ? -1 : turn;
   const anim = animRunning() ? net.anim : null;
   const positions = order.map((_, i) => L.posOf(game, i));
@@ -2037,7 +2037,7 @@ function renderRoomGame(room, game) {
   const mine = acting === net.nickname && net.role === 'guest' || (net.role === 'host' && acting === room.host);
   const rolling = L.isRollStep(game) && !goal;
   const picking = L.isPickStep(game) && !goal;
-  // 「人生の道」でゴールした人の番は、サイコロのかわりに「おうえん」
+  // 「道中すごろく」でゴールした人の番は、サイコロのかわりに「おうえん」
   const cheering = life && rolling && L.doneOf(game, turn);
 
   // サイコロ
@@ -2094,7 +2094,7 @@ function renderRoomGame(room, game) {
     else if (life) note.textContent = mine ? 'あなたが選ぶ番だよ' : `${actor}さんが選ぶ番だよ`;
     else note.textContent = mine ? 'あなたが話す番だよ' : `${actor}さんが話す番だよ`;
   }
-  // 「人生の道」: ゴールに着いた人を、次のサイコロまで知らせる（紙ふぶきは1回だけ）
+  // 「道中すごろく」: ゴールに着いた人を、次のサイコロまで知らせる（紙ふぶきは1回だけ）
   const arrived = life && !goal && !anim && game.arrived && Number(game.arrived.rollNo) === (Number(game.rollNo) || 0)
     ? L.asList(game.arrived.who).filter((i) => Number.isInteger(i) && order[i] != null) : [];
   if (arrived.length && rolling && !cheering) {
@@ -2458,7 +2458,7 @@ async function hostTransaction(update, failMessage) {
 function hostWatchAbsent(room) {
   const game = L.gameOf(room);
   const playing = game && room.status === L.STATUS.PLAYING;
-  // 前の版が作った人生の道のゲーム・知らない段階のゲームは、この版では進められない → 待合室にもどす
+  // 前の版が作った道中すごろくのゲーム・知らない段階のゲームは、この版では進められない → 待合室にもどす
   const old = playing && L.isOldLife(game);
   const actor = playing && (L.isRollStep(game) || L.isPickStep(game)) ? L.actorOf(game) : null;
   // サイコロを振る・進む目を選ぶ番の人がいないとき → 次の人へとばす
@@ -2625,7 +2625,7 @@ function submitOnEnter(input, handler) {
 
 initSettings();
 buildToggle('roomSquares', L.SQUARE_OPTIONS.map((n) => ({ value: n, label: `${n}マス` })), L.DEFAULT_SQUARES, setSquares);
-buildToggle('roomMode', [{ value: L.MODE.THEME, label: 'テーマで話す' }, { value: L.MODE.LIFE, label: '人生の道' }], L.MODE.THEME, setRoomMode);
+buildToggle('roomMode', [{ value: L.MODE.THEME, label: 'テーマで話す' }, { value: L.MODE.LIFE, label: '道中すごろく' }], L.MODE.THEME, setRoomMode);
 buildToggle('roomLifeLen', [{ value: -1, label: 'みじかい' }, { value: 0, label: 'ふつう' }, { value: 1, label: 'ながい' }], 0, setRoomLifeLen);
 buildThemeList('roomThemes', toggleTheme);
 

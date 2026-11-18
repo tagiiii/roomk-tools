@@ -1,4 +1,4 @@
-// 興味スゴロク E2E その3: 「人生の道」のルーム
+// 興味スゴロク E2E その3: 「道中すごろく」のルーム
 // 待合室のあそびかた・長さ／盤（4段・マスの種類・場面の名前）／えらぶ・きく（相手を選ぶ）・できごと（みんな進む・もう一度）／
 // ゴールした人をとばす・みんなゴールでおわり／もう一度あそぶ・今までの遊び方にもどす
 const L = require('./lib.cjs');
@@ -31,11 +31,11 @@ const { check, sleep } = L;
   check('A1 はじめは今までの遊び方（マス数とテーマの欄）', await L.visible(H, '#fieldRoomSquares') && await L.visible(H, '#fieldRoomThemes') && !(await L.visible(H, '#fieldRoomLength')));
   await H.page.click('#roomMode [data-value="life"]');
   let room = await L.roomWhen(code, (r) => r.mode === 'life');
-  check('A2 「人生の道」にするとルームに入る', room.mode === 'life', room.mode);
+  check('A2 「道中すごろく」にするとルームに入る', room.mode === 'life', room.mode);
   await L.waitVisible(H, '#fieldRoomLength');
   check('A3 マス数とテーマの欄をかくし、長さを出す', !(await L.visible(H, '#fieldRoomSquares')) && !(await L.visible(H, '#fieldRoomThemes')));
   check('A4 3人は24マス', (await L.text(H, '#roomLifeLenNote')) === '24マス', await L.text(H, '#roomLifeLenNote'));
-  await L.waitText(A, '#waitingSettings', '人生の道');
+  await L.waitText(A, '#waitingSettings', '道中すごろく');
   check('A5 参加者にも、あそびかたとマス数が出る', (await L.text(A, '#waitingSettings')).includes('24マス'), await L.text(A, '#waitingSettings'));
   await H.page.click('#roomLifeLen [data-value="1"]');
   await L.waitText(H, '#roomLifeLenNote', '28マス');
@@ -44,7 +44,7 @@ const { check, sleep } = L;
   await H.page.click('#roomLifeLen [data-value="0"]');
   await L.waitText(H, '#roomLifeLenNote', '24マス');
 
-  // ── R. 版のちがい: 版を書く前の画面・前の版の画面の人がいると、人生の道をはじめられない ──
+  // ── R. 版のちがい: 版を書く前の画面・前の版の画面の人がいると、道中すごろくをはじめられない ──
   room = await L.roomOf(code);
   check('R1 作成・参加で自分の版を書く', ['ほすと', 'あお', 'みどり'].every((n) => room.players[n].ver === 4), room.players);
   const pPath = (n) => `${L.ROOMS}/${code}/players/${n}`;
@@ -86,7 +86,7 @@ const { check, sleep } = L;
   await L.waitScreen(A, 'game');
   await L.waitScreen(B, 'game');
   room = await L.roomOf(code);
-  check('B1 ゲームは人生の道・24マス・だれもゴールしていない', room.game.mode === 'life' && room.game.squares === 24 && room.game.done.every((d) => d === false), room.game);
+  check('B1 ゲームは道中すごろく・24マス・だれもゴールしていない', room.game.mode === 'life' && room.game.squares === 24 && room.game.done.every((d) => d === false), room.game);
   for (const c of [H, A]) {
     check(`B2 盤は24マス（${c.label}）`, (await c.page.$$('#board .ks-square')).length === 24);
     check(`B3 マスの種類のアイコンと見本・場面の名前（${c.label}）`,
@@ -502,7 +502,7 @@ const { check, sleep } = L;
   await H.page.click('#btn-restart');
   await L.waitScreen(A, 'waiting');
   room = await L.roomOf(code);
-  check('H1 待合室にもどっても、あそびかたは人生の道のまま', room.status === 'waiting' && room.mode === 'life' && !room.game, room);
+  check('H1 待合室にもどっても、あそびかたは道中すごろくのまま', room.status === 'waiting' && room.mode === 'life' && !room.game, room);
   await H.page.click('#roomMode [data-value="theme"]');
   await L.waitVisible(H, '#fieldRoomSquares');
   await H.page.click('#btnStartGame');
@@ -514,10 +514,10 @@ const { check, sleep } = L;
     && (await A.page.$$('#board .ks-square__icon')).length === 0 && (await A.page.$$('#board .ks-board__label')).length === 0);
   await H.page.click('#btn-roll');
   await L.waitQuestion(A);
-  // テーマの名前に「・」が入るもの（得意・チャレンジ）があるので、人生の道のマスの名前で終わらないことを見る
+  // テーマの名前に「・」が入るもの（得意・チャレンジ）があるので、道中すごろくのマスの名前で終わらないことを見る
   const themeNow = (await L.card(A)).theme;
   check('H4 今までの質問のカードが出る', Object.values(LABEL).every((l) => !themeNow.endsWith('・' + l)) && (await L.text(A, '#btn-next')).includes('話せた！次の人へ'), await L.card(A));
-  // ── I. 前の版が作った人生の道のゲームは、この版では進めず、ホストの画面が待合室にもどす ──
+  // ── I. 前の版が作った道中すごろくのゲームは、この版では進めず、ホストの画面が待合室にもどす ──
   await H.page.click('#btnRoomBack');
   await L.waitScreen(A, 'waiting');
   await H.page.click('#roomMode [data-value="life"]');

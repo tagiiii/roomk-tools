@@ -968,7 +968,7 @@
   .ks-goal__icon .material-symbols-rounded { animation: none; }
 }
 
-/* ── 「人生の道」モード（1台の画面） ── */
+/* ── 「道中すごろく」モード（1台の画面） ── */
 .ks-field__note {
   margin-top: 8px;
   font-size: var(--font-size-sub);
