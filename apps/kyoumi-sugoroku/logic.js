@@ -16,26 +16,26 @@ export const STATUS = {
   GOAL: 'goal',
 };
 
-// 画面の版。人生の道の決まりを変えて、前の版の画面と混ざると困るときに1つ上げる（段階の名前 life{VER}-* も変わる）。
-// ルームの参加者は players/{名前}/ver に自分の版を書く。版のちがう人がいると、人生の道を始められない（staleNames）
+// 画面の版。道中すごろくの決まりを変えて、前の版の画面と混ざると困るときに1つ上げる（段階の名前 life{VER}-* も変わる）。
+// ルームの参加者は players/{名前}/ver に自分の版を書く。版のちがう人がいると、道中すごろくを始められない（staleNames）
 export const VER = 4;
 const LV = 'life' + VER;
 
 export const STEP = {
   ROLL: 'roll',  // 番の人がサイコロを振るのを待っている
   TALK: 'talk',  // 質問が出ている
-  // 「人生の道」の段階。名前を分けて、ちがう決まりの版の画面からの操作を通さない。
-  // 今までの遊び方は roll / talk、公開済みの前の版の人生の道は life-roll / life-talk（サイコロ1つ・「はなす」あり）と
+  // 「道中すごろく」の段階。名前を分けて、ちがう決まりの版の画面からの操作を通さない。
+  // 今までの遊び方は roll / talk、公開済みの前の版の道中すごろくは life-roll / life-talk（サイコロ1つ・「はなす」あり）と
   // life2-*（「いっしょ」「よそう」のマスがない）・life3-*（「みんなで」のマスとおたすけカードがない）
   LIFE_ROLL: LV + '-roll',
   LIFE_PICK: LV + '-pick', // サイコロを2つ振って、進む目を選んでいる
   LIFE_TALK: LV + '-talk',
 };
-// この版の人生の道の段階。これ以外（前の版が作ったゲームの life-roll / life-talk や、壊れた値）は、
+// この版の道中すごろくの段階。これ以外（前の版が作ったゲームの life-roll / life-talk や、壊れた値）は、
 // この版では進められないので、ホストの画面が待合室にもどす
 const LIFE_STEPS = [STEP.LIFE_ROLL, STEP.LIFE_PICK, STEP.LIFE_TALK];
 
-/* ── 「人生の道」モード（2026-11-18） ──
+/* ── 「道中すごろく」モード（2026-11-18） ──
    盤は4段で、1段が1つの場面。マスの種類で起きることが決まる。みんながゴールしたらおわり。
    質問・できごとは、種類・場面のキー・app.js の一覧の中の番号で共有する（一覧は並べ替え・途中の削除をしない）。 */
 export const MODE = { THEME: 'theme', LIFE: 'life' };
@@ -212,7 +212,7 @@ export function themesOf(value, counts) {
   return list.length >= MIN_THEMES ? list : keys;
 }
 
-// 盤のマス数（「人生の道」は 16〜28、今までの遊び方は 10〜20）
+// 盤のマス数（「道中すごろく」は 16〜28、今までの遊び方は 10〜20）
 export function boardSize(game) {
   if (isLife(game)) return LIFE_SIZES.includes(game.squares) ? game.squares : 20;
   return squaresOf(game?.squares);
@@ -223,7 +223,7 @@ export function lifeSceneAt(game, pos) {
   const scenes = LIFE?.scenes || [];
   return scenes[Math.min(scenes.length - 1, Math.floor(pos / lifeCols(game)))] ?? null;
 }
-// ゴールした人か（「人生の道」だけ）
+// ゴールした人か（「道中すごろく」だけ）
 export function doneOf(game, i) {
   return isLife(game) && game.done != null && typeof game.done === 'object' && game.done[i] === true;
 }
@@ -239,7 +239,7 @@ function lifeIndexOk(kind, scene, idx) {
   if (kind === KIND.MINNA) return idx < asList(LIFE.minna).length;
   return false;
 }
-// 「人生の道」のいまのカード。壊れた値は読み飛ばす。
+// 「道中すごろく」のいまのカード。壊れた値は読み飛ばす。
 // 「きく」は phase（だれに → どの質問 → 答える）・target（相手。まだなら null）・opts（選べる質問の番号3つ）を持つ
 export function lifeQuestionOf(game) {
   const q = game?.q;
@@ -373,7 +373,7 @@ export function pickedOf(game, counts) {
   const turn = Number(p.turn);
   const choice = Number(p.choice);
   if (p.life === true) {
-    // 「人生の道」の「えらぶ」
+    // 「道中すごろく」の「えらぶ」
     const kiku = p.kiku === true;
     if (!isLife(game) || !lifeIndexOk(kiku ? KIND.KIKU : KIND.ERABU, p.scene, idx)) return null;
     if (!Number.isInteger(turn) || turn < 0 || turn >= orderOf(game).length) return null;
@@ -426,7 +426,7 @@ function drawQuestion(game, counts, rng, theme) {
 }
 
 // 次の番の人。順番どおりに回し、いない人はとばす。だれもいなければ、いまの人のまま
-// （「人生の道」でゴールした人にも番は回る。その番は「おうえん」）
+// （「道中すごろく」でゴールした人にも番は回る。その番は「おうえん」）
 function nextTurn(room, game) {
   const order = orderOf(game);
   const from = turnOf(game);
@@ -437,7 +437,7 @@ function nextTurn(room, game) {
   return from;
 }
 
-/* ── 「人生の道」の進行 ── */
+/* ── 「道中すごろく」の進行 ── */
 // 一覧（番号の並び）から、まだ出していないものを count 個（出しきったら最初から。avoid はすぐには出さない）
 function lifeDraw(game, key, candidates, rng, avoid = [], count = 1) {
   const used = { ...(game.used || {}) };
@@ -777,7 +777,7 @@ export function startGame(room, counts) {
   if (room?.status !== STATUS.WAITING) return null;
   const names = playingNames(room);
   if (names.length < MIN_PLAYERS || names.length > MAX_PLAYERS) return null;
-  // 人生の道は、版のちがう画面の人がいると始めない（その画面では操作できないため。読みこみなおすとそろう）
+  // 道中すごろくは、版のちがう画面の人がいると始めない（その画面では操作できないため。読みこみなおすとそろう）
   if (modeOf(room.mode) === MODE.LIFE && staleNames(room).length) return null;
   const id = (Number(room.lastGameId) || 0) + 1;
   const proxies = room.proxies || {};
