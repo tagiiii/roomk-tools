@@ -162,8 +162,19 @@ body { background: var(--color-bg); }
 .ak-chip-btn:disabled { opacity: 0.45; cursor: default; }
 .ak-said-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
 .ak-said { display: inline-flex; align-items: center; gap: 5px; padding: 4px 14px; border-radius: var(--radius-full); background: var(--color-accent-soft); color: var(--color-accent); font-weight: 700; font-size: var(--font-size-lg); }
-.ak-asked { margin: 0 0 var(--space-sm); padding: 0; list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 8px; font-size: var(--font-size-sub); }
-.ak-asked li { padding: 3px 10px; border-radius: var(--radius-full); background: var(--color-primary-soft); }
+.ak-asked { margin: 0 auto var(--space-sm); padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 560px; }
+.ak-asked__item { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; padding: 10px 14px; border-radius: var(--radius-md, 12px); background: #fff; border: 2px solid var(--color-border); text-align: left; }
+.ak-asked__item.is-wait { border-style: dashed; border-color: var(--color-accent); }
+.ak-asked__q { display: flex; flex-direction: column; min-width: 0; }
+.ak-asked__q small { font-size: var(--font-size-sub); color: var(--color-muted); }
+.ak-asked__q b { font-size: var(--font-size-lg, 1.25rem); }
+.ak-asked__a { flex: none; min-width: 5.5em; padding: 6px 16px; border-radius: var(--radius-full); text-align: center; font-weight: 700; font-size: var(--font-size-lg, 1.25rem); }
+.ak-asked__a.is-yes { background: var(--color-success); color: #fff; }
+.ak-asked__a.is-no { background: var(--color-primary); color: #fff; }
+.ak-asked__a.is-wait { font-size: var(--font-size-sub); font-weight: 700; color: var(--color-accent); background: var(--color-accent-soft, var(--color-primary-soft)); }
+.ak-asked__btns { display: flex; gap: 8px; flex: none; }
+.ak-asked__btns .btn { min-width: 5.5em; min-height: 48px; font-size: var(--font-size-lg, 1.25rem); }
+.ak-asked__btns .ak-yes { background: var(--color-success); border-color: var(--color-success); }
 .ak-refuse { color: var(--color-muted); font-size: var(--font-size-sub); }
 
 /* お店の人のできること（出す・質問する・出さない） */
