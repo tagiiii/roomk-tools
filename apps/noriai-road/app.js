@@ -43,6 +43,7 @@ const STAGE_NOTE = [
   'ステージ6〜9のしかけが全部出てくる。',
   'ひもでつながったまま、長い道を進む。むずかしい。',
   'ほとんど全部のしかけが出てくる、いちばんむずかしい道。',
+  'みんなで乗ると開くしかけブロックと、持ち運べるばね。',
 ];
 // 1台のパソコンで遊ぶときのキー（1〜4番）
 const KEYSETS = [
@@ -1022,7 +1023,11 @@ function syncGame(room, game, now) {
       if (state.evSeen.has(key)) continue;
       state.evSeen.add(key);
       const s = Number(ev?.s);
-      if (Number.isInteger(s) && s >= 1 && s <= game.n) E.throwItem(w, s, ev.f < 0 ? -1 : 1, Number(ev.x) || 0, Number(ev.y) || 0);
+      // k: 'p' は「ひろう」（持ち運べるばね）。ないときは投げる・置く
+      if (Number.isInteger(s) && s >= 1 && s <= game.n) {
+        if (ev.k === 'p') E.pickItem(w, s, Number(ev.x) || 0, Number(ev.y) || 0);
+        else E.throwItem(w, s, ev.f < 0 ? -1 : 1, Number(ev.x) || 0, Number(ev.y) || 0);
+      }
       state.roomRef.child('live/' + game.id + '/ev/' + key).remove().catch(() => {});
     }
   }
@@ -1154,6 +1159,10 @@ function stepRoom(now, inputs) {
     if (o.throw) {
       if (state.role === 'host') E.throwItem(w, me.seat, me.face, me.x, me.y);
       else state.roomRef.child('live/' + id + '/ev').push({ s: me.seat, f: me.face, x: Math.round(me.x * 100) / 100, y: Math.round(me.y * 100) / 100 }).catch(writeFail);
+    }
+    if (o.pick) {
+      if (state.role === 'host') E.pickItem(w, me.seat, me.x, me.y);
+      else state.roomRef.child('live/' + id + '/ev').push({ s: me.seat, k: 'p', f: me.face, x: Math.round(me.x * 100) / 100, y: Math.round(me.y * 100) / 100 }).catch(writeFail);
     }
     // 自分の位置: 変わったときだけ・1秒に10回まで（はじめの1回は、止まっていても書く）
     const enc = E.encodePlayer(me);
@@ -1368,16 +1377,24 @@ function updateActLabel() {
   const seat = state.mode === 'local' ? state.pick : state.seat;
   const me = seat ? w.players[seat - 1] : null;
   const inside = !!(me && me.entered && !me.away);
-  if (state.actInside === inside) return;
-  state.actInside = inside;
+  // 持ち運べるばね: 持っていれば「置く」、近くにあれば「ひろう」
+  const hold = me && !inside ? E.holdingOf(w, me.seat) : null;
+  const mode = inside ? 'in' : hold === 'spring' ? 'put' : !hold && me && E.pickable(w, me) ? 'pick' : '';
+  if (state.actMode === mode) return;
+  state.actMode = mode;
+  const LABELS = {
+    in: ['出る', 'とびらから出る', 'とびらの中にいるよ。下の矢印キー（S でも）で、とびらから出られる'],
+    put: ['置く', 'ばねを目の前に置く', 'ばねを持っているよ。下の矢印キー（S でも）で、目の前に置ける'],
+    pick: ['ひろう', 'ばねをひろう', '近くにばねがあるよ。下の矢印キー（S でも）で、ひろえる'],
+    '': ['投げる', '', 'キーボード: 左右で動く・上かスペースでジャンプ・下で投げる'],
+  };
+  const [text, aria, hint] = LABELS[mode];
   const pad = document.querySelector('.nr-pad[data-key="a"]');
   if (pad) {
-    pad.textContent = inside ? '出る' : '投げる';
-    if (inside) pad.setAttribute('aria-label', 'とびらから出る'); else pad.removeAttribute('aria-label');
+    pad.textContent = text;
+    if (aria) pad.setAttribute('aria-label', aria); else pad.removeAttribute('aria-label');
   }
-  $('keyHint').textContent = inside
-    ? 'とびらの中にいるよ。下の矢印キー（S でも）で、とびらから出られる'
-    : 'キーボード: 左右で動く・上かスペースでジャンプ・下で投げる';
+  $('keyHint').textContent = hint;
 }
 
 function updateClear() {
@@ -1436,6 +1453,7 @@ function draw() {
   const x0 = Math.max(0, Math.floor(cam) - 1);
   const x1 = Math.min(w.W - 1, Math.ceil(cam + E.VIEW) + 1);
   drawTiles(w, x0, x1, T);
+  drawBlocks(w, T);
   drawCheckpoints(w, T);
   drawSprings(w, T);
   drawSwitches(w, T);
@@ -1512,6 +1530,30 @@ function drawTiles(w, x0, x1, T) {
         label(String(seat), x * T + T / 2, y * T + T / 2, T * 0.42, SEAT_DARK[seat - 1]);
       }
     }
+  }
+}
+// しかけブロック: 開く前は、乗っている人数/要る人数。開いたあとは、空になった印
+function drawBlocks(w, T) {
+  for (const k of w.blocks || []) {
+    const x = k.x * T, y = k.y * T, bw = k.w * T;
+    g.fillStyle = k.open ? '#B8A68E' : '#E9B949';
+    rr(x + 1, y + 1, bw - 2, T - 2, T * 0.12);
+    g.fill();
+    g.strokeStyle = k.open ? '#7D6B55' : '#9C7417';
+    g.lineWidth = Math.max(2, T * 0.07);
+    g.stroke();
+    if (k.open) {
+      g.fillStyle = '#7D6B55';
+      for (const dx of [0.3, 0.7]) { g.beginPath(); g.arc(x + bw * dx, y + T / 2, T * 0.08, 0, Math.PI * 2); g.fill(); }
+      continue;
+    }
+    // ばねの絵（中から出てくるもの）
+    g.strokeStyle = '#8A5A12';
+    g.lineWidth = Math.max(1.5, T * 0.05);
+    g.beginPath();
+    for (let j = 0; j <= 4; j++) g.lineTo(x + T * (j % 2 ? 0.55 : 0.25), y + T * (0.8 - j * 0.14));
+    g.stroke();
+    label(k.riders + '/' + k.need + '人', x + bw * 0.62, y + T / 2, T * 0.32, k.riders >= k.need ? '#1F6E3C' : '#5E3D22');
   }
 }
 function drawCheckpoints(w, T) {
@@ -1758,8 +1800,22 @@ function drawItems(w, T) {
       const q = w.players[it.holder - 1];
       if (!q || !visible(q)) continue;
     }
+    if (it.hidden) continue;
     const x = it.x * T, y = it.y * T, s = E.ITEM * T;
-    if (it.kind === 'ball') {
+    if (it.kind === 'spring') {
+      // 持ち運べるばね: 床のばねと同じ形を小さく
+      const base = y + s;
+      g.fillStyle = '#6E5A45';
+      g.fillRect(x, base - s * 0.14, s, s * 0.14);
+      g.strokeStyle = '#6E5A45';
+      g.lineWidth = Math.max(1.5, T * 0.05);
+      g.beginPath();
+      for (let j = 0; j <= 4; j++) g.lineTo(x + s * (j % 2 ? 0.8 : 0.2), base - s * 0.14 - j * s * 0.15);
+      g.stroke();
+      g.fillStyle = '#D9572E';
+      rr(x - s * 0.05, base - s * 0.92, s * 1.1, s * 0.2, s * 0.08);
+      g.fill();
+    } else if (it.kind === 'ball') {
       g.fillStyle = '#F08A24';
       g.beginPath(); g.arc(x + s / 2, y + s / 2, s / 2, 0, Math.PI * 2); g.fill();
       g.strokeStyle = '#A6520E';

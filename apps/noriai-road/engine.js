@@ -32,6 +32,7 @@
   const SEESAW_SPEED = 2.2;
   const ITEM = 0.6;           // カギ・ボールの大きさ
   const THROW = { ball: { vx: 6.5, vy: -16 }, key: { vx: 4, vy: -7 } };
+  const PICK_REACH = 0.5;      // 持ち運べるばねを「ひろう」で取れる近さ
   const EPS = 1e-4;
   const LINKS = 'ABCDEFGH';
   const MAX_PLAYERS = 10;
@@ -43,7 +44,7 @@
   /* ── ステージを作る道具 ── */
   function builder() {
     const cols = [];
-    const meta = { gates: [], switches: [], plats: [], seesaws: [], boxes: [], items: [], hoops: [], springs: [], checkpoints: [], door: null };
+    const meta = { gates: [], switches: [], plats: [], seesaws: [], boxes: [], items: [], hoops: [], springs: [], blocks: [], checkpoints: [], door: null };
     let ox = 0;
     let link = 0;
     function ensure(x) {
@@ -143,17 +144,19 @@
       b.meta.plats.push({ x: o + 0.5, y: 10, w: 2.5, ax: o + 0.5, ay: 10, bx: o + 11.5, by: 10, need });
       b.advance(15);
     },
-    // シーソー: 重いほうが下がる。上がった側から、右の台の上のもの（カギかボール）をとる
+    // シーソー: 重いほうが下がる。上がった側から、右の3マスの段（上にカギかボール）へ上がる。
+    // 段は右のシーソーのすぐとなりで、下の床はない。最後の1人は、左に重い箱（重さ2）を乗せないと上がれない
+    // （人は人の頭から上がれるが、最後の人の下にはだれもいないため。2026-11-18）
     seesaw(b, item) {
       b.begin();
       const o = b.ox;
       b.fill(o + 3, o + 8, 10, H - 1, '.');
-      b.fill(o + 10, o + 13, 7, 7, '#');
+      b.fill(o + 9, o + 13, 7, 9, '#');
       const ss = b.meta.seesaws.length;
       b.meta.plats.push({ x: o + 3, y: 10, w: 2.8, ax: o + 3, ay: 10, bx: o + 3, by: 10, need: 0, seesaw: ss, side: -1 });
       b.meta.plats.push({ x: o + 6.2, y: 10, w: 2.8, ax: o + 6.2, ay: 10, bx: o + 6.2, by: 10, need: 0, seesaw: ss, side: 1 });
       b.meta.seesaws.push({ left: b.meta.plats.length - 2, right: b.meta.plats.length - 1, rest: 10, cx: o + 6 });
-      b.meta.boxes.push({ x: o + 1, y: 9, need: 1 });
+      b.meta.boxes.push({ x: o + 1, y: 9, need: 2 });
       if (item) b.meta.items.push({ kind: item, x: o + 11.7, y: 6.4 });
       b.advance(16);
     },
@@ -199,15 +202,13 @@
       b.meta.switches.push({ letter: L, x: o + 4, y: row - 1 });
       b.advance(14);
     },
-    // 箱を足場にする: 3マスの台。箱をとびらの前まで押して、箱の上の人の頭から跳ぶ
+    // 箱を足場にする: 2マスのかべ（下の通り道はない）。人は人の頭から上がれるが、
+    // 最後の1人は、かべの前まで押した箱に乗らないと上がれない（2026-11-18。前は3マスの台とスイッチ）
     boxStep(b) {
       b.begin();
       const o = b.ox;
-      const L = b.nextLink();
       b.meta.boxes.push({ x: o + 2, y: 9, need: 1 });
-      b.fill(o + 7, o + 15, 7, 7, '#');
-      b.meta.gates.push({ letter: L, x: o + 7, y0: 8, y1: 9, seat: 0 });
-      b.meta.switches.push({ letter: L, x: o + 8, y: 6 });
+      b.fill(o + 7, o + 15, 8, 9, '#');
       b.advance(17);
     },
     // 手分け: 下のスイッチと、高い足場の上のスイッチを同時におさえると、とびらがずっと開く
@@ -249,6 +250,18 @@
       if (item) b.meta.items.push({ kind: item, x: o + 5.7, y: 5.4 });
       b.advance(11);
     },
+    // しかけブロック: 数字の人数がブロックに乗る（人の上に乗っている人も数える）と開いて、持ち運べるばねが出る。
+    // その先の穴は5マスで、ふつうのジャンプでも人の頭からでもとどかない。ばねを穴の手前に置いて、
+    // ばねで跳ぶとわたれる。最後の1人も、ばねがないとわたれない（2026-11-18）
+    springBlock(b, need) {
+      b.begin();
+      const o = b.ox;
+      b.fill(o + 2, o + 3, 9, 9, '#');
+      b.meta.blocks.push({ x: o + 2, y: 9, w: 2, need });
+      b.meta.items.push({ kind: 'spring', x: o + 2.7, y: 9 - ITEM - 0.01, hidden: true });
+      b.fill(o + 8, o + 12, 10, H - 1, '.');
+      b.advance(16);
+    },
     // ゴールのとびら。locked ならカギを持った人がふれると開く
     door(b, locked) {
       b.begin();
@@ -273,7 +286,7 @@
     },
     {
       name: 'シーソーとボール',
-      hint: 'シーソーは重いほうが下がる。箱も重さに入るよ。ボールを持つとジャンプできないので、投げてわたそう。高いかごに入れると、とびらが開く。',
+      hint: 'シーソーは重いほうが下がる。重い箱は、人2人ぶんの重さだよ。シーソーの先の段は、最後の1人は箱を乗せないと上がれない。ボールを持つとジャンプできないので、投げてわたそう。高いかごに入れると、とびらが開く。',
       parts: [['start'], ['seesaw', 'ball'], ['ballHoop', false], ['door', false]],
     },
     {
@@ -289,7 +302,7 @@
     },
     {
       name: '高い台',
-      hint: '3マスの台は、2人重なった上から跳ぶと上がれる（2人のときは2マス）。箱も足場になるよ。台の上のスイッチをおさえている間だけ、下のとびらが開く。',
+      hint: '3マスの台は、2人重なった上から跳ぶと上がれる（2人のときは2マス）。台の上のスイッチをおさえている間だけ、下のとびらが開く。2マスのかべは、最後の1人は、かべの前まで押した箱に乗って上がろう。',
       parts: [['start'], ['bump'], ['tower'], ['boxStep'], ['door', false]],
     },
     {
@@ -324,6 +337,12 @@
       name: 'いちばん長い道',
       hint: 'ステージ1〜10のしかけが、ほとんど全部出てくる長い道。ボールはシーソーの先、カギはばねで上がるかべの上にあるよ。',
       parts: [['start'], ['ledge'], ['tower'], ['boxSwitch', 'all'], ['springPit'], ['numPair'], ['seesaw', 'ball'], ['ballHoop', false], ['split'], ['lift', 'all'], ['springWall', 'key'], ['bridge', 'all'], ['colorGate', 2], ['door', true]],
+    },
+    // 13: しかけブロック（2026-11-18）
+    {
+      name: 'しかけブロック',
+      hint: 'しかけブロックの数字の人数がブロックに乗ると、ばねが出てくる。ばねは「ひろう」で持って、「置く」で目の前に置ける。広い穴は、穴の手前に置いたばねで跳ばないとわたれないよ。',
+      parts: [['start'], ['springBlock', 2], ['boxStep'], ['seesaw', 'key'], ['springBlock', 'all'], ['door', true]],
     },
   ];
 
@@ -381,7 +400,8 @@
         riders: 0, dx: 0, dy: 0,
       })),
       seesaws: meta.seesaws.map((s) => ({ ...s, off: 0, wl: 0, wr: 0 })),
-      items: meta.items.map((it) => ({ kind: it.kind, x: it.x, y: it.y, x0: it.x, y0: it.y, w: ITEM, h: ITEM, vx: 0, vy: 0, holder: 0, cool: {}, hooped: false, gone: false })),
+      items: meta.items.map((it) => ({ kind: it.kind, x: it.x, y: it.y, x0: it.x, y0: it.y, w: ITEM, h: ITEM, vx: 0, vy: 0, holder: 0, cool: {}, hooped: false, gone: false, hidden: !!it.hidden, armed: false })),
+      blocks: meta.blocks.map((k) => ({ x: k.x, y: k.y, w: k.w, need: resolveNeed(k.need, n), riders: 0, open: false })),
       hoops: meta.hoops.map((h) => ({ ...h, done: false })),
       springs: meta.springs.map((sp) => ({ ...sp })),
       door: meta.door ? { x: meta.door.x, y: meta.door.y, w: 1.2, h: 2, locked: meta.door.locked } : null,
@@ -623,6 +643,7 @@
       p.ground = null;
     }
     if (inp.actPressed && holdKind) out.throw = true;
+    else if (inp.actPressed && pickable(world, p)) out.pick = true;
 
     p.dx = p.x - x0;
     p.dy = p.y - y0;
@@ -633,7 +654,29 @@
     for (const sp of world.springs) {
       if (Math.abs(p.y + PH - sp.y) < 0.05 && p.x + PW > sp.x + 0.15 && p.x < sp.x + 0.85) return true;
     }
+    // 床に置いてある、持ち運べるばね（だれかが「置く」で置いたものだけ。出てきたばね・落ちて戻ったばねは、乗っても跳ばない）
+    for (const it of world.items) {
+      if (it.kind !== 'spring' || it.holder || it.hidden || it.gone || !it.armed) continue;
+      if (Math.abs(p.y + PH - (it.y + ITEM)) < 0.08 && p.x + PW > it.x + 0.1 && p.x < it.x + ITEM - 0.1) return true;
+    }
     return false;
+  }
+  // 近くに「ひろう」で取れるばねがあれば、その番号（なければ -1）。何も持っていない人だけ
+  function pickableIndex(world, p) {
+    if (holdingOf(world, p.seat)) return -1;
+    const r = { x: p.x - PICK_REACH, y: p.y - 0.2, w: PW + PICK_REACH * 2, h: PH + 0.4 };
+    return world.items.findIndex((it) => it.kind === 'spring' && !it.holder && !it.hidden && !it.gone && overlap(it, r));
+  }
+  const pickable = (world, p) => pickableIndex(world, p) >= 0;
+  // 「ひろう」（ホスト・1台の画面が決める）。x, y はひろう人の位置
+  function pickItem(world, seat, x, y) {
+    const k = pickableIndex(world, { seat, x, y });
+    if (k < 0) return false;
+    const it = world.items[k];
+    it.holder = seat;
+    it.vx = 0; it.vy = 0;
+    it.armed = false;
+    return true;
   }
 
   // とびらから出る: とびらの左どなりの床に出す（とびらに重なったままだと、次のこまでまた入ってしまうため）
@@ -701,7 +744,8 @@
       const r = rootOf(q.ground, players, 0);
       if (r && r[0] === 'p') weight[+r.slice(1)] += 1;
     }
-    world.boxes.forEach((b) => { if (b.ground && b.ground[0] === 'p') weight[+b.ground.slice(1)] += 1; });
+    // 箱の重さは、押すのに要る人数（シーソーの重い箱は2）
+    world.boxes.forEach((b) => { if (b.ground && b.ground[0] === 'p') weight[+b.ground.slice(1)] += b.need; });
 
     // 動く床
     world.plats.forEach((p, i) => {
@@ -772,11 +816,26 @@
       s.on = live.some((q) => (!s.seatN || q.seat === s.seatN) && pressed({ x: q.x, y: q.y, w: PW, h: PH })) || (!s.seatN && world.boxes.some(pressed));
     }
 
-    // カギ・ボール
+    // しかけブロック: 乗っている人数（人の上に乗っている人も数える）がそろうと開いて、ばねが出る
+    world.blocks.forEach((k, bi) => {
+      if (k.open) return;
+      const on = (q) => Math.abs(q.y + PH - k.y) < 0.05 && q.x + PW > k.x + 0.05 && q.x < k.x + k.w - 0.05;
+      const bottom = (q) => { let c = q; for (let d = 0; d <= MAX_PLAYERS && c && c.ground && c.ground[0] === 's'; d++) c = findPlayer(players, +c.ground.slice(1)); return c; };
+      k.riders = live.filter((q) => { const b = bottom(q); return b && !b.entered && on(b); }).length;
+      if (k.riders >= k.need) {
+        k.open = true;
+        let c = -1;
+        for (let i = 0; i < world.items.length; i++) if (world.items[i].kind === 'spring' && world.items[i].hidden && c < 0 && Math.abs(world.items[i].x0 - (k.x + 0.7)) < 0.5) c = i;
+        const it = world.items[c];
+        if (it) { it.hidden = false; it.x = it.x0; it.y = it.y0; it.vx = 0; it.vy = -6; }
+      }
+    });
+
+    // カギ・ボール・ばね
     const holding = {};
     world.items.forEach((it, i) => { if (!it.gone && it.holder) holding[it.holder] = i; });
     world.items.forEach((it) => {
-      if (it.gone || it.hooped) return;
+      if (it.gone || it.hooped || it.hidden) return;
       for (const k of Object.keys(it.cool)) { it.cool[k] -= dt; if (it.cool[k] <= 0) delete it.cool[k]; }
       if (it.holder) {
         const q = findPlayer(players, it.holder);
@@ -807,7 +866,7 @@
         it.vx *= 0.8;
         if (Math.abs(it.vx) < 0.05) it.vx = 0;
       } else if (r.bump) it.vy = Math.abs(it.vy) * 0.3;
-      if (it.y > H + 1) { it.x = it.x0; it.y = it.y0; it.vx = 0; it.vy = 0; }
+      if (it.y > H + 1) { it.x = it.x0; it.y = it.y0; it.vx = 0; it.vy = 0; it.armed = false; }
       // かご
       // かご: ふちより上から落ちてきたときだけ入る
       if (it.kind === 'ball' && vyBefore > 0) {
@@ -824,7 +883,8 @@
         }
       }
       if (it.hooped) return;
-      // ひろう
+      // ひろう（ばねは「ひろう」の操作で取る。歩いて乗ると、ひろわずに跳ぶ）
+      if (it.kind === 'spring') return;
       for (const q of live) {
         if (holding[q.seat] != null || it.cool[q.seat] > 0) continue;
         if (overlap(it, { x: q.x, y: q.y - 0.1, w: PW, h: PH + 0.1 })) {
@@ -863,13 +923,21 @@
   function throwItem(world, seat, face, x, y) {
     for (const it of world.items) {
       if (it.gone || it.holder !== seat) continue;
-      const t = THROW[it.kind];
       it.holder = 0;
+      it.cool[seat] = 0.4;
+      // ばねは、目の前の足もとに置く
+      if (it.kind === 'spring') {
+        it.x = x + PW / 2 - ITEM / 2 + face * 0.9;
+        it.y = y + PH - ITEM - 0.05;
+        it.vx = 0; it.vy = 0;
+        it.armed = true;
+        return true;
+      }
+      const t = THROW[it.kind];
       it.x = x + PW / 2 - ITEM / 2;
       it.y = y - ITEM - 0.02;
       it.vx = face * t.vx;
       it.vy = t.vy;
-      it.cool[seat] = 0.4;
       return true;
     }
     return false;
@@ -896,6 +964,7 @@
     for (const p of order) {
       const o = stepPlayer(world, p, inputs[p.seat - 1] || {}, dt, ctx);
       if (o.throw) throwItem(world, p.seat, p.face, p.x, p.y);
+      if (o.pick) pickItem(world, p.seat, p.x, p.y);
     }
   }
 
@@ -925,7 +994,8 @@
     return {
       b: world.boxes.map((b) => [r2(b.x), r2(b.y)]),
       p: world.plats.map((p) => [r2(p.x), r2(p.y), p.riders]),
-      i: world.items.map((it) => [r2(it.x), r2(it.y), it.holder, it.hooped ? 1 : 0, it.gone ? 1 : 0]),
+      i: world.items.map((it) => [r2(it.x), r2(it.y), it.holder, it.hooped ? 1 : 0, it.gone ? 1 : 0, it.hidden ? 1 : 0, it.armed ? 1 : 0]),
+      k: world.blocks.map((k) => (k.open ? 'o' : String(Math.min(9, k.riders)))).join('') || '-',
       g: world.gates.map((g) => (g.open ? 1 : 0)).join('') || '-',
       s: world.switches.map((s) => (s.on ? 1 : 0)).join('') || '-',
       h: world.hoops.map((h) => (h.done ? 1 : 0)).join('') || '-',
@@ -943,6 +1013,10 @@
     world.gates.forEach((g, k) => { g.open = bit(w.g, k); });
     world.switches.forEach((s, k) => { s.on = bit(w.s, k); });
     world.hoops.forEach((h, k) => { h.done = bit(w.h, k); });
+    world.blocks.forEach((b, k) => {
+      const ch = typeof w.k === 'string' ? w.k[k] : null;
+      if (ch === 'o') b.open = true; else if (ch && ch >= '0' && ch <= '9') { b.open = false; b.riders = +ch; }
+    });
     if (world.door) world.door.locked = w.d === 1;
     world.clear = w.c === 1;
     world.items.forEach((it, k) => {
@@ -950,7 +1024,7 @@
       if (v.length < 5) return;
       const holder = Math.trunc(num(v[2], 0));
       it.holder = holder >= 1 && holder <= world.n ? holder : 0;
-      it.hooped = v[3] === 1; it.gone = v[4] === 1;
+      it.hooped = v[3] === 1; it.gone = v[4] === 1; it.hidden = v[5] === 1; it.armed = v[6] === 1;
       if (positions) { it.x = num(v[0], it.x); it.y = num(v[1], it.y); it.vx = 0; it.vy = 0; }
     });
     world.plats.forEach((p, k) => {
@@ -969,7 +1043,7 @@
   const api = {
     H, VIEW, PW, PH, ITEM, ROPE_LEN, JUMP_H, GRAV, JUMP_V, SPEED, SPRING_H,
     STAGES, buildStage, createWorld, makePlayer, stepPlayer, stepObjects, stepLocal,
-    throwItem, holdingOf, camLeft, mapSeat, solidTile, respawnX, surfaceY, gateRect, rootOf,
+    throwItem, pickItem, pickable, holdingOf, camLeft, mapSeat, solidTile, respawnX, surfaceY, gateRect, rootOf,
     encodePlayer, decodePlayer, snapshot, applySnapshot, MIN_PLAYERS: 2, MAX_PLAYERS, ALL_CAP, ropeGroups, ropeLinked, platNeed,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
