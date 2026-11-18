@@ -9,13 +9,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
   <!-- index.html と app.js・engine.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261118b">
+  <link rel="stylesheet" href="style.css?v=20261118c">
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
-  <script src="engine.js?v=20261118b"></script>
+  <script src="engine.js?v=20261118c"></script>
 </head>
 <body data-genre="atekko">
 
@@ -208,7 +208,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261118b"></script>
+  <script type="module" src="app.js?v=20261118c"></script>
   <script src="../shared/js/overlay-a11y.js?v=1" defer></script>
   <script src="../shared/js/focus-keep.js?v=1" defer></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
@@ -236,12 +236,14 @@
           'スイッチに乗っている間だけ、同じしるしのとびらが開く',
           '番号のかべは、その番号の人だけ通れる。向こうのスイッチをその人がおさえると、みんな通れる',
           '箱の数字は、押すのに要る人数。リフトと動く床は、数字の人数が乗ると動く。人数が多いときは、何回かに分かれて乗る',
-          'シーソーは重いほうが下がる。箱も重さに入る',
+          'シーソーは重いほうが下がる。重い箱は人2人ぶんの重さ。シーソーの先の段は、最後の1人は箱を乗せないと上がれない',
           'ボールを持つとジャンプできない。投げてわたして、高いかごに入れると、とびらが開く',
           'カギを持ってゴールのとびらにふれると、とびらが開く',
           'ステージ4は、となりの番号の人とひもでつながっている（5人からは、いくつかの組に分かれる）。はなれすぎると進めない',
-          '3マスの台は、2人重なった上から跳ぶと上がれる（2人で遊ぶときは2マス）。箱も足場になる',
+          '3マスの台は、2人重なった上から跳ぶと上がれる（2人で遊ぶときは2マス）',
+          '2マスのかべは、人の頭から上がれる。最後の1人は、かべの前まで押した箱に乗って上がる',
           'ばねに乗ると、高く跳べる',
+          'しかけブロックの数字の人数がブロックに乗ると、ばねが出てくる。ばねは下の矢印キー（「ひろう」のボタン）で持ち、もう一度で目の前に置く。その先の広い穴は、手前に置いたばねで跳ばないとわたれない',
           'とびらに「0/2」などと出ていたら、同じしるしのスイッチを全部、同時におさえると開く。一度開くと、ずっと開いたまま',
           '番号のスイッチは、その番号の人だけがおさえられる',
           'みんなが画面の中にいるように、ひとりだけ先へは行けない',

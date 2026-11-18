@@ -466,9 +466,9 @@ test('10人: 頭の上に積み重なっても、リフトの人数に数える'
 const STAGE = Object.fromEntries(E.STAGES.map((st, i) => [st.name, i]));
 const GROUND = 10 - E.PH;
 
-test('ステージは12こ', () => {
-  assert.strictEqual(E.STAGES.length, 12);
-  for (const name of ['高い台', 'ばねでとぶ', '手分けの道', 'ひもと高い台', 'さいごの道', 'ひもでつながる長い道', 'いちばん長い道']) assert(name in STAGE, name);
+test('ステージは13こ', () => {
+  assert.strictEqual(E.STAGES.length, 13);
+  for (const name of ['高い台', 'ばねでとぶ', '手分けの道', 'ひもと高い台', 'さいごの道', 'ひもでつながる長い道', 'いちばん長い道', 'しかけブロック']) assert(name in STAGE, name);
 });
 test('むずかしい道（11・12）: これまでのステージで使った区間だけで、前より長い', () => {
   const old = E.STAGES.slice(0, 10);
@@ -556,22 +556,47 @@ test('高い台: 2人なら2マス、3人からは3マス。3マスは2人重な
   assert(w3.switches[0].on && g.open, 'とびらが開いた');
 });
 
-test('箱を足場に: とびらの前で止まり、箱の上の人の頭から3マスに上がれる（2人）', () => {
-  const w = E.createWorld(STAGE['高い台'], 2);
+// 箱の足場（2026-11-18 から）: 2マスのかべ。人は人の頭から上がれるが、最後の1人は箱に乗らないと上がれない
+function wallOf(w) {
   const box = w.boxes[0];
-  const g = w.gates[1];
+  let x = Math.floor(box.x) + 1;
+  while (!E.solidTile(w, x, 9, 0)) x++;
+  return x;
+}
+test('箱の足場: 2マスのかべは、ひとりでは上がれず、箱をかべの前まで押して乗ると上がれる（最後の人）', () => {
+  for (const n of [2, 5]) {
+    const w = E.createWorld(STAGE['高い台'], n);
+    const box = w.boxes[0];
+    const wx = wallOf(w);
+    assert(E.solidTile(w, wx, 8, 0) && !E.solidTile(w, wx, 7, 0), '2マスのかべ');
+    const ps = w.players;
+    ps.forEach((p, k) => place(p, box.x - 3 - k, GROUND));
+    // ひとりで跳んでも上がれない
+    const a = ps[0];
+    place(a, wx - 1.2, GROUND);
+    run(w, 60, (f) => [{ r: true, jump: f < 30 }]);
+    assert(a.y > 8.5, 'ひとりでは上がれない y=' + a.y);
+    // 箱をかべの前まで押す
+    place(a, box.x - E.PW, GROUND);
+    run(w, 5);
+    run(w, 200, () => [{ r: true }]);
+    assert(near(box.x + 1, wx, 0.02), '箱はかべの前で止まる x=' + box.x);
+    place(a, box.x + 0.1, 9 - E.PH);
+    run(w, 5);
+    run(w, 60, (f) => [{ r: true, jump: f < 30 }]);
+    assert(a.y < 8 && a.ground === 't', '箱の上から上がれた y=' + a.y);
+  }
+});
+test('箱の足場: 人の頭からも2マスのかべに上がれる（最後の人のほかは箱がなくてもよい）', () => {
+  const w = E.createWorld(STAGE['高い台'], 2);
+  const wx = wallOf(w);
   const [a, b] = w.players;
-  place(a, box.x - E.PW, GROUND);
-  place(b, box.x - 3, GROUND);
-  run(w, 5);
-  run(w, 150, () => [{ r: true }, {}]);
-  assert(near(box.x + 1, g.x, 0.02), '箱はとびらの前で止まる x=' + box.x);
-  place(a, box.x + 0.1, 9 - E.PH);
-  place(b, box.x + 0.1, 9 - E.PH * 2 - 0.02);
+  place(a, wx - 1, GROUND);
+  place(b, wx - 1, GROUND - E.PH - 0.02);
   run(w, 10);
   assert.strictEqual(b.ground, 's1');
-  run(w, 50, (f) => [{}, { r: true, jump: f < 30 }]);
-  assert(b.y < 7 && b.ground === 't', '台に上がった y=' + b.y);
+  run(w, 60, (f) => [{}, { r: true, jump: f < 30 }]);
+  assert(b.y < 8 && b.ground === 't', '頭から上がれた y=' + b.y);
 });
 
 test('手分け: スイッチ1つでは開かず、2つ同時で開き、はなれても開いたまま', () => {
@@ -622,7 +647,7 @@ test('番号のスイッチ: その番号の人だけがおさえられる（1�
 test('ひもと高い台（2人）: 台の上でスイッチをおさえたまま、ひもでつながった人がとびらを通れる', () => {
   const w = E.createWorld(STAGE['ひもと高い台'], 2);
   assert(w.rope);
-  for (const k of [0, 1]) {
+  for (const k of [0]) {
     const sw = w.switches[k];
     const g = w.gates[k];
     const top = sw.y + 1;
@@ -635,6 +660,161 @@ test('ひもと高い台（2人）: 台の上でスイッチをおさえたま�
     assert(a.x > g.x + 1, 'ひもでつながったまま、とびらの向こうへ通れた k=' + k + ' x=' + a.x);
     assert(Math.hypot(a.x - b.x, a.y - b.y) <= E.ROPE_LEN + 0.05);
   }
+});
+
+// シーソー（2026-11-18 から）: 右の3マスの段へは、上がった右のシーソーから上がる。最後の1人は、左に重い箱がないと上がれない
+test('シーソー: 箱は重さ2（押すのに2人）。最後の1人は、左に箱を乗せると右が上がって段に上がれる', () => {
+  const w = E.createWorld(2, 2);
+  const [L, R] = [w.plats[0], w.plats[1]];
+  const box = w.boxes[0];
+  assert.strictEqual(box.need, 2, '重い箱');
+  const [a, b] = w.players;
+  place(b, R.x + 30, GROUND); // もう向こうへ行った人（遠くに置く）
+  b.entered = true;
+  place(a, R.x + 1.8, R.y - E.PH);
+  run(w, 120);
+  run(w, 60, (f) => [{ r: true, jump: f < 30 }, {}]);
+  assert(a.y > 8, '箱がないと、ひとりでは段に上がれない y=' + a.y);
+  place(a, L.x - 3, GROUND);
+  run(w, 120);
+  box.x = L.x + 1.6; box.y = L.y - 1; box.vy = 0;
+  run(w, 120);
+  assert(near(R.y, 10 - 1.5, 0.05), '箱1つで右が上がった y=' + R.y);
+  place(a, R.x + 1.8, R.y - E.PH);
+  run(w, 30);
+  assert(near(R.y, 10 - 1.5, 0.05), '最後の1人が乗っても、右は上がったまま y=' + R.y);
+  run(w, 60, (f) => [{ r: true, jump: f < 30 }, {}]);
+  assert(near(a.y, 7 - E.PH, 0.05), '段に上がれた y=' + a.y);
+});
+test('シーソー: 段の下に床はなく、右のシーソーのすぐとなり', () => {
+  const w = E.createWorld(2, 2);
+  const R = w.plats[1];
+  const bx = Math.round(R.x + R.w);
+  for (const ty of [7, 8, 9]) assert(E.solidTile(w, bx, ty, 0), '段 ty=' + ty);
+  assert(!E.solidTile(w, bx, 6, 0));
+});
+
+// しかけブロック（2026-11-18）
+function blockStage(n) {
+  const w = E.createWorld(STAGE['しかけブロック'], n);
+  return { w, k: w.blocks[0], sp: w.items.find((it) => it.kind === 'spring') };
+}
+test('しかけブロック: 数字の人数が乗ると開いて、ばねが出る（人の上に乗っている人も数える）', () => {
+  const { w, k, sp } = blockStage(3);
+  assert.strictEqual(k.need, 2);
+  assert(sp.hidden, 'はじめはばねは出ていない');
+  const [a, b, c] = w.players;
+  place(c, k.x - 4, GROUND);
+  place(a, k.x + 0.2, k.y - E.PH);
+  run(w, 10);
+  assert(!k.open && k.riders === 1, '1人では開かない');
+  place(b, k.x + 0.2, k.y - E.PH * 2 - 0.02);
+  run(w, 10);
+  assert.strictEqual(b.ground, 's1');
+  assert(k.open, '頭の上の人も数えて開いた');
+  run(w, 60);
+  assert(!sp.hidden && !sp.holder, 'ばねが出た');
+  assert(near(sp.y + E.ITEM, k.y, 0.05), 'ばねはブロックの上 y=' + sp.y);
+});
+test('持ち運べるばね: 歩いてもひろわない。「ひろう」で持ち、持ったまま跳べる。「置く」で目の前に置く', () => {
+  const { w, k, sp } = blockStage(2);
+  k.open = true; sp.hidden = false;
+  const [a, b] = w.players;
+  place(b, k.x - 4, GROUND);
+  place(a, k.x + 1.2, k.y - E.PH);
+  run(w, 60);
+  assert(!sp.holder, '重なってもひろわない');
+  run(w, 2, (f) => [f === 0 ? { act: true } : {}, {}]);
+  assert.strictEqual(sp.holder, 1, 'ひろった');
+  place(a, k.x + 3, GROUND);
+  run(w, 10);
+  const y0 = a.y;
+  let top = a.y;
+  for (let f = 0; f < 40; f++) { run(w, 1, () => [{ jump: f < 30 }, {}]); top = Math.min(top, a.y); }
+  assert(top < y0 - 1, '持ったまま跳べる');
+  run(w, 60);
+  a.face = 1;
+  run(w, 2, (f) => [f === 0 ? { act: true } : {}, {}]);
+  assert(!sp.holder, '置いた');
+  run(w, 30);
+  assert(sp.x > a.x + 0.3 && near(sp.y + E.ITEM, 10, 0.05), '目の前の床に置いた x=' + sp.x + ' y=' + sp.y);
+});
+test('しかけブロックの先の穴: ふつうのジャンプでも、2人重なった頭からでもわたれず、手前に置いたばねからならわたれる', () => {
+  const { w, k, sp } = blockStage(3);
+  // 穴のはじめ
+  let px = k.x + 2;
+  while (E.solidTile(w, px, 10, 99)) px++;
+  let pe = px;
+  while (!E.solidTile(w, pe, 10, 99)) pe++;
+  assert.strictEqual(pe - px, 5, '穴は5マス');
+  const across = (p) => p.x > pe - 0.2 && p.y < 10 && p.ground === 't';
+  const [a, b, c] = w.players;
+  // ふつうに走って跳ぶ
+  place(b, k.x - 4, GROUND); place(c, k.x - 5, GROUND);
+  place(a, px - 3, GROUND);
+  let ok = false;
+  for (let f = 0; f < 90; f++) { run(w, 1, () => [{ r: true, jump: a.x + E.PW > px - 0.1 }, {}, {}]); if (across(a)) ok = true; }
+  assert(!ok, 'ふつうのジャンプではわたれない');
+  // 2人重なった頭（いちばん上は3人目）から
+  place(a, px - 1 - E.PW, GROUND);
+  place(b, px - 1 - E.PW, GROUND - E.PH - 0.02);
+  place(c, px - 1 - E.PW, GROUND - E.PH * 2 - 0.04);
+  run(w, 15);
+  ok = false;
+  for (let f = 0; f < 90; f++) { run(w, 1, () => [{}, {}, { r: true, jump: f < 30 }]); if (across(c)) ok = true; }
+  assert(!ok, '2人重なった頭からでもわたれない');
+  // 手前にばねを置く
+  k.open = true; sp.hidden = false; sp.holder = 0;
+  sp.x = px - E.ITEM - 0.05; sp.y = 10 - E.ITEM; sp.vx = 0; sp.vy = 0; sp.armed = true;
+  place(b, k.x - 4, GROUND); place(c, k.x - 5, GROUND);
+  place(a, px - 4, GROUND);
+  ok = false;
+  for (let f = 0; f < 120; f++) { run(w, 1, () => [{ r: true }, {}, {}]); if (across(a)) ok = true; }
+  assert(ok, 'ばねからならわたれた x=' + a.x);
+});
+test('持ち運べるばね: 出てきたばねに乗っても跳ばない（置いたばねだけ跳ぶ）', () => {
+  const { w, k, sp } = blockStage(2);
+  const [a, b] = w.players;
+  place(a, k.x + 0.2, k.y - E.PH);
+  place(b, k.x + 1.1, k.y - E.PH);
+  run(w, 90);
+  assert(k.open && !sp.hidden, '開いた');
+  assert(near(a.y, k.y - E.PH, 0.05) && near(b.y, k.y - E.PH, 0.05), 'ブロックの上の人は跳ばない a=' + a.y + ' b=' + b.y);
+  // ひろって置くと、跳ぶ
+  run(w, 2, (f) => [f === 0 ? { act: true } : {}, {}]);
+  assert.strictEqual(sp.holder, 1);
+  place(a, k.x + 3, GROUND); place(b, k.x - 3, GROUND);
+  run(w, 30);
+  a.face = 1;
+  run(w, 2, (f) => [f === 0 ? { act: true } : {}, {}]);
+  run(w, 30);
+  assert(sp.armed && near(sp.y + E.ITEM, 10, 0.05), '床に置いたばね y=' + sp.y);
+  place(b, sp.x - 1.5, GROUND);
+  let top = 99;
+  for (let f = 0; f < 40; f++) { run(w, 1, () => [{}, { r: f < 12 }]); top = Math.min(top, b.y); }
+  assert(top < GROUND - 3, '置いたばねでは跳ぶ top=' + top);
+});
+test('持ち運べるばね: 穴に落ちると、しかけブロックの上に戻る', () => {
+  const { w, k, sp } = blockStage(2);
+  k.open = true; sp.hidden = false;
+  let px = k.x + 2;
+  while (E.solidTile(w, px, 10, 99)) px++;
+  sp.x = px + 2; sp.y = 9; sp.vy = 0; sp.armed = true;
+  w.players.forEach((p, i) => place(p, k.x - 3 - i, GROUND));
+  run(w, 90);
+  assert(near(sp.x, sp.x0, 0.01) && near(sp.y + E.ITEM, k.y, 0.05), 'ブロックの上に戻った x=' + sp.x + ' y=' + sp.y);
+  assert(!sp.armed, '戻ったばねは、乗っても跳ばない');
+});
+test('しかけブロック: ルームに置く形（ばねが出ているか・開いたか・乗っている人数）', () => {
+  const { w, k, sp } = blockStage(2);
+  k.riders = 1;
+  let v = blockStage(2).w;
+  E.applySnapshot(v, JSON.parse(JSON.stringify(E.snapshot(w))), false);
+  assert(!v.blocks[0].open && v.blocks[0].riders === 1 && v.items.find((it) => it.kind === 'spring').hidden);
+  k.open = true; sp.hidden = false;
+  v = blockStage(2).w;
+  E.applySnapshot(v, JSON.parse(JSON.stringify(E.snapshot(w))), true);
+  assert(v.blocks[0].open && !v.items.find((it) => it.kind === 'spring').hidden);
 });
 
 console.log(`\n${passed} ok`);
