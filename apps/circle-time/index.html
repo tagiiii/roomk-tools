@@ -40,6 +40,8 @@
   .seg{ display:flex; gap:8px; margin-bottom:16px; }
   .seg button{ flex:1; min-height:48px; border-radius:12px; border:2px solid var(--color-border); background:#fff; font:700 16px 'Zen Maru Gothic',var(--font-base); color:var(--color-text); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; }
   .seg-sm button{ min-height:40px; font-size:14px; }
+  .ready-h{ font:700 16px 'Zen Maru Gothic',var(--font-base); color:var(--color-primary); margin:14px 0 6px; }
+  .ready-h span{ margin-left:8px; font:500 13px var(--font-base); color:var(--color-muted); }
   .ready{ list-style:none; margin:4px 0 16px; padding:0; display:flex; flex-direction:column; gap:8px; }
   .ready li{ display:flex; gap:10px; align-items:flex-start; background:var(--color-primary-soft); border-radius:12px; padding:10px 12px; font-size:13px; line-height:1.6; }
   .ready li > .material-symbols-rounded{ color:var(--color-accent); font-size:22px; flex:none; }
@@ -754,7 +756,8 @@
         <button type="button" data-v="am" aria-pressed="true"><span class="material-symbols-rounded">wb_sunny</span>午前</button>
         <button type="button" data-v="pm" aria-pressed="false"><span class="material-symbols-rounded">wb_twilight</span>午後</button>
       </div>
-      <ul class="ready">
+      <h3 class="ready-h" id="ready-h">自動で用意するもの<span>入れなくてOK</span></h3>
+      <ul class="ready" aria-labelledby="ready-h">
         <li id="rd-wx" class="wait"><span class="material-symbols-rounded">partly_cloudy_day</span><span><b>全国の天気</b><span id="wx-status-text">取りにいきます…</span></span></li>
         <li id="rd-day" class="wait"><span class="material-symbols-rounded">calendar_today</span><span><b>今日は何の日</b><span id="day-status-text">今朝用意した記念日を確かめています…</span></span></li>
         <li id="rd-prog" class="wait"><span class="material-symbols-rounded">event_note</span><span><b id="prog-head">今日のプログラム</b><span id="prog-status-text">room-K ポータルの時間割を確かめています…</span></span></li>
