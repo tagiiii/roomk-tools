@@ -183,7 +183,8 @@ const { check, sleep } = L;
   await L.waitText(B, '#modal-effect', 'いっしょ');
   check('V7 結果: 番の人と同じだった人が進む', (await L.text(B, '#modal-effect')) === 'ほすとさんがいっしょ！ 1マス進む', await L.text(B, '#modal-effect'));
   const rows = await B.page.$$eval('#modal-choices .ks-result', (els) => els.map((e) => ({ answer: e.classList.contains('is-answer'), people: [...e.querySelectorAll('.ks-result__person')].map((p) => p.textContent.replace(/^\d+/, '')) })));
-  check('V8 だれが何を選んだかが出る・番の人の答えに印', rows.length === 3 && rows[0].answer && rows[0].people.join() === 'ほすと,あお' && rows[1].people.join() === 'みどり' && !rows[1].answer, rows);
+  check('V8 番の人の答えと、同じだった人だけが出る（ちがう答えの人は、だれが何を選んだかを出さない）', rows.length === 3 && rows[0].answer && rows[0].people.join() === 'ほすと,あお' && rows[1].people.length === 0 && !rows[1].answer
+    && !(await L.text(B, '#modal-choices')).includes('みどり'), rows);
   check('V9 進めるのは番の人とホスト', (await L.card(A)).next && (await L.card(H)).next && !(await L.card(B)).next && (await L.text(A, '#btn-next')).includes('進む'));
   await A.page.click('#btn-next');
   room = await gameWhen((g) => g.step === 'life3-roll' && !g.q);
