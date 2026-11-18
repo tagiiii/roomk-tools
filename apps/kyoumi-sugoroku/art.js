@@ -23,7 +23,8 @@ export function sceneHeight(total, cols = DEFAULT_COLS) {
 
 // マスの幅（盤の幅に対する％）。列が多いときは、となりと重ならない大きさにする
 export function squareWidth(cols = DEFAULT_COLS) {
-  return Math.min(14.5, (dxOf(cols) - 8) / 6);
+  // 列が少ない盤（3〜4列。人数が多いとき）は、コマが集まっても見やすいようにマスを大きくする
+  return Math.min(cols <= 4 ? 16.5 : 14.5, (dxOf(cols) - 8) / 6);
 }
 
 // 段の中心の高さ（場面の名前を置くのに使う）

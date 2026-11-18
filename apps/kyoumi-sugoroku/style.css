@@ -170,7 +170,9 @@
 .ks-pawn.ks-pawn--1::before,
 .ks-pawn.ks-pawn--1::after,
 .ks-pawn.ks-pawn--4::before,
-.ks-pawn.ks-pawn--4::after {
+.ks-pawn.ks-pawn--4::after,
+.ks-pawn.ks-pawn--7::before,
+.ks-pawn.ks-pawn--7::after {
   top: -22%;
   width: 40%;
   height: 48%;
@@ -181,19 +183,26 @@
 .ks-pawn.ks-pawn--2::before,
 .ks-pawn.ks-pawn--2::after,
 .ks-pawn.ks-pawn--5::before,
-.ks-pawn.ks-pawn--5::after {
+.ks-pawn.ks-pawn--5::after,
+.ks-pawn.ks-pawn--8::before,
+.ks-pawn.ks-pawn--8::after {
   top: -36%;
   width: 24%;
   height: 60%;
 }
-.ks-pawn.ks-pawn--2::before, .ks-pawn.ks-pawn--5::before { left: 18%; }
-.ks-pawn.ks-pawn--2::after, .ks-pawn.ks-pawn--5::after { right: 18%; }
+.ks-pawn.ks-pawn--2::before, .ks-pawn.ks-pawn--5::before, .ks-pawn.ks-pawn--8::before { left: 18%; }
+.ks-pawn.ks-pawn--2::after, .ks-pawn.ks-pawn--5::after, .ks-pawn.ks-pawn--8::after { right: 18%; }
 .ks-pawn--0 { --ks-c: #2E7D8C; }
 .ks-pawn--1 { --ks-c: #C96F1E; }
 .ks-pawn--2 { --ks-c: #4F8540; }
 .ks-pawn--3 { --ks-c: #B5476B; }
 .ks-pawn--4 { --ks-c: #5B5FA8; }
 .ks-pawn--5 { --ks-c: #8C6A3F; }
+/* 7〜10人目（2026-11-18。10人まで遊べるように） */
+.ks-pawn--6 { --ks-c: #7A4FB3; }
+.ks-pawn--7 { --ks-c: #B8433A; }
+.ks-pawn--8 { --ks-c: #2F6BB0; }
+.ks-pawn--9 { --ks-c: #5E6B72; }
 
 /* ── ゲーム画面：プレイヤーインジケーター ── */
 .ks-indicator {
@@ -315,6 +324,16 @@
   width: min(30px, 31cqi);
   height: min(30px, 31cqi);
   font-size: min(12px, 14cqi);
+}
+/* 7人からは、4つで1段・3段で10人分 */
+.ks-square__pawns:has(:nth-child(7)) {
+  inset: 6% -8% -8%;
+  gap: 1px 0;
+}
+.ks-square__pawns:has(:nth-child(7)) .ks-pawn {
+  width: min(24px, 25cqi);
+  height: min(24px, 25cqi);
+  font-size: min(10px, 12cqi);
 }
 /* 1〜2人のマスは、コマを大きく */
 .ks-square__pawns:not(:has(:nth-child(3))) .ks-pawn {
@@ -826,10 +845,10 @@
 }
 .ks-overlay__panel p { margin-bottom: 16px; }
 
-/* ── 人数（1〜6人）は同じ幅で1列に。せまいときは3つずつ ── */
+/* ── 人数（1〜10人）は同じ幅で、5つずつ2段 ── */
 #player-count {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 #player-count .ks-toggle__btn { min-width: 0; }
 
@@ -854,9 +873,6 @@
   .ks-roombar__code { grid-column: 1 / 3; align-self: center; padding-left: 4px; }
   .ks-roombar__leave { grid-column: 3; grid-row: 1; margin-left: 0; }
   .ks-roombar .btn { white-space: nowrap; min-width: 0; padding-left: 4px; padding-right: 4px; }
-}
-@media (max-width: 480px) {
-  #player-count { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 /* ── はじめの画面の型（2026-11-06）: ツール名・ひとこと・絵は、はじめの画面の白い面（.app-entry）に入れた。
@@ -1049,3 +1065,69 @@
 @media (max-width: 600px) {
   .ks-board__label { font-size: 10px; padding: 1px 8px; }
 }
+
+/* ── サイコロを2つ振って、進む目を選ぶ ── */
+.ks-dicepick {
+  max-width: 480px;
+  margin: 0 auto 18px;
+  padding: 16px;
+  background: #fff;
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius-box);
+  text-align: center;
+}
+.ks-dicepick[hidden] { display: none; }
+.ks-dicepick__lead {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 12px;
+}
+.ks-dicepick__row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.ks-dicepick__btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 8px 12px;
+  border: 2px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-primary-soft);
+  font-family: inherit;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.ks-dicepick__btn:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+.ks-dicepick__btn:disabled { cursor: default; }
+.ks-dice.ks-dice--sm {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  box-shadow: inset 0 -5px 0 rgba(106, 79, 53, 0.13), 0 3px 0 #CDB894, 0 6px 10px rgba(63, 54, 45, 0.18);
+}
+.ks-dicepick__steps {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+.ks-dicepick__dest {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 12px 3px 8px;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+.ks-dicepick__dest .material-symbols-rounded { font-size: 17px; }
+.ks-modal[data-theme="life-cheer"] { --ks-theme: #D9577A; --ks-theme-soft: #FDE9EE; }

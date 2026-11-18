@@ -17,14 +17,14 @@ const { check, sleep } = L;
   await O.page.click('#btnGoLocal');
   await L.waitScreen(O, 'settings');
   const counts = await O.page.$$eval('#player-count .ks-toggle__btn', (els) => els.map((e) => e.textContent));
-  check('A2 人数は1〜6人', counts.join() === '1人,2人,3人,4人,5人,6人', counts);
-  await O.page.click('#player-count [data-value="6"]');
-  check('A3 6人なら名前欄も6つ', (await O.page.$$('#player-names input')).length === 6);
-  await O.page.fill('#player-names input >> nth=5', 'ろくばん');
+  check('A2 人数は1〜10人', counts.join() === '1人,2人,3人,4人,5人,6人,7人,8人,9人,10人', counts);
+  await O.page.click('#player-count [data-value="10"]');
+  check('A3 10人なら名前欄も10', (await O.page.$$('#player-names input')).length === 10);
+  await O.page.fill('#player-names input >> nth=9', 'じゅうばん');
   await O.page.click('#btn-start');
   await L.waitScreen(O, 'game');
   const ind = await L.indicator(O);
-  check('A4 6人のコマと名前', ind.length === 6 && ind[5].name === 'ろくばん' && ind[0].name === 'プレイヤー1', ind);
+  check('A4 10人のコマと名前', ind.length === 10 && ind[9].name === 'じゅうばん' && ind[0].name === 'プレイヤー1', ind);
   check('A5 6色目のコマ', await O.page.evaluate(() => getComputedStyle(document.querySelector('#indicator .ks-pawn.ks-pawn--5')).backgroundColor !== 'rgba(0, 0, 0, 0)'));
   check('A6 ルームバーは出ない', !(await L.visible(O, '#roomBar')));
   await O.page.click('#btn-roll');
@@ -43,7 +43,7 @@ const { check, sleep } = L;
       if (await O.page.evaluate(() => document.getElementById('goal-modal').style.display === 'flex')) {
         check('A9b ゴールに「もう一度あそぶ」と「設定に戻る」', await L.visible(O, '#btn-restart') && await L.visible(O, '#btnGoalSettings'));
         await O.page.click('#btn-restart');
-        check('A9c もう一度あそぶは同じ設定ですぐはじまる', (await L.indicator(O)).length === 6 && await L.visible(O, '#btn-roll'));
+        check('A9c もう一度あそぶは同じ設定ですぐはじまる', (await L.indicator(O)).length === 10 && await L.visible(O, '#btn-roll'));
         continue;
       }
     }

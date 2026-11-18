@@ -3,8 +3,8 @@
 // ルームの決まりは logic.js。質問はテーマのキーと QUESTIONS の中の番号で共有するので、
 // QUESTIONS は並べ替え・途中の削除をしない（足すのは末尾だけ）。
 import { shuffle, popIn } from '../shared/js/utils.js';
-import * as L from './logic.js?v=20261118life';
-import { SCENE_W, sceneHeight, squarePoints, squareWidth, rowCenters, sceneElement } from './art.js?v=20261118life';
+import * as L from './logic.js?v=20261118game';
+import { SCENE_W, sceneHeight, squarePoints, squareWidth, rowCenters, sceneElement } from './art.js?v=20261118game';
 
 const NUMBERS = ['①', '②', '③', '④', '⑤'];
 
@@ -153,7 +153,7 @@ const COUNTS = Object.fromEntries(Object.entries(QUESTIONS).map(([key, list]) =>
 
 /* ── 「人生の道」モード（1台の画面だけ。2026-11-18 試作） ──
    盤は4段で、1段が1つの場面。マスの種類（えらぶ・はなす・きく・できごと）で起きることが決まる。
-   質問は場面ごと。{ q, choices } は「えらぶ」のマス、文字列は「はなす」のマスに出す。 */
+   質問は場面ごとで、どれも3択（チャットで参加する人も、押すだけで答えられるように。2026-11-18 オーナー）。 */
 const LIFE_SCENES = [
   { key: 'chiisai', label: '小さいころ' },
   { key: 'ima', label: 'いま' },
@@ -162,10 +162,10 @@ const LIFE_SCENES = [
 ];
 const LIFE_KINDS = {
   erabu: { label: 'えらぶ', icon: 'checklist' },
-  hanasu: { label: 'はなす', icon: 'chat_bubble' },
   kiku: { label: 'きく', icon: 'forum' },
   dekigoto: { label: 'できごと', icon: 'auto_awesome' },
 };
+// 「えらぶ」のマス: 番の人が3つから選ぶ
 const LIFE_QUESTIONS = {
   chiisai: [
     { q: '小さいころ、よく遊んだのは？', choices: ['外で走り回る', '家の中でじっくり', 'どっちもよくやった'] },
@@ -174,12 +174,12 @@ const LIFE_QUESTIONS = {
     { q: '小さいころの自分は？', choices: ['よくしゃべる子', 'しずかな子', '場所によってちがう'] },
     { q: '小さいころ、好きだったお話は？', choices: ['動物が出てくる話', '冒険の話', 'おもしろくて笑える話'] },
     { q: '小さいころ、雨の日は？', choices: ['水たまりで遊びたい', '家で遊びたい', '窓から見ていたい'] },
-    '小さいころ、夢中になっていた遊びは？',
-    '小さいころ、大事にしていたものはある？',
-    '小さいころ、よく見ていた番組や動画は？',
-    '小さいころ、行って楽しかった場所は？',
-    '小さいころは苦手だったけど、今は食べられるものはある？',
-    '小さいころ、できるようになってうれしかったことは？',
+    { q: '小さいころ、夢中になっていた遊びは？', choices: ['ごっこ遊び', 'ブロックやお絵かき', '外での遊び'] },
+    { q: '小さいころ、大事にしていたものは？', choices: ['ぬいぐるみや人形', 'おもちゃ', '絵本やカード'] },
+    { q: '小さいころ、よく見ていたのは？', choices: ['アニメ', '動物や乗り物の番組', '歌やダンスの動画'] },
+    { q: '小さいころ、行って楽しかった場所は？', choices: ['公園', '動物園や水族館', 'お店やお祭り'] },
+    { q: '小さいころは苦手だったけど、今は平気な食べものは？', choices: ['野菜', 'からいもの', 'まだ苦手なものが多い'] },
+    { q: '小さいころ、できるようになってうれしかったことは？', choices: ['自転車に乗ること', '泳ぐこと', '料理のお手伝い'] },
   ],
   ima: [
     { q: '休みの日の朝の自分は？', choices: ['早起きする', 'ゆっくり寝る', 'その日の気分'] },
@@ -188,12 +188,12 @@ const LIFE_QUESTIONS = {
     { q: 'いま、ほしいのは？', choices: ['新しいゲームや道具', '自分だけの時間', 'おいしいもの'] },
     { q: '集中しやすいのは？', choices: ['朝', '昼', '夜'] },
     { q: 'やりとりするなら？', choices: ['声で話す', '文字で送る', 'どっちも好き'] },
-    'いま、いちばん楽しみにしていることは？',
-    '最近「やってよかった」と思ったことは？',
-    'いま、もっとくわしくなりたいものはある？',
-    '最近、気に入っている場所は？',
-    'いまの自分の「ちょっといいところ」は？',
-    '最近、おすすめしたいものはある？',
+    { q: 'いま、いちばん楽しみにしていることは？', choices: ['ゲームや動画の続き', 'おいしいごはん', '出かける予定'] },
+    { q: '最近「やってよかった」と思ったことは？', choices: ['新しいことを試した', '片づけや準備', 'ゆっくり休んだ'] },
+    { q: 'いま、もっとくわしくなりたいものは？', choices: ['ゲームやアニメ', '生きものや自然', '機械やパソコン'] },
+    { q: '最近、気に入っている場所は？', choices: ['自分の部屋', '近所のお店や公園', 'ふとんの中'] },
+    { q: 'いまの自分の「ちょっといいところ」は？', choices: ['やさしいところ', '好きなことに集中できるところ', 'おもしろいところ'] },
+    { q: '最近、おすすめしたいものは？', choices: ['ゲームやアプリ', '動画や音楽', '食べもの'] },
   ],
   mousugu: [
     { q: '次の休みに行くなら？', choices: ['自然の多いところ', 'にぎやかな街', '家でのんびり'] },
@@ -202,12 +202,12 @@ const LIFE_QUESTIONS = {
     { q: 'ひとりで出かけられるなら？', choices: ['近くの町へ', '遠くの県へ', '外国へ'] },
     { q: '自分の部屋を変えるなら？', choices: ['かっこよく', 'かわいく', 'すっきりシンプルに'] },
     { q: '新しく覚えるなら？', choices: ['外国の言葉', 'プログラミング', '料理やお菓子作り'] },
-    '近いうちにやってみたいことは？',
-    '次の誕生日にしたいことは？',
-    '次に出かけるなら、どこへ行きたい？',
-    'もう少し上手になりたいことは？',
-    'これから食べてみたいものは？',
-    '1年後の自分に、ひとこと言うなら？',
+    { q: '近いうちにやってみたいことは？', choices: ['新しいゲーム', '料理やお菓子作り', 'どこかへおでかけ'] },
+    { q: '次の誕生日にしたいことは？', choices: ['好きなものを食べる', 'ほしいものをもらう', 'のんびりすごす'] },
+    { q: '次に出かけるなら、どこへ行きたい？', choices: ['遊べるところ', '買いものができるところ', '景色のいいところ'] },
+    { q: 'もう少し上手になりたいことは？', choices: ['ゲーム', '絵や工作', '体を動かすこと'] },
+    { q: 'これから食べてみたいものは？', choices: ['まだ食べたことのないスイーツ', '外国の料理', 'ごうかな肉や魚'] },
+    { q: '1年後の自分に、ひとこと言うなら？', choices: ['元気にしてる？', '好きなこと続けてる？', '無理しないでね'] },
   ],
   otona: [
     { q: 'おとなになったら住みたいのは？', choices: ['海の近く', '山の近く', '街の中'] },
@@ -216,43 +216,43 @@ const LIFE_QUESTIONS = {
     { q: 'おとなになったら、住む家は？', choices: ['広い一軒家', '景色のいい高い部屋', '小さくて落ち着く部屋'] },
     { q: 'おとなになったら、休みの日は？', choices: ['旅行に出かける', '家で好きなことをする', 'だれかと遊ぶ'] },
     { q: 'おとなになったら、朝ごはんは？', choices: ['パン', 'ごはん', 'その日の気分'] },
-    'おとなになったら、やってみたいことは？',
-    'おとなになっても、続けていたいことは？',
-    'おとなになったら、行ってみたい国や場所は？',
-    'おとなになったら、どんな部屋に住みたい？',
-    'おとなになったら、自分で買ってみたいものは？',
-    'どんなおとなを「いいな」と思う？',
+    { q: 'おとなになったら、やってみたいことは？', choices: ['ひとり旅', '好きなものをたくさん買う', '夜ふかし'] },
+    { q: 'おとなになっても、続けていたいことは？', choices: ['ゲーム', '絵や音楽', 'のんびりすること'] },
+    { q: 'おとなになったら、行ってみたいのは？', choices: ['外国', '日本のあちこち', '宇宙'] },
+    { q: 'おとなになったら、どんな部屋に住みたい？', choices: ['好きなものだらけの部屋', '広くてすっきりした部屋', '秘密基地みたいな部屋'] },
+    { q: 'おとなになったら、自分で買ってみたいものは？', choices: ['大きなテレビやパソコン', '乗りもの', 'おいしいものをたくさん'] },
+    { q: 'どんなおとなを「いいな」と思う？', choices: ['やさしい人', 'おもしろい人', '好きなことを楽しんでいる人'] },
   ],
 };
-// 「きく」のマス: 番の人が、だれかに聞く質問
+// 「きく」のマス: 番の人が相手を選び、3枚の質問から1枚を選んで聞く。聞かれた人が3つから選んで答える
 const LIFE_ASK = {
   chiisai: [
-    '小さいころ、どんな遊びが好きだった？',
-    '小さいころ、なりたかったものはある？',
-    '小さいころ、好きだったキャラクターは？',
-    '小さいころ、よく食べていたおやつは？',
-    '小さいころ、よく行った場所は？',
+    { q: '小さいころ、どんな遊びが好きだった？', choices: ['外で遊ぶ', '家で遊ぶ', '何かを作る'] },
+    { q: '小さいころ、なりたかったものは？', choices: ['ヒーローやお姫さま', '動物や乗りもの', 'とくになかった'] },
+    { q: '小さいころ、好きだったキャラクターは？', choices: ['かわいいキャラ', 'かっこいいキャラ', 'おもしろいキャラ'] },
+    { q: '小さいころ、よく食べていたおやつは？', choices: ['あまいお菓子', 'スナックやせんべい', 'くだものやアイス'] },
+    { q: '小さいころ、よく行った場所は？', choices: ['公園', 'お店', 'だれかの家'] },
   ],
   ima: [
-    'いま、いちばんハマっているものは？',
-    '最近、おいしかったものは？',
-    '休みの日は何をしていることが多い？',
-    'いま、ほしいものはある？',
-    '最近、思わず笑ったことは？',
+    { q: 'いま、いちばんハマっているものは？', choices: ['ゲーム', '動画や音楽', '作ることや描くこと'] },
+    { q: '最近、おいしかったものは？', choices: ['ごはんやめん', 'お菓子やデザート', '飲みもの'] },
+    { q: '休みの日は何をしていることが多い？', choices: ['家でのんびり', '好きなことに集中', '出かける'] },
+    { q: 'いま、ほしいものは？', choices: ['遊ぶもの', '身につけるもの', '時間'] },
+    { q: '最近、思わず笑ったことは？', choices: ['動画やテレビ', 'だれかの一言', '自分のうっかり'] },
   ],
   mousugu: [
-    '近いうちに、楽しみにしていることは？',
-    'これから行ってみたい場所は？',
-    'これから挑戦してみたいことはある？',
-    '次の休みは何をしたい？',
-    'これから、作ってみたいものはある？',
+    { q: '近いうちに、楽しみにしていることは？', choices: ['発売や配信', '食べること', '出かけること'] },
+    { q: 'これから行ってみたい場所は？', choices: ['近くの気になる場所', '遠くの有名な場所', 'まだ決めていない'] },
+    { q: 'これから挑戦してみたいことは？', choices: ['新しい遊び', '作ること', '体を動かすこと'] },
+    { q: '次の休みは何をしたい？', choices: ['ゆっくり休む', '思いきり遊ぶ', 'どこかへ行く'] },
+    { q: 'これから、作ってみたいものは？', choices: ['食べもの', '絵や工作', 'ゲームや動画'] },
   ],
   otona: [
-    'おとなになったら、いちばん楽しみなことは？',
-    'おとなになっても、好きでいたいものは？',
-    'おとなになったら、どこに住んでみたい？',
-    'おとなになったら、どんな毎日がいい？',
-    'おとなって、どんなところが楽しそう？',
+    { q: 'おとなになったら、いちばん楽しみなことは？', choices: ['好きな時間に好きなことをする', '自分で買いものをする', '遠くへ出かける'] },
+    { q: 'おとなになっても、好きでいたいものは？', choices: ['いま好きなゲームや作品', 'いま好きな食べもの', 'いま好きな場所'] },
+    { q: 'おとなになったら、どこに住んでみたい？', choices: ['いまの町', 'にぎやかな都会', '自然の多いところ'] },
+    { q: 'おとなになったら、どんな毎日がいい？', choices: ['のんびりした毎日', 'いそがしくて楽しい毎日', '毎日ちがうことが起きる'] },
+    { q: 'おとなって、どんなところが楽しそう？', choices: ['自由なところ', '自分で決められるところ', 'まだよくわからない'] },
   ],
 };
 // 「できごと」のマス。move: その人が進む / all: みんなが進む / again: もう一度サイコロ
@@ -269,14 +269,9 @@ const LIFE_EVENTS = [
 ];
 
 // ルームの決まり（logic.js）に、中身の形だけを渡す（番号で共有する）
-const lifeIndexes = (wantChoices) => Object.fromEntries(LIFE_SCENES.map((sc) => [
-  sc.key,
-  LIFE_QUESTIONS[sc.key].map((item, i) => ((typeof item === 'object') === wantChoices ? i : -1)).filter((i) => i >= 0),
-]));
 L.setLifeContent({
   scenes: LIFE_SCENES.map((sc) => sc.key),
-  erabu: lifeIndexes(true),
-  hanasu: lifeIndexes(false),
+  erabu: Object.fromEntries(LIFE_SCENES.map((sc) => [sc.key, LIFE_QUESTIONS[sc.key].length])),
   kiku: Object.fromEntries(LIFE_SCENES.map((sc) => [sc.key, LIFE_ASK[sc.key].length])),
   events: LIFE_EVENTS.map((ev) => ({ move: ev.move || 0, all: ev.all || 0, again: !!ev.again })),
 });
@@ -476,12 +471,14 @@ function fillQuestion(themeKey, item, playerName, opts) {
       btn.addEventListener('click', () => opts.onChoose(i));
       choicesEl.appendChild(btn);
     });
-    const free = makeElement('button', 'ks-choice ks-choice--free');
-    free.type = 'button';
-    free.append(msIcon(opts.freeIcon || 'chat'), document.createTextNode(opts.freeLabel || '自由に話す'));
-    free.disabled = !opts.canPress;
-    free.addEventListener('click', () => opts.onChoose(L.CHOICE_FREE));
-    choicesEl.appendChild(free);
+    if (!opts.noFree) {
+      const free = makeElement('button', 'ks-choice ks-choice--free');
+      free.type = 'button';
+      free.append(msIcon(opts.freeIcon || 'chat'), document.createTextNode(opts.freeLabel || '自由に話す'));
+      free.disabled = !opts.canPress;
+      free.addEventListener('click', () => opts.onChoose(L.CHOICE_FREE));
+      choicesEl.appendChild(free);
+    }
   }
   $('modal-effect').hidden = !opts.effect;
   $('modal-effect').textContent = opts.effect || '';
@@ -500,7 +497,7 @@ function renderPick(pick) {
   if (!pick) return;
   $('pickWho').replaceChildren(
     makeElement('span', `ks-pawn ks-pawn--${pick.playerIndex}`, pick.playerIndex + 1),
-    document.createTextNode(`${pick.name} さんが選んだもの`),
+    document.createTextNode(pick.title || `${pick.name} さんが選んだもの`),
   );
   $('pickQ').textContent = pick.item.q;
   const label = pick.choice === L.CHOICE_FREE ? '自由に話す' : (pick.item.choices?.[pick.choice] ?? '');
@@ -676,21 +673,18 @@ function startLocalGame() {
   const players = [];
   for (let i = 0; i < settings.playerCount; i++) {
     const name = settings.names[i].trim().slice(0, L.NAME_MAX);
-    players.push({ name: name || `プレイヤー${i + 1}`, pos: 0, done: false });
+    players.push({ name: name || `プレイヤー${i + 1}`, pos: 0 });
   }
 
   local.players = players;
   local.currentIndex = 0;
-  local.mode = life ? 'life' : 'theme';
-  local.totalSquares = life ? lifeSize() : settings.totalSquares;
-  local.view = null;
-  local.life = null;
   if (life) {
-    local.view = lifeView(local.totalSquares);
-    local.life = { pools: {}, events: [], card: null };
-    window.RoomkStats?.count('mode-life');
+    startLocalLife(players.map((p) => p.name));
+    return;
   }
-  $('lifeLegend').hidden = !life;
+  endLocalLife();
+  local.totalSquares = settings.totalSquares;
+  $('lifeLegend').hidden = true;
   local.themes = themes;
   local.rolling = false;
   local.ended = false;
@@ -709,13 +703,13 @@ function startLocalGame() {
 }
 
 function renderLocalGame() {
-  renderIndicator(local.players.map((p, i) => ({ name: p.name, current: i === local.currentIndex && !local.ended, tags: p.done ? ['ゴール'] : [] })));
+  renderIndicator(local.players.map((p, i) => ({ name: p.name, current: i === local.currentIndex && !local.ended })));
   // だれの番かを1行で（ルームと同じ）
   const name = local.players[local.currentIndex].name;
   $('turnNote').hidden = local.ended;
   $('turnNote').textContent = local.rolling ? `${name}さんがサイコロを振ったよ` : `${name}さんの番だよ`;
   renderPick(local.lastPick);
-  renderBoard(local.totalSquares, local.players.map((p) => p.pos), local.ended ? -1 : local.currentIndex, local.view);
+  renderBoard(local.totalSquares, local.players.map((p) => p.pos), local.ended ? -1 : local.currentIndex);
   $('btn-roll').disabled = local.rolling || local.ended;
 }
 
@@ -745,7 +739,6 @@ function moveLocalPawn(steps) {
   let remaining = steps;
   const step = () => {
     if (remaining <= 0 || player.pos >= max) {
-      if (local.mode === 'life') { lifeLanded(); return; }
       if (player.pos >= max) {
         local.ended = true;
         renderLocalGame();
@@ -805,14 +798,12 @@ function showLocalQuestion() {
 }
 
 function chooseLocal(choice) {
-  if (local.mode === 'life') { lifeChoose(choice); return; }
   const player = local.players[local.currentIndex];
   local.lastPick = { playerIndex: local.currentIndex, name: player.name, item: local.currentQ.question, choice };
   closeLocalQuestion();
 }
 
 function closeLocalQuestion() {
-  if (local.mode === 'life') { lifeNextPressed(); return; }
   local.history.push(local.currentQ);
   $('modal').style.display = 'none';
   local.currentIndex = (local.currentIndex + 1) % local.players.length;
@@ -823,7 +814,6 @@ function closeLocalQuestion() {
 }
 
 function skipLocalQuestion() {
-  if (local.mode === 'life') { lifeReask(); return; }
   // 別の質問を出す（テーマは維持）
   const theme = local.currentQ.theme;
   local.currentQ = { theme, question: pickLocalQuestion(theme) };
@@ -832,8 +822,8 @@ function skipLocalQuestion() {
 }
 
 function showLocalGoal(winner) {
-  $('goal-title').textContent = winner ? 'ゴール！' : 'みんなゴール！';
-  $('goal-name').textContent = winner ? `${winner.name} さん、おめでとう！` : '4つの場面をたどったね。おつかれさま！';
+  $('goal-title').textContent = 'ゴール！';
+  $('goal-name').textContent = `${winner.name} さん、おめでとう！`;
   $('goal-wait').hidden = true;
   $('btn-restart').hidden = false;
   $('btnGoalSettings').hidden = false;
@@ -843,40 +833,9 @@ function showLocalGoal(winner) {
   celebrate();
 }
 
-/* ── 「人生の道」の進行（1台の画面） ── */
-function lifeSceneAt(pos) {
-  return LIFE_SCENES[Math.min(LIFE_SCENES.length - 1, Math.floor(pos / local.view.cols))];
-}
-// 場面ごと・種類ごとの山から1つ引く（出しきったら混ぜなおす）
-function lifeDraw(poolKey, list) {
-  const pools = local.life.pools;
-  if (!pools[poolKey] || pools[poolKey].length === 0) pools[poolKey] = shuffle(list);
-  return pools[poolKey].shift();
-}
-function lifeDrawQuestion(scene, kind) {
-  if (kind === 'kiku') return { q: lifeDraw('kiku:' + scene.key, LIFE_ASK[scene.key]), choices: null };
-  const wantChoices = kind === 'erabu';
-  const list = LIFE_QUESTIONS[scene.key].filter((item) => (typeof item === 'object') === wantChoices);
-  return normalizeQ(lifeDraw(kind + ':' + scene.key, list));
-}
-function lifeLanded() {
-  const player = local.players[local.currentIndex];
-  const max = local.totalSquares - 1;
-  if (player.pos >= max) { lifeArrive([local.currentIndex]); return; }
-  const kind = local.view.kinds[player.pos];
-  const scene = lifeSceneAt(player.pos);
-  const card = { kind, scene, target: null };
-  if (kind === 'dekigoto') card.event = lifeDraw('event', LIFE_EVENTS);
-  else card.question = lifeDrawQuestion(scene, kind);
-  // 聞く相手がほかにいないとき（1人で遊ぶ）は、そばにいる人に聞く
-  if (kind === 'kiku' && local.players.length < 2) card.target = 'そばにいる人';
-  local.life.card = card;
-  renderLifeCard();
-  $('modal').style.display = 'flex';
-  popIn($('questionCard'));
-}
 // 「人生の道」のカード（1台の画面・ルーム共通）
-// c: { kind, scene, question, event, target（聞く相手の文。まだなら null）, others: [名前…], playerName, playerIndex, dice, act, onChoose }
+// c: { kind, scene, phase, question, cards: [質問の文…], event, target（聞く相手の文。まだなら null）, answerer（答える人の名前。人のとき）,
+//      others: [名前…], playerName（番の人）, playerIndex, dice, act（この画面で押せるか）, onChoose }
 function fillLifeCard(c) {
   const kind = LIFE_KINDS[c.kind];
   const base = {
@@ -900,131 +859,124 @@ function fillLifeCard(c) {
       nextIcon: ev.again ? 'casino' : 'arrow_forward',
       waitText: c.act ? '' : `${who}さんが進めるのを待ってね`,
     });
-  } else if (c.kind === 'kiku' && c.target == null) {
+  } else if (c.kind === 'kiku' && c.phase === L.PHASE.WHO) {
     // だれに聞くかを選ぶ
-    fillQuestion(null, { q: c.question.q, choices: c.others.map((name) => `${name} さんに聞く`) }, who, {
+    fillQuestion(null, { q: 'だれに聞く？', choices: c.others.map((name) => `${name} さんに聞く`) }, who, {
       ...base, toText: `${who} さんが、だれかに聞く番`, freeLabel: 'みんなに聞く', freeIcon: 'groups',
-      showNext: false, showSkip: c.act,
+      showNext: false, showSkip: false,
       waitText: c.act ? '聞く相手を選んでね' : `${who}さんが、聞く相手を選んでいるよ`,
     });
-  } else if (c.kind === 'kiku') {
-    fillQuestion(null, { q: c.question.q, choices: null }, who, {
+  } else if (c.kind === 'kiku' && c.phase === L.PHASE.CARD) {
+    // 3枚の質問から1枚を選ぶ
+    fillQuestion(null, { q: 'どの質問にする？', choices: c.cards }, who, {
+      ...base, toText: `${who} さんから、${c.target}へ`, noFree: true,
+      showNext: false, showSkip: c.act,
+      waitText: c.act ? '聞きたい質問を選んでね' : `${who}さんが、質問を選んでいるよ`,
+    });
+  } else if (c.kind === 'kiku' && c.answerer) {
+    // 聞かれた人が、3つから選んで答える
+    fillQuestion(null, c.question, who, {
       ...base, toText: `${who} さんから、${c.target}へ`,
+      showNext: false, showSkip: c.act,
+      waitText: c.act ? '選ぶと、次の人の番になるよ。答えにくいときは「別の質問」に変えてね' : `${c.answerer}さんが選ぶと、次の人の番になるよ`,
+    });
+  } else if (c.kind === 'kiku') {
+    // みんな・そばにいる人に聞いたとき: 声やチャットで答える（選択肢は見るだけ）
+    fillQuestion(null, c.question, who, {
+      ...base, toText: `${who} さんから、${c.target}へ`, canPress: false, noFree: true,
       showNext: c.act, showSkip: c.act,
-      waitText: '答えにくいときは「別の質問」に変えてもらっていいよ',
+      waitText: '声やチャットで答えてね',
     });
   } else {
-    const hasChoices = !!c.question.choices;
     fillQuestion(null, c.question, who, {
-      ...base, showNext: c.act && !hasChoices, showSkip: c.act,
-      waitText: c.act
-        ? (hasChoices ? CHOICE_HINT : '')
-        : (hasChoices ? `${who}さんが選ぶと、次の人の番になるよ` : `${who}さんが話しおわると、次の人へ進むよ`),
+      ...base, showNext: false, showSkip: c.act,
+      waitText: c.act ? CHOICE_HINT : `${who}さんが選ぶと、次の人の番になるよ`,
     });
   }
 }
-function renderLifeCard() {
-  const card = local.life.card;
-  const player = local.players[local.currentIndex];
-  card.others = local.players.filter((_, i) => i !== local.currentIndex).map((p) => p.name);
-  fillLifeCard({
-    kind: card.kind,
-    scene: card.kind === 'dekigoto' ? null : card.scene,
-    question: card.question,
-    event: card.event,
-    target: card.target,
-    others: card.others,
-    playerName: player.name,
-    playerIndex: local.currentIndex,
-    act: true,
-    onChoose: chooseLocal,
+// サイコロを2つ振ったあと、進む目を選ぶ欄（1台の画面・ルーム共通）
+function renderDicePick(game, act, lead) {
+  const box = $('dicePick');
+  const dice = game ? L.pickDice(game) : null;
+  const show = !!dice;
+  box.hidden = !show;
+  if (!show) { net.pickKey = null; return; }
+  $('dicePickLead').textContent = lead;
+  const key = `${game.id}:${game.rollNo}:${dice.join()}:${act}`;
+  if (net.pickKey === key) return;
+  net.pickKey = key;
+  const total = L.boardSize(game);
+  const kinds = L.lifeKinds(total);
+  const from = L.posOf(game, L.turnOf(game));
+  const row = $('dicePickRow');
+  row.replaceChildren();
+  dice.forEach((n, i) => {
+    const to = Math.min(total - 1, from + n);
+    const kind = LIFE_KINDS[kinds[to]];
+    const btn = makeElement('button', 'ks-dicepick__btn');
+    btn.type = 'button';
+    btn.disabled = !act;
+    const face = makeElement('span', 'ks-dice ks-dice--sm', n);
+    face.dataset.n = String(n);
+    const dest = makeElement('span', 'ks-dicepick__dest');
+    dest.append(msIcon(kind ? kind.icon : 'flag'), document.createTextNode(kind ? kind.label : 'ゴール'));
+    btn.append(face, makeElement('span', 'ks-dicepick__steps', `${n}マス進む`), dest);
+    btn.setAttribute('aria-label', `${n}マス進む。止まるマスは ${kind ? kind.label : 'ゴール'}`);
+    btn.addEventListener('click', () => roomPickDie(i));
+    row.appendChild(btn);
   });
 }
-function lifeChoose(choice) {
-  const card = local.life.card;
-  const player = local.players[local.currentIndex];
-  if (card.kind === 'kiku') {
-    card.target = choice === L.CHOICE_FREE ? 'みんな' : `${card.others[choice]} さん`;
-    renderLifeCard();
-    popIn($('questionCard'));
-    return;
-  }
-  local.lastPick = { playerIndex: local.currentIndex, name: player.name, item: card.question, choice };
-  lifeEndTurn();
-}
-function lifeReask() {
-  const card = local.life.card;
-  if (card.kind === 'dekigoto') return;
-  card.question = lifeDrawQuestion(card.scene, card.kind);
-  renderLifeCard();
-  popIn($('questionCard'));
-}
-// 「話せた！次の人へ」・できごとの「進む」
-function lifeNextPressed() {
-  const card = local.life.card;
-  if (card.kind !== 'dekigoto') { lifeEndTurn(); return; }
-  $('modal').style.display = 'none';
-  const ev = card.event;
-  if (ev.again) { lifeEndTurn(true); return; }
-  const movers = ev.all
-    ? local.players.map((p, i) => i).filter((i) => !local.players[i].done)
-    : [local.currentIndex];
-  lifeMove(movers, ev.all || ev.move || 0);
-}
-// できごとで進む（進んだ先のマスでは何も起きない）
-function lifeMove(indexes, steps) {
-  const max = local.totalSquares - 1;
-  let remaining = steps;
-  const step = () => {
-    const moving = indexes.filter((i) => local.players[i].pos < max);
-    if (remaining <= 0 || moving.length === 0) {
-      const arrived = indexes.filter((i) => !local.players[i].done && local.players[i].pos >= max);
-      if (arrived.length) lifeArrive(arrived);
-      else lifeEndTurn();
-      return;
+
+/* ── 「人生の道」の1台の画面 ──
+   通信しないルーム（net.offline）として、ルームと同じ決まり（logic.js）・同じ画面（renderRoomGame）で動かす。
+   遊ぶ人はみんな「端末のない人」で、押すのはいつもこの画面（ホストの代わり）。 */
+function startLocalLife(names) {
+  // 名前は順番の見出しにもなるので、同じ名前は番号を付けて分ける
+  const used = new Set();
+  const unique = names.map((name) => {
+    let label = name;
+    for (let n = 2; used.has(label); n++) {
+      const tail = String(n);
+      label = name.slice(0, Math.max(1, L.NAME_MAX - tail.length)) + tail;
     }
-    moving.forEach((i) => { local.players[i].pos++; });
-    remaining--;
-    renderLocalGame();
-    local.moveTimer = setTimeout(step, 250);
+    used.add(label);
+    return label;
+  });
+  const waiting = {
+    status: L.STATUS.WAITING,
+    host: '',
+    hostUid: 'local',
+    hostPlays: false,
+    mode: L.MODE.LIFE,
+    lifeLen: settings.lifeLen,
+    lastGameId: 0,
+    players: {},
+    proxies: Object.fromEntries(unique.map((name, i) => [name, { joinedAt: i + 1 }])),
   };
-  step();
+  const room = L.startGame(waiting, COUNTS);
+  if (!room) return;
+  stopAnim();
+  Object.assign(net, { offline: true, role: 'host', nickname: null, room, seen: null, shownKey: null, arrivedKey: null, busy: false });
+  placeCards(true);
+  $('roomBar').hidden = true;
+  window.RoomkStats?.count('start-local');
+  window.RoomkStats?.count('mode-life');
+  trackRoll(room);
+  renderRoom(room);
 }
-// ゴールに着いた人。みんな着いたらおわり
-function lifeArrive(indexes) {
-  indexes.forEach((i) => { local.players[i].done = true; });
-  if (local.players.every((p) => p.done)) {
-    local.ended = true;
-    $('modal').style.display = 'none';
-    renderLocalGame();
-    showLocalGoal(null);
-    return;
-  }
-  celebrate();
-  renderLocalGame();
-  $('turnNote').textContent = `${indexes.map((i) => local.players[i].name).join('さん・')}さんがゴール！`;
-  local.moveTimer = setTimeout(() => lifeEndTurn(), 1600);
-}
-// 次の人へ（ゴールした人はとばす）。again のときは同じ人がもう一度振る
-function lifeEndTurn(again = false) {
-  $('modal').style.display = 'none';
-  local.life.card = null;
-  if (!again || local.players[local.currentIndex].done) {
-    const n = local.players.length;
-    for (let k = 1; k <= n; k++) {
-      const i = (local.currentIndex + k) % n;
-      if (!local.players[i].done) { local.currentIndex = i; break; }
-    }
-  }
-  local.rolling = false;
-  setDiceRolling(false);
-  setDice('?');
-  renderLocalGame();
-  if (again) $('turnNote').textContent = `${local.players[local.currentIndex].name}さん、もう一度サイコロを振ろう`;
+function endLocalLife() {
+  if (!net.offline) return;
+  stopAnim();
+  Object.assign(net, { offline: false, role: null, room: null, seen: null, shownKey: null });
+  $('roomStage').hidden = true;
+  $('diceArea').hidden = false;
+  $('lifeLegend').hidden = true;
+  placeCards(false);
 }
 
 function resetLocal() {
   clearTimers();
+  endLocalLife();
   local.rolling = false;
   local.ended = false;
   local.lastPick = null;
@@ -1093,6 +1045,7 @@ function firebaseReady() {
 }
 
 function currentUid() {
+  if (net.offline) return 'local';
   return fb ? firebase.auth().currentUser?.uid || null : null;
 }
 
@@ -1673,15 +1626,16 @@ function trackRoll(room) {
   const rollNo = Number(game.rollNo) || 0;
   const seen = net.seen;
   const last = game.last;
-  if (seen && seen.id === game.id && rollNo === seen.rollNo + 1 && last && Number.isInteger(last.turn)) {
+  if (seen && seen.id === game.id && rollNo === seen.rollNo + 1 && validLast(game, last)) {
     stopAnim();
     net.anim = {
       key: game.id + ':' + rollNo,
       turn: last.turn,
-      from: Number(last.from) || 0,
-      to: Number(last.to) || 0,
+      from: last.from,
+      to: last.to,
       dice: Number(last.dice) || 1,
-      start: performance.now(),
+      cheerBy: Number.isInteger(last.cheerBy) ? last.cheerBy : null,
+      start: performance.now() - (last.quick ? DICE_MS : 0),
     };
     net.animTimer = setInterval(() => {
       if (!animRunning()) stopAnim();
@@ -1691,6 +1645,15 @@ function trackRoll(room) {
     stopAnim();
   }
   net.seen = { id: game.id, rollNo };
+}
+
+// いちばん新しいサイコロの記録が、盤の中の正しい動きか（壊れた値ではアニメーションせず、いまの形をすぐ出す）
+function validLast(game, last) {
+  if (!last || typeof last !== 'object') return false;
+  const max = L.boardSize(game) - 1;
+  const inBoard = (n) => Number.isInteger(n) && n >= 0 && n <= max;
+  return Number.isInteger(last.turn) && last.turn >= 0 && last.turn < L.orderOf(game).length
+    && inBoard(last.from) && inBoard(last.to) && last.to >= last.from && last.to - last.from <= 6;
 }
 
 function animRunning() {
@@ -1785,6 +1748,7 @@ function playerTags(room, game, name) {
   const tags = [];
   if (name === net.nickname) tags.push('あなた');
   if (L.doneOf(game, L.orderOf(game).indexOf(name))) tags.push('ゴール');
+  if (net.offline) return tags;
   if (net.role === 'host' && L.isProxy(game, name)) tags.push('端末なし');
   else if (!L.present(room, game, name)) tags.push('つながっていない');
   return tags;
@@ -1811,7 +1775,8 @@ function renderRoomGame(room, game) {
   renderPick(pick && {
     playerIndex: pick.turn,
     name: order[pick.turn],
-    item: normalizeQ(pick.life ? LIFE_QUESTIONS[pick.scene][pick.idx] : QUESTIONS[pick.theme][pick.idx]),
+    title: pick.kiku ? `${order[pick.turn]} さんの答え${pick.by != null ? `（${order[pick.by]} さんの質問）` : ''}` : '',
+    item: normalizeQ(pick.kiku ? LIFE_ASK[pick.scene][pick.idx] : pick.life ? LIFE_QUESTIONS[pick.scene][pick.idx] : QUESTIONS[pick.theme][pick.idx]),
     choice: pick.choice,
   });
   const total = L.boardSize(game);
@@ -1820,8 +1785,13 @@ function renderRoomGame(room, game) {
   const uid = currentUid();
   const act = L.canAct(room, uid, net.nickname, net.role);
   const actor = L.actorOf(game);
-  const mine = actor === net.nickname && net.role === 'guest' || (net.role === 'host' && actor === room.host);
+  // いま押す人（「きく」で答える段階は、聞かれた人）
+  const acting = order[L.actingIndex(room, game)] ?? actor;
+  const mine = acting === net.nickname && net.role === 'guest' || (net.role === 'host' && acting === room.host);
   const rolling = L.isRollStep(game) && !goal;
+  const picking = L.isPickStep(game) && !goal;
+  // 「人生の道」でゴールした人の番は、サイコロのかわりに「おうえん」
+  const cheering = life && rolling && L.doneOf(game, turn);
 
   // サイコロ
   const diceRolling = !!anim && performance.now() - anim.start < DICE_MS;
@@ -1829,39 +1799,51 @@ function renderRoomGame(room, game) {
   if (diceRolling) setDice(Math.floor(Math.random() * 6) + 1);
   else if (anim || !rolling) setDice(game.last?.dice || '?');
   else setDice('?');
-  $('btn-roll').hidden = !rolling || !act;
+  $('btn-roll').hidden = !rolling || !act || cheering;
   $('btn-roll').disabled = !!anim || net.busy;
 
   // いまの番の案内
   const note = $('turnNote');
   note.hidden = goal && !anim;
-  if (anim) {
-    note.textContent = `${order[anim.turn]}さんがサイコロを振ったよ`;
+  if (anim && anim.cheerBy != null) {
+    note.textContent = `${order[anim.cheerBy]}さんが、${order[anim.turn]}さんをおうえん！`;
+  } else if (anim) {
+    note.textContent = life ? `${order[anim.turn]}さんが進むよ` : `${order[anim.turn]}さんがサイコロを振ったよ`;
+  } else if (picking) {
+    note.textContent = mine ? 'あなたの番だよ。進む目を選んでね' : net.offline ? `${actor}さん、進む目を選んでね` : `${actor}さんが、進む目を選んでいるよ`;
+  } else if (cheering) {
+    note.textContent = mine ? 'あなたのおうえんの番だよ' : `${actor}さんのおうえんの番だよ`;
   } else if (rolling) {
     if (mine) note.textContent = 'あなたの番だよ。「サイコロを振る」を押してね';
+    else if (net.offline) note.textContent = `${actor}さんの番だよ`;
     else if (act) note.textContent = `${actor}さんの番だよ（ホストは代わりに押せます${L.present(room, game, actor) ? '' : '。つながっていません'}）`;
     else note.textContent = `${actor}さんがサイコロを振る番だよ`;
   } else if (!goal) {
     const lq = life ? L.lifeQuestionOf(game) : null;
     if (lq?.kind === L.KIND.DEKIGOTO) note.textContent = `${actor}さんのできごと`;
-    else if (lq?.kind === L.KIND.KIKU && lq.target != null && !L.targetGone(room, game, lq)) {
+    else if (lq?.kind === L.KIND.KIKU && lq.phase === L.PHASE.CARD && !L.targetGone(room, game, lq)) {
+      note.textContent = mine ? 'あなたが質問を選ぶ番だよ' : net.offline ? `${actor}さんが質問を選ぶ番だよ` : `${actor}さんが、質問を選んでいるよ`;
+    } else if (lq?.kind === L.KIND.KIKU && lq.target != null && !L.targetGone(room, game, lq)) {
       // 聞く相手が決まったら、答える人を知らせる
       note.textContent = lq.target === L.TARGET_ALL ? 'みんなが答える番だよ'
         : lq.target === L.TARGET_NEAR ? 'そばにいる人が答える番だよ'
         : order[lq.target] === net.nickname ? 'あなたが答える番だよ' : `${order[lq.target]}さんが答える番だよ`;
     } else if (lq?.kind === L.KIND.KIKU) note.textContent = mine ? 'あなたが、だれかに聞く番だよ' : `${actor}さんが、だれかに聞く番だよ`;
+    else if (life) note.textContent = mine ? 'あなたが選ぶ番だよ' : `${actor}さんが選ぶ番だよ`;
     else note.textContent = mine ? 'あなたが話す番だよ' : `${actor}さんが話す番だよ`;
   }
   // 「人生の道」: ゴールに着いた人を、次のサイコロまで知らせる（紙ふぶきは1回だけ）
   const arrived = life && !goal && !anim && game.arrived && Number(game.arrived.rollNo) === (Number(game.rollNo) || 0)
     ? L.asList(game.arrived.who).filter((i) => Number.isInteger(i) && order[i] != null) : [];
-  if (arrived.length && rolling) {
+  if (arrived.length && rolling && !cheering) {
     note.textContent = `${arrived.map((i) => order[i]).join('さん・')}さんがゴール！ ${note.textContent}`;
     const arrivedKey = `${game.id}:${game.rollNo}:${arrived.join()}`;
     if (net.arrivedKey !== arrivedKey) { net.arrivedKey = arrivedKey; celebrate(); }
   }
 
-  $('btnRoomBack').hidden = !(net.role === 'host' && !goal);
+  if (L.isOldLife(game) && !goal) note.textContent = 'このゲームは続けられなくなったよ。ホストの画面が待合室にもどすのを待ってね';
+  $('btnRoomBack').hidden = net.offline || !(net.role === 'host' && !goal);
+  $('btn-back').hidden = !net.offline;
 
   // 質問・ゴールのカード（アニメーションが終わってから出す）
   const stage = $('roomStage');
@@ -1874,26 +1856,50 @@ function renderRoomGame(room, game) {
     $('goal-title').textContent = winner < 0 ? 'みんなゴール！' : 'ゴール！';
     $('goal-name').textContent = winner < 0 ? '4つの場面をたどったね。おつかれさま！' : `${order[winner]} さん、おめでとう！`;
     $('btn-restart').hidden = net.role !== 'host';
-    $('btnGoalSettings').hidden = true;
+    $('btnGoalSettings').hidden = !net.offline;
     $('goal-wait').hidden = net.role === 'host';
-  } else if (!anim && !rolling && life && L.lifeQuestionOf(game)) {
+  } else if (!anim && cheering) {
+    // おうえん: まだゴールしていない人を1人選んで、1マス進める
+    key = 'c:' + game.id + ':' + game.rollNo + ':' + turn;
+    $('goalCard').hidden = true;
+    $('questionCard').hidden = false;
+    const rest = L.cheerTargets(room, game).map((i) => order[i]);
+    fillQuestion(null, { q: rest.length ? 'だれを1マス進める？' : 'おうえんできる人が、いまいないよ', choices: rest.map((name) => `${name} さん`) }, actor, {
+      head: { key: 'life-cheer', icon: 'favorite', label: 'おうえん' },
+      toText: `${actor} さんのおうえん`,
+      playerIndex: turn,
+      dice: null,
+      canPress: act && !net.busy,
+      onChoose: roomCheer,
+      noFree: true,
+      showNext: false,
+      showSkip: false,
+      waitText: !rest.length ? 'ほかの人がもどるのを待ってね' : act ? 'ゴールした人は、自分の番にだれかを1マス進められるよ' : `${actor}さんが、おうえんする人を選んでいるよ`,
+    });
+  } else if (!anim && L.isTalkStep(game) && life && L.lifeQuestionOf(game)) {
     const lq = L.lifeQuestionOf(game);
     key = 'q:' + game.id + ':' + game.rollNo + ':' + lq.n;
     $('goalCard').hidden = true;
     $('questionCard').hidden = false;
     const gone = L.targetGone(room, game, lq);
-    const targetText = lq.target == null || gone ? null
+    const kiku = lq.kind === L.KIND.KIKU;
+    // 選んだ相手がいなくなったら、聞く相手を選びなおす
+    const phase = kiku ? (gone ? L.PHASE.WHO : lq.phase) : null;
+    const targetText = !kiku || phase === L.PHASE.WHO ? null
       : lq.target === L.TARGET_ALL ? 'みんな'
       : lq.target === L.TARGET_NEAR ? 'そばにいる人'
       : `${order[lq.target]} さん`;
     fillLifeCard({
       kind: lq.kind,
+      phase,
       scene: lq.kind === L.KIND.DEKIGOTO ? null : lifeScene(lq.scene),
       question: lq.kind === L.KIND.DEKIGOTO ? null
-        : lq.kind === L.KIND.KIKU ? { q: LIFE_ASK[lq.scene][lq.idx], choices: null }
-        : normalizeQ(LIFE_QUESTIONS[lq.scene][lq.idx]),
+        : kiku ? (phase === L.PHASE.ANSWER ? LIFE_ASK[lq.scene][lq.idx] : null)
+        : LIFE_QUESTIONS[lq.scene][lq.idx],
+      cards: kiku && phase === L.PHASE.CARD ? lq.opts.map((i) => LIFE_ASK[lq.scene][i].q) : [],
       event: lq.kind === L.KIND.DEKIGOTO ? LIFE_EVENTS[lq.idx] : null,
       target: targetText,
+      answerer: kiku && phase === L.PHASE.ANSWER && lq.target >= 0 ? order[lq.target] : null,
       others: order.filter((name, i) => i !== turn && L.present(room, game, name)),
       playerName: actor,
       playerIndex: turn,
@@ -1901,7 +1907,7 @@ function renderRoomGame(room, game) {
       act: act && !net.busy,
       onChoose: roomChoose,
     });
-  } else if (!anim && !rolling && q) {
+  } else if (!anim && !rolling && !picking && q) {
     key = 'q:' + game.id + ':' + game.rollNo + ':' + q.n;
     const item = normalizeQ(QUESTIONS[q.theme][q.idx]);
     const hasChoices = !!(item.choices && item.choices.length);
@@ -1921,7 +1927,8 @@ function renderRoomGame(room, game) {
     });
   }
   stage.hidden = key == null;
-  $('diceArea').hidden = key != null;
+  $('diceArea').hidden = key != null || picking;
+  renderDicePick(anim ? null : game, act && !net.busy, 'どっちの目で進む？');
   if (key && key !== net.shownKey) {
     popIn(key.startsWith('goal') ? $('goalCard') : $('questionCard'));
     if (key.startsWith('goal')) celebrate();
@@ -1931,6 +1938,16 @@ function renderRoomGame(room, game) {
 
 /* ── 番の操作（番の人とホスト） ── */
 async function roomAct(mutate, failMessage) {
+  if (net.offline) {
+    // 1台の画面: 通信せずに、その場で決まりを当てる
+    const next = L.canAct(net.room, 'local', null, 'host') ? mutate(net.room) : null;
+    if (next) {
+      net.room = next;
+      trackRoll(next);
+    }
+    renderRoom(net.room);
+    return !!next;
+  }
   if (net.busy || !net.roomRef) return null;
   net.busy = true;
   const uid = currentUid();
@@ -1986,15 +2003,18 @@ async function roomChoose(choice) {
     if (!lq) return;
     let picked = choice;
     let n = 0;
-    if (lq.kind === L.KIND.KIKU) {
-      // 画面の並び（自分以外の人）を、順番の番号になおす
+    if (lq.kind === L.KIND.KIKU && (lq.phase === L.PHASE.WHO || L.targetGone(net.room, game, lq))) {
+      // 画面の並び（自分以外の、いまいる人）を、順番の番号になおす
       const others = L.orderOf(game).map((_, i) => i).filter((i) => i !== L.turnOf(game) && L.present(net.room, game, L.orderOf(game)[i]));
       picked = choice === L.CHOICE_FREE ? L.TARGET_ALL : others[choice];
       if (picked == null) return;
-    } else {
-      n = normalizeQ(LIFE_QUESTIONS[lq.scene][lq.idx]).choices?.length || 0;
+    } else if (lq.kind === L.KIND.KIKU && lq.phase === L.PHASE.ANSWER) {
+      n = LIFE_ASK[lq.scene][lq.idx].choices.length;
+    } else if (lq.kind === L.KIND.ERABU) {
+      n = LIFE_QUESTIONS[lq.scene][lq.idx].choices.length;
     }
-    await roomAct((room) => L.choose(room, now.id, now.rollNo, now.qn, picked, n, COUNTS), '選べませんでした。もう一度ためしてね');
+    const seed = L.randomSeed();
+    await roomAct((room) => L.choose(room, now.id, now.rollNo, now.qn, picked, n, COUNTS, seed), '選べませんでした。もう一度ためしてね');
     return;
   }
   const q = L.questionOf(game, COUNTS);
@@ -2002,6 +2022,36 @@ async function roomChoose(choice) {
   const item = normalizeQ(QUESTIONS[q.theme][q.idx]);
   const count = item.choices ? item.choices.length : 0;
   await roomAct((room) => L.choose(room, now.id, now.rollNo, now.qn, choice, count, COUNTS), '選べませんでした。もう一度ためしてね');
+}
+
+// サイコロを2つ振ったあと、進む目を選ぶ
+async function roomPickDie(which) {
+  const now = currentTurn();
+  if (!now || animRunning()) return;
+  const seed = L.randomSeed();
+  let goal = false;
+  const ok = await roomAct((room) => {
+    const next = L.pickDie(room, now.id, now.rollNo, which, seed);
+    goal = next?.status === L.STATUS.GOAL;
+    return next;
+  }, '進めませんでした。もう一度ためしてね');
+  if (ok && goal) window.RoomkStats?.count('finish');
+}
+
+// ゴールした人の番: 画面の並び（まだゴールしていない人）を順番の番号になおして、1マス進める
+async function roomCheer(choice) {
+  const now = currentTurn();
+  const game = L.gameOf(net.room);
+  if (!now || !game || animRunning()) return;
+  const target = L.cheerTargets(net.room, game)[choice];
+  if (target == null) return;
+  let goal = false;
+  const ok = await roomAct((room) => {
+    const next = L.cheer(room, now.id, now.rollNo, target);
+    goal = next?.status === L.STATUS.GOAL;
+    return next;
+  }, 'おうえんできませんでした。もう一度ためしてね');
+  if (ok && goal) window.RoomkStats?.count('finish');
 }
 
 async function roomNext() {
@@ -2036,12 +2086,16 @@ async function hostTransaction(update, failMessage) {
 function hostWatchAbsent(room) {
   const game = L.gameOf(room);
   const playing = game && room.status === L.STATUS.PLAYING;
-  const actor = playing && L.isRollStep(game) ? L.actorOf(game) : null;
-  // いない人と、「人生の道」でゴールした人に番が残っているとき → 次の人へとばす
-  const skip = actor != null && (!L.present(room, game, actor) || L.doneOf(game, L.turnOf(game)));
-  // カードが出ている段階なのに読めるカードがないとき（壊れた値）→ 次の人へ進めて立て直す
+  // 前の版が作った人生の道のゲーム・知らない段階のゲームは、この版では進められない → 待合室にもどす
+  const old = playing && L.isOldLife(game);
+  const actor = playing && (L.isRollStep(game) || L.isPickStep(game)) ? L.actorOf(game) : null;
+  // サイコロを振る・進む目を選ぶ番の人がいないとき → 次の人へとばす
+  const skip = actor != null && !L.present(room, game, actor);
+  // カードが出ている段階なのに読めるカードがない・目を選ぶ段階なのに目が読めないとき（壊れた値）→ 立て直す
   const broken = playing && L.talkBroken(game, COUNTS);
-  const key = skip || broken ? `${game.id}:${game.rollNo}:${L.turnOf(game)}:${broken ? 'b' : 's'}` : null;
+  const badPick = playing && L.pickBroken(game);
+  const kind = old ? 'o' : broken ? 'b' : badPick ? 'p' : skip ? 's' : '';
+  const key = kind ? `${game.id}:${game.rollNo}:${L.turnOf(game)}:${kind}` : null;
   if (key === net.skipKey) return;
   clearTimeout(net.skipTimer);
   net.skipTimer = null;
@@ -2053,11 +2107,21 @@ function hostWatchAbsent(room) {
     const ok = await hostTransaction((r) => {
       const g = L.gameOf(r);
       if (!g || `${g.id}:${g.rollNo}:${L.turnOf(g)}` !== key.slice(0, -2)) return;
-      return broken ? (L.talkBroken(g, COUNTS) ? L.dropTalk(r) : undefined) : L.skipAbsent(r);
+      if (kind === 'o') return L.isOldLife(g) ? L.backToWaiting(r, g.id) : undefined;
+      if (kind === 'b') return L.talkBroken(g, COUNTS) ? L.dropTalk(r) : undefined;
+      if (kind === 'p') return L.dropPick(r);
+      return L.skipAbsent(r);
     }, '');
-    // 進めなかったら（処理中など）、次のルームの変化でまた見る
-    if (!ok && net.skipKey === key) net.skipKey = null;
-  }, ABSENT_GRACE_MS);
+    if (ok && kind === 'o') toast('ゲームを続けられなくなったので、待合室にもどりました。「はじめる」でもう一度あそべます', false);
+    // 進めなかったら（ほかの操作の処理中など）、少し待ってもう一度見る（次のルームの変化を待たない）
+    if (!ok && net.skipKey === key) {
+      net.skipKey = null;
+      net.skipTimer = setTimeout(() => {
+        net.skipTimer = null;
+        if (net.role === 'host' && net.room && !net.offline) hostWatchAbsent(net.room);
+      }, 1000);
+    }
+  }, kind === 'o' ? 500 : ABSENT_GRACE_MS);
 }
 
 async function setHostPlays(value) {
@@ -2172,7 +2236,7 @@ async function backToWaiting(fromGoal) {
 
 /* ════════════ ボタンと入口 ════════════ */
 function inRoom() {
-  return !!net.roomRef;
+  return !!net.roomRef || !!net.offline;
 }
 
 function submitOnEnter(input, handler) {
@@ -2234,7 +2298,7 @@ $('btnRoomBack').addEventListener('click', () => backToWaiting(false));
 $('btn-roll').addEventListener('click', () => (inRoom() ? roomRoll() : rollLocalDice()));
 $('btn-next').addEventListener('click', () => (inRoom() ? roomNext() : closeLocalQuestion()));
 $('btn-skip').addEventListener('click', () => (inRoom() ? roomReask() : skipLocalQuestion()));
-$('btn-restart').addEventListener('click', () => (inRoom() ? backToWaiting(true) : playAgainLocal()));
+$('btn-restart').addEventListener('click', () => (net.offline ? playAgainLocal() : inRoom() ? backToWaiting(true) : playAgainLocal()));
 $('btnGoalSettings').addEventListener('click', backToLocalSettings);
 $('btn-back').addEventListener('click', () => {
   if (confirm('ゲームを終わって設定に戻りますか？')) backToLocalSettings();

@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c" />
   <!-- index.html と app.js・logic.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261118life" />
+  <link rel="stylesheet" href="style.css?v=20261118game" />
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-database-compat.js"></script>
@@ -31,7 +31,7 @@
         <div class="app-hero"><img class="app-illust" src="../assets/illustrations/kyoumi-sugoroku.webp" alt="" width="156" height="156" decoding="async" onerror="this.parentNode.remove()" /></div>
         <h1 class="app-title">興味スゴロク</h1>
         <p class="app-catch">サイコロを振ってマスに止まり、出てきた質問について話そう</p>
-        <p class="ks-top__lead app-entry__lead">1〜6人で遊べるよ。遊び方は2つから選べるよ。</p>
+        <p class="ks-top__lead app-entry__lead">1〜10人で遊べるよ。遊び方は2つから選べるよ。</p>
         <ul class="ks-top__notes app-entry__notes">
           <li>ひとりひとりの端末で遊ぶときは「ルームを作る」「ルームに参加する」。自分の番は自分の端末でサイコロを振るよ</li>
           <li>1台の画面をみんなで見て遊ぶときは「1台の画面であそぶ」</li>
@@ -200,6 +200,10 @@
       <div class="ks-indicator" id="indicator"></div>
       <p class="ks-turn" id="turnNote" role="status" hidden></p>
       <div class="ks-stage" id="roomStage" hidden></div>
+      <div class="ks-dicepick" id="dicePick" hidden>
+        <p class="ks-dicepick__lead" id="dicePickLead"></p>
+        <div class="ks-dicepick__row" id="dicePickRow"></div>
+      </div>
       <div class="ks-pick" id="lastPick" role="status" hidden>
         <p class="ks-pick__who" id="pickWho"></p>
         <p class="ks-pick__q" id="pickQ"></p>
@@ -209,7 +213,6 @@
       <div class="ks-board" id="board"></div>
       <ul class="ks-legend" id="lifeLegend" aria-label="マスの種類" hidden>
         <li class="ks-legend__item ks-legend__item--erabu"><span class="material-symbols-rounded" aria-hidden="true">checklist</span>えらぶ</li>
-        <li class="ks-legend__item ks-legend__item--hanasu"><span class="material-symbols-rounded" aria-hidden="true">chat_bubble</span>はなす</li>
         <li class="ks-legend__item ks-legend__item--kiku"><span class="material-symbols-rounded" aria-hidden="true">forum</span>きく</li>
         <li class="ks-legend__item ks-legend__item--dekigoto"><span class="material-symbols-rounded" aria-hidden="true">auto_awesome</span>できごと</li>
       </ul>
@@ -291,7 +294,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261118life"></script>
+  <script type="module" src="app.js?v=20261118game"></script>
   <script src="../shared/js/overlay-a11y.js?v=1" defer></script>
   <script src="../shared/js/focus-keep.js?v=1" defer></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
@@ -299,7 +302,7 @@
   <script>
     RoomkHowto.init({
       title: 'あそびかた',
-      lead: 'サイコロを振ってマスに止まり、出てきた質問についてみんなで話すスゴロク。1〜6人で遊べるよ。',
+      lead: 'サイコロを振ってマスに止まり、出てきた質問についてみんなで話すスゴロク。1〜10人で遊べるよ。',
       sections: [
         { heading: 'ひとりひとりの端末で遊ぶとき', items: [
           'ホストが「ルームを作る」で名前を入れる。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる。スマホやタブレットで入る人には「QRコードを出す」をカメラで読み取ってもらう',
@@ -317,8 +320,10 @@
         { heading: '「人生の道」であそぶとき', items: [
           'ルームではホストが待合室の「あそびかた」で、1台の画面でははじめの設定の「あそびかた」で、「人生の道」を選ぶ',
           '「小さいころ」「いま」「もうすぐ」「おとなになったら」の4つの場面をたどる盤になる',
-          'マスは4種類。「えらぶ」は3つから選ぶ、「はなす」は質問に答える、「きく」は番の人がだれかに質問する、「できごと」は先へ進めることがある',
-          '「きく」では、番の人が聞く相手を選ぶ（「みんなに聞く」も選べる）。聞かれた人は、答えにくいときは「別の質問」に変えてもらっていい',
+          '「サイコロを振る」を押すと目が2つ出るので、進む目を選ぶ（同じ目のときは、そのまま進む）',
+          'マスは3種類。「えらぶ」は3つから選ぶ、「きく」は番の人がだれかに質問する、「できごと」は先へ進めることがある',
+          '「きく」では、番の人が聞く相手を選び、3枚の質問から1枚を選ぶ。聞かれた人が3つから選んで答える（「別の質問」に変えてもいい）',
+          'ゴールした人は、自分の番に「おうえん」で、だれかを1マス進められる',
           'みんながゴールしたらおわり',
         ] },
         { heading: 'どちらでも', items: [
@@ -326,7 +331,7 @@
           '「別の質問」を押すと、ちがう質問に変えられる',
           '選択肢がある質問は、ひとつ選ぶ（選ばないときは「自由に話す」）と次の人の番になる。選んだものは、次の人がサイコロを振るまで盤の上に出る',
         ] },
-        { heading: 'おわりかた', text: 'だれかがゴールしたらおわり。「もう一度あそぶ」で、またあそべるよ。' },
+        { heading: 'おわりかた', text: '「テーマで話す」は、だれかがゴールしたらおわり。「人生の道」は、みんながゴールしたらおわり。「もう一度あそぶ」で、またあそべるよ。' },
       ],
     });
   </script>
