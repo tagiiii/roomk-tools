@@ -14,7 +14,7 @@ const E = window.NoriaiEngine;
 const MIN_SEATS = E.MIN_PLAYERS;
 const MAX_SEATS = E.MAX_PLAYERS;
 const STAGE_COUNT = E.STAGES.length;
-const DEFAULT_SET = { stage: 0, hostPlays: true };
+const DEFAULT_SET = { stage: 0, hostPlays: true, timer: false };
 // ひとこと: 決まった言葉をえらんで、みんなに知らせる（声を出さなくても伝えられる）。自由に打つ欄は置かない。
 // 言葉を足す・変えるときは、オーナーが決める（docs/development/ui.md「マイクを使わない子が参加できる手段」）
 const SAYS = ['待って', '行くよ', '乗って', '押して', 'ありがとう', 'いいね'];
@@ -113,7 +113,11 @@ const state = {
   last: 0,
   clearShown: null,
   hintOpen: false,
-  local: { stage: 0, n: 2 },
+  local: { stage: 0, n: 2, timer: false, timerRun: false, t0: 0, clearMs: null, best: {}, prevBest: null },
+  frozenMs: null,      // タイムアタック: クリアが見えた時点の時間（ホストの書いた時間が届くまで）
+  timeText: null,
+  clearSent: null,
+  prevBest: null,
 };
 const $ = (id) => document.getElementById(id);
 
@@ -186,6 +190,7 @@ function normSet(raw) {
   return {
     stage: Number.isInteger(s.stage) && s.stage >= 0 && s.stage < STAGE_COUNT ? s.stage : DEFAULT_SET.stage,
     hostPlays: typeof s.hostPlays === 'boolean' ? s.hostPlays : DEFAULT_SET.hostPlays,
+    timer: typeof s.timer === 'boolean' ? s.timer : DEFAULT_SET.timer,
   };
 }
 function byJoined(entries) {
@@ -221,7 +226,17 @@ function gameOf(room) {
   const stage = Number(g.stage);
   if (!Number.isInteger(stage) || stage < 0 || stage >= STAGE_COUNT) return null;
   const uids = asList(g.uids);
-  return { id: Number(g.id) || 0, seats: seats.slice(), uids: seats.map((_, i) => (typeof uids[i] === 'string' ? uids[i] : '')), stage, n };
+  const ms = (v) => (Number.isFinite(Number(v)) && Number(v) >= 0 && v !== null && v !== '' ? Number(v) : null);
+  return {
+    id: Number(g.id) || 0, seats: seats.slice(), uids: seats.map((_, i) => (typeof uids[i] === 'string' ? uids[i] : '')), stage, n,
+    // タイムアタック: はじめた時刻（サーバーの時刻）と、クリアまでの時間（ホストが1回だけ書く）
+    timer: g.timer === true, startedAt: ms(g.startedAt), clearMs: ms(g.clearMs),
+  };
+}
+// このルームで、ステージごとのいちばん速いタイム（ルームを閉じると消える）
+function bestOf(room, stage) {
+  const v = Number(room?.best?.[stage]);
+  return Number.isFinite(v) && v > 0 ? v : null;
 }
 function selfSeat(game) {
   if (state.role !== 'host' && state.role !== 'guest') return 0;
@@ -290,7 +305,10 @@ function resetGame() {
   Object.assign(state, {
     world: null, gameId: null, seat: 0, remote: {}, objBuf: [], worldKey: '', evSeen: new Set(),
     lastSent: '', lastSentAt: 0, lastWorld: '', lastWorldAt: 0, finished: false, says: {}, saySeen: {}, clearShown: null,
+    frozenMs: null, timeText: null, clearSent: null, prevBest: null,
   });
+  $('timeLine').hidden = true;
+  $('clearTime').hidden = true;
   $('clearBox').hidden = true;
   $('sayPanel').hidden = true;
   $('btnSay').setAttribute('aria-expanded', 'false');
@@ -668,7 +686,9 @@ function newGameFor(room, seats, stage) {
   if (seats.length < MIN_SEATS || seats.length > MAX_SEATS || new Set(seats).size !== seats.length) return null;
   if (!seats.every((name) => seatable(room, name))) return null;
   const id = (Number(room.lastGameId) || 0) + 1;
-  return { id, seats: seats.slice(), uids: seats.map((name) => room.players[name].uid), stage, n: seats.length };
+  const made = { id, seats: seats.slice(), uids: seats.map((name) => room.players[name].uid), stage, n: seats.length };
+  if (normSet(room.set).timer) Object.assign(made, { timer: true, startedAt: serverTimestamp() });
+  return made;
 }
 
 async function startGame() {
@@ -684,6 +704,7 @@ async function startGame() {
     window.RoomkStats?.count('start');
     window.RoomkStats?.count('players-' + made.n);
     window.RoomkStats?.count('stage-' + (made.stage + 1));
+    if (made.timer) window.RoomkStats?.count('timer');
   } else if (ok === false) {
     toast('遊ぶ人が2人そろっていないよ。だれかが入るのを待つか、「ホストも遊ぶ」をオンにしてね');
   }
@@ -822,6 +843,9 @@ function renderWaiting(room) {
   $('lobbyPeople').replaceChildren(...seats.map((name, i) => row(name, i)), ...others.map((name) => row(name, -1)));
   $('hostPlaysBox').hidden = !host;
   if (host) $('hostPlays').checked = set.hostPlays;
+  $('timerBox').hidden = !host;
+  if (host) $('timerOn').checked = set.timer;
+  $('lobbyTimerNote').hidden = host || !set.timer;
   $('lobbySet').hidden = !host;
   if (host) seg($('lobbySet'), E.STAGES.map((s, k) => [k, stageLabel(k), STAGE_NOTE[k]]), set.stage, (v) => saveSet((s) => ({ ...s, stage: v })));
   $('lobbySetNote').textContent = host ? 'クリアすると、次のステージへ進める。' : 'ステージ: ' + stageLabel(set.stage) + '（' + STAGE_NOTE[set.stage] + '）';
@@ -867,6 +891,68 @@ function renderGameUI(room, game) {
   $('btnRetry').title = absent ? 'いま参加している人で、はじめからやりなおす' : '';
   $('btnSkip').textContent = game.stage === STAGE_COUNT - 1 ? 'はじめのステージにする' : '次のステージにする';
   $('btnNext').textContent = game.stage === STAGE_COUNT - 1 ? 'はじめのステージへ' : '次のステージへ';
+  $('timeLine').hidden = !game.timer;
+  state.timeText = null;
+  renderClearTime();
+}
+
+/* ── タイムアタック ── */
+// 時間の書き方（1:05.3）。まだ進んでいる間は、1秒ごと（1:05）
+function fmtTime(ms, tenths) {
+  const t = Math.max(0, ms);
+  const m = Math.floor(t / 60000);
+  const sec = Math.floor((t % 60000) / 1000);
+  return m + ':' + String(sec).padStart(2, '0') + (tenths ? '.' + Math.floor((t % 1000) / 100) : '');
+}
+// いまの時間の情報 { on, ms, done, best }。はかっていなければ on: false
+function timeInfo() {
+  if (state.mode === 'local') {
+    const L = state.local;
+    if (!L.timerRun || !state.world) return { on: false };
+    const done = L.clearMs != null;
+    return { on: true, ms: done ? L.clearMs : performance.now() - L.t0, done, best: L.best[state.world.stage] ?? null, prev: L.prevBest };
+  }
+  const game = gameOf(state.room);
+  if (!game || !game.timer || game.startedAt == null) return { on: false };
+  const done = game.clearMs != null;
+  const ms = done ? game.clearMs : (state.world?.clear ? state.frozenMs ?? RoomkRTDB.now() - game.startedAt : RoomkRTDB.now() - game.startedAt);
+  return { on: true, ms, done, best: bestOf(state.room, game.stage), prev: state.prevBest };
+}
+// ステージの上の時間（1こまごとに呼ぶ。文字が変わったときだけ書きかえる）
+function updateTimeLine() {
+  const t = timeInfo();
+  if (!t.on) return;
+  if (state.world?.clear && !t.done && state.frozenMs == null) state.frozenMs = t.ms;
+  const text = 'タイム ' + fmtTime(t.ms, t.done);
+  if (text === state.timeText) return;
+  state.timeText = text;
+  $('timeLine').textContent = text;
+}
+// クリアの札のタイム
+function renderClearTime() {
+  const t = timeInfo();
+  const box = $('clearTime');
+  if (!t.on || !t.done) { box.hidden = true; return; }
+  const lines = ['クリアまでのタイム ' + fmtTime(t.ms, true)];
+  // いちばん速いタイムは、このルーム（1台のときは、この画面を開いている間）の、同じステージで
+  if (t.best != null && t.ms <= t.best && t.prev != null) lines.push('このステージで、いちばん速いタイム！（前は ' + fmtTime(t.prev, true) + '）');
+  else if (t.best != null && t.ms > t.best) lines.push('このステージのいちばん速いタイム ' + fmtTime(t.best, true));
+  box.replaceChildren(...lines.map((x, i) => el(i ? 'span' : 'strong', '', x)));
+  box.hidden = false;
+}
+// ホスト: クリアしたら、クリアまでの時間と、いちばん速いタイムを1回だけ書く
+function recordClearTime(game) {
+  if (state.role !== 'host' || !game.timer || game.startedAt == null || game.clearMs != null || state.clearSent === game.id) return;
+  state.clearSent = game.id;
+  const ms = Math.max(0, Math.round(state.frozenMs ?? RoomkRTDB.now() - game.startedAt));
+  const best = bestOf(state.room, game.stage);
+  state.prevBest = best;
+  const up = { 'game/clearMs': ms };
+  if (best == null || ms < best) up['best/' + game.stage] = ms;
+  state.roomRef.update(up).catch((error) => {
+    console.warn('[noriai-road] clear time failed', error);
+    state.clearSent = null;
+  });
 }
 
 /* ── ステージの同期 ── */
@@ -895,6 +981,8 @@ function startWorld(room, game) {
 function syncGame(room, game, now) {
   if (state.gameId !== game.id || !state.world) startWorld(room, game);
   const w = state.world;
+  // クリアの前のいちばん速いタイムを覚えておく（クリアで書きかわったとき「前は」を出す）
+  if (game.clearMs == null && state.role !== 'host') state.prevBest = bestOf(room, game.stage);
   const live = room.live?.[game.id] || {};
   // ほかの人の位置
   const pmap = live.p || {};
@@ -1086,6 +1174,10 @@ function stepRoom(now, inputs) {
       state.finished = true;
       window.RoomkStats?.count('finish');
     }
+    if (w.clear) {
+      const game = gameOf(room);
+      if (game && game.id === id) recordClearTime(game);
+    }
   }
 }
 
@@ -1124,12 +1216,15 @@ function sendSay(k) {
 function renderLocalSet() {
   seg($('localCountSeg'), [2, 3, 4].map((n) => [n, n + '人']), state.local.n, (v) => { state.local.n = v; renderLocalSet(); });
   seg($('localStageSeg'), E.STAGES.map((s, k) => [k, stageLabel(k), STAGE_NOTE[k]]), state.local.stage, (v) => { state.local.stage = v; renderLocalSet(); });
+  $('localTimer').checked = state.local.timer;
 }
 function startLocal(stage) {
   state.mode = 'local';
   resetGame();
   state.world = E.createWorld(stage, state.local.n);
   state.local.stage = stage;
+  // タイムアタック（はかるときだけ）。いちばん速いタイムは、この画面を開いている間だけ覚える
+  Object.assign(state.local, { timerRun: state.local.timer, t0: performance.now(), clearMs: null, prevBest: null });
   state.camX = E.camLeft(state.world, state.world.players) || 0;
   state.pick = Math.min(state.pick, state.local.n);
   state.hintOpen = stage === 0 || state.hintOpen;
@@ -1154,6 +1249,8 @@ function renderLocalUI() {
   $('roster').replaceChildren();
   $('hostMenu').hidden = false;
   $('btnLobby').hidden = true;
+  $('timeLine').hidden = !state.local.timerRun;
+  state.timeText = null;
   const last = w.stage === STAGE_COUNT - 1;
   $('btnSkip').textContent = last ? 'はじめのステージにする' : '次のステージにする';
   $('btnNext').textContent = last ? 'はじめのステージへ' : '次のステージへ';
@@ -1258,6 +1355,7 @@ function frame(t) {
     draw();
     updateActLabel();
     updateClear();
+    updateTimeLine();
   }
   requestAnimationFrame(frame);
 }
@@ -1285,6 +1383,13 @@ function updateClear() {
   const clear = !!w?.clear;
   if (state.clearShown === clear) return;
   state.clearShown = clear;
+  if (clear && state.mode === 'local' && state.local.timerRun && state.local.clearMs == null) {
+    const L = state.local;
+    L.clearMs = Math.round(performance.now() - L.t0);
+    L.prevBest = L.best[w.stage] ?? null;
+    if (L.prevBest == null || L.clearMs < L.prevBest) L.best[w.stage] = L.clearMs;
+  }
+  renderClearTime();
   $('clearBox').hidden = !clear;
   const canPick = state.mode === 'local' || state.role === 'host';
   $('clearBtns').hidden = !canPick;
@@ -1710,7 +1815,11 @@ submitOnEnter($('hostName'), createRoom);
 $('btnJoinRoom').addEventListener('click', joinRoom);
 submitOnEnter($('guestName'), joinRoom);
 submitOnEnter($('joinCode'), joinRoom);
-$('btnLocalStart').addEventListener('click', () => { window.RoomkStats?.count('local-start'); startLocal(state.local.stage); });
+$('btnLocalStart').addEventListener('click', () => {
+  window.RoomkStats?.count('local-start');
+  if (state.local.timer) window.RoomkStats?.count('timer');
+  startLocal(state.local.stage);
+});
 $('btnLocalTop').addEventListener('click', () => { stopLocal(); showScreen('top'); });
 
 $('btnCopyCode').addEventListener('click', (event) => RoomkRTDB.copyRoomCode(state.roomCode, event.currentTarget));
@@ -1731,6 +1840,8 @@ $('btnShowQr').addEventListener('click', () => {
 $('btnLeave').addEventListener('click', leaveRoom);
 $('btnOverlayLeave').addEventListener('click', leaveRoom);
 $('hostPlays').addEventListener('change', (event) => { const on = event.currentTarget.checked; saveSet((s) => ({ ...s, hostPlays: on })); });
+$('timerOn').addEventListener('change', (event) => { const on = event.currentTarget.checked; saveSet((s) => ({ ...s, timer: on })); });
+$('localTimer').addEventListener('change', (event) => { state.local.timer = event.currentTarget.checked; });
 $('btnStartGame').addEventListener('click', startGame);
 $('btnNext').addEventListener('click', () => (state.mode === 'local' ? localGo('next') : restartGame('next')));
 $('btnAgain').addEventListener('click', () => (state.mode === 'local' ? localGo('again') : restartGame('again')));

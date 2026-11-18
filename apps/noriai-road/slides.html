@@ -121,6 +121,11 @@
   .qa__a{ display:flex; gap:13px; align-items:flex-start; font-size:21px; color:var(--ink-soft); margin-top:8px; line-height:1.5; }
   .qa__badge{ flex:none; width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:900; font-size:19px; }
   .qa__badge.q{ background:var(--blue); } .qa__badge.a{ background:var(--coral); }
+  /* 質問が4つのとき、1枚に収める */
+  .qa--tight{ gap:10px; }
+  .qa--tight .qa__item{ padding:12px 22px; }
+  .qa--tight .qa__q{ font-size:21px; }
+  .qa--tight .qa__a{ font-size:19px; margin-top:4px; }
 
   /* タイトルスライド */
   .title-slide{ align-items:center; justify-content:center; text-align:center; padding-bottom:76px; }
@@ -374,12 +379,13 @@ const SLIDES = [
 
   /* 14 */ { type:'content', accent:'coral', section:'Q&A', sectionEn:'question & answer',
     headline:'よくある質問',
-    body:`<div class="qa">
+    body:`<div class="qa qa--tight">
       ${qa('進めなくなったら、どうする？', 'ホストが「このステージをやりなおす」で、はじめの場所にもどせるよ。')}
       ${qa('とちゅうから入ったら？', 'そのステージは見る番。次のステージから、キャラが出るよ。')}
       ${qa('1台のパソコンで、みんなで遊べる？', 'トップの「1台のパソコンで遊ぶ」で、1つのキーボードで2〜4人を動かせるよ。')}
+      ${qa('タイムアタックはできる？', '待合室でホストが「タイムアタック」をオンにすると、みんなでクリアするまでの時間が出るよ。')}
     </div>`,
-    note:'よくある質問だよ\nQ. 進めなくなったら？→ A. ホストが「このステージをやりなおす」で、はじめの場所にもどせるよ。\nQ. とちゅうから入ったら？→ A. そのステージは見る番。次のステージからキャラが出るよ。\nQ. 1台のパソコンで遊べる？→ A. トップの「1台のパソコンで遊ぶ」で、1つのキーボードで2〜4人を動かせるよ。' },
+    note:'よくある質問だよ\nQ. 進めなくなったら？→ A. ホストが「このステージをやりなおす」で、はじめの場所にもどせるよ。\nQ. とちゅうから入ったら？→ A. そのステージは見る番。次のステージからキャラが出るよ。\nQ. 1台のパソコンで遊べる？→ A. トップの「1台のパソコンで遊ぶ」で、1つのキーボードで2〜4人を動かせるよ。\nQ. タイムアタックはできる？→ A. 待合室でホストが「タイムアタック」をオンにすると、みんなでクリアするまでの時間が出るよ。' },
 
   /* 15 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
     sub:'気になることはある？',

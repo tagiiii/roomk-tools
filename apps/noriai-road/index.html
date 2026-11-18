@@ -9,13 +9,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
   <!-- index.html と app.js・engine.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261116d">
+  <link rel="stylesheet" href="style.css?v=20261118a">
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
-  <script src="engine.js?v=20261116d"></script>
+  <script src="engine.js?v=20261118a"></script>
 </head>
 <body data-genre="atekko">
 
@@ -85,6 +85,10 @@
         <p class="nr-field__label" id="lblLocalStage">ステージ</p>
         <div class="nr-seg nr-seg--col" id="localStageSeg" role="group" aria-labelledby="lblLocalStage"></div>
       </div>
+      <label class="nr-check">
+        <input type="checkbox" id="localTimer">
+        <span>タイムアタック（クリアまでの時間をはかる）</span>
+      </label>
       <button type="button" class="btn btn-primary btn-full mt-md" id="btnLocalStart">はじめる</button>
     </div>
   </section>
@@ -119,6 +123,11 @@
         <h2 class="nr-h2">ステージ</h2>
         <div id="lobbySet" class="nr-seg nr-seg--col" role="group" aria-label="ステージ" hidden></div>
         <p id="lobbySetNote" class="nr-note"></p>
+        <label id="timerBox" class="nr-check" hidden>
+          <input type="checkbox" id="timerOn">
+          <span>タイムアタック（みんなでクリアするまでの時間をはかる）</span>
+        </label>
+        <p id="lobbyTimerNote" class="nr-note" hidden>タイムアタック: みんなでクリアするまでの時間をはかるよ</p>
       </div>
 
       <button id="btnStartGame" type="button" class="btn btn-primary btn-full btn-lg" hidden>はじめる</button>
@@ -132,6 +141,7 @@
       <div class="nr-head">
         <p class="nr-stage" id="stageName"></p>
         <p class="nr-you" id="youLine" hidden></p>
+        <p class="nr-time" id="timeLine" hidden></p>
         <button type="button" class="nr-quiet nr-head__hint" id="btnHint" aria-expanded="false" aria-controls="hintText">しかけの説明</button>
         <button type="button" class="nr-quiet" id="btnLocalTop" hidden>トップへ戻る</button>
       </div>
@@ -144,6 +154,7 @@
           <div class="nr-over__card">
             <p class="nr-over__big">クリア！</p>
             <p class="nr-over__sub">みんなでとびらに入れたね。</p>
+            <p class="nr-over__time" id="clearTime" hidden></p>
             <div class="nr-over__btns" id="clearBtns" hidden>
               <button type="button" class="btn btn-primary btn-lg" id="btnNext">次のステージへ</button>
               <button type="button" class="btn btn-secondary" id="btnAgain">もう一回</button>
@@ -197,7 +208,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261116d"></script>
+  <script type="module" src="app.js?v=20261118a"></script>
   <script src="../shared/js/overlay-a11y.js?v=1" defer></script>
   <script src="../shared/js/focus-keep.js?v=1" defer></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
