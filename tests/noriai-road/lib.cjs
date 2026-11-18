@@ -75,7 +75,7 @@ let browser;
 const clients = [];
 async function launch() { browser = await chromium.launch({ channel: 'chrome' }); return browser; }
 async function newClient(label, opts = {}) {
-  const context = await browser.newContext({ viewport: opts.viewport || { width: 1200, height: 900 }, ...(opts.mobile ? { isMobile: true, hasTouch: true } : {}) });
+  const context = await browser.newContext({ viewport: opts.viewport || { width: 1200, height: 900 }, ...(opts.mobile ? { isMobile: true, hasTouch: true } : {}), ...(opts.scale ? { deviceScaleFactor: opts.scale } : {}) });
   await context.grantPermissions(['clipboard-read', 'clipboard-write']).catch(() => {});
   await context.route('**/*', (route) => {
     const host = new URL(route.request().url()).hostname;
