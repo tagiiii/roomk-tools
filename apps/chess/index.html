@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>チェス | あそびのたな</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- 駒の形（国際チェスの記号 ♚♛♜♝♞♟ だけを読みこむ） -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Symbols+2&text=%E2%99%9A%E2%99%9B%E2%99%9C%E2%99%9D%E2%99%9E%E2%99%9F&display=block" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
+  <!-- index.html と app.js・engine.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
+  <link rel="stylesheet" href="style.css?v=20261118a">
+  <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-database-compat.js"></script>
+  <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
+  <script src="../shared/js/room-qr.js?v=20261022"></script>
+  <script src="engine.js?v=20261118a"></script>
+</head>
+<body data-genre="board">
+
+  <!-- トップ -->
+  <section class="ch-screen ch-front active" id="screen-top">
+    <div class="ch-panel app-entry">
+      <h1 class="ch-panel__title app-title">チェス</h1>
+      <p class="ch-panel__lead app-entry__lead">2人で白と黒に分かれて交互に駒を動かし、相手のキングを逃げられない形（チェックメイト）にしたら勝ち。</p>
+      <ul class="ch-panel__notes app-entry__notes">
+        <li>ルールを知らなくても大丈夫。動ける所・駒の名前と動き方・おすすめの手が出る「補助」があるよ</li>
+        <li>対戦しない人も、ルームに入れば対局を見られるよ</li>
+        <li>CPU とも対戦できるよ（「1台の画面であそぶ」や、ルームの席で選べる）</li>
+      </ul>
+      <div class="ch-panel__actions app-entry__actions">
+        <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームを作る</button>
+        <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
+        <button type="button" class="btn btn-secondary btn-full" id="btnGoLocal">1台の画面であそぶ</button>
+        <button type="button" class="ch-quiet ch-quiet--center" id="btnGoWatch">みんなにみせる画面をひらく</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ルームを作る -->
+  <section class="ch-screen ch-front" id="screen-create">
+    <div class="ch-panel">
+      <button type="button" class="ch-quiet ch-back" id="btnCreateBack">トップへ戻る</button>
+      <h2 class="ch-panel__title ch-panel__title--sub">ルームを作る</h2>
+      <label class="form-label" for="hostName">ホストの名前（8文字まで）</label>
+      <input class="form-input" id="hostName" aria-describedby="createError" maxlength="8" autocomplete="nickname">
+      <p class="ch-alert" id="createError" role="alert" hidden></p>
+      <button type="button" class="btn btn-primary btn-full mt-md" id="btnCreateRoom">ルームを作る</button>
+    </div>
+  </section>
+
+  <!-- ルームに参加する -->
+  <section class="ch-screen ch-front" id="screen-join">
+    <div class="ch-panel">
+      <button type="button" class="ch-quiet ch-back" id="btnJoinBack">トップへ戻る</button>
+      <h2 class="ch-panel__title ch-panel__title--sub">ルームに参加する</h2>
+      <p class="ch-hint" id="joinLinkHint" hidden>リンクから開いたので、ルームコードは入っているよ。名前を入れて「参加する」を押してね。</p>
+      <label class="form-label" for="guestName">名前（8文字まで）</label>
+      <input class="form-input" id="guestName" aria-describedby="joinError" maxlength="8" autocomplete="nickname">
+      <label class="form-label mt-md" for="joinCode">ルームコード（6文字）</label>
+      <input class="form-input ch-code-input" id="joinCode" aria-describedby="joinError" maxlength="6" autocorrect="off" autocapitalize="characters" autocomplete="off" spellcheck="false">
+      <p class="ch-alert" id="joinError" role="alert" hidden></p>
+      <button type="button" class="btn btn-primary btn-full mt-md" id="btnJoinRoom">参加する</button>
+    </div>
+  </section>
+
+  <!-- みんなにみせる画面をひらく -->
+  <section class="ch-screen ch-front" id="screen-watch-join">
+    <div class="ch-panel">
+      <button type="button" class="ch-quiet ch-back" id="btnWatchBack">トップへ戻る</button>
+      <h2 class="ch-panel__title ch-panel__title--sub">みんなにみせる画面をひらく</h2>
+      <p class="ch-hint">画面共有でみんなに見せるための画面です。ルームには入らず、見るだけです。</p>
+      <label class="form-label" for="watchCode">ルームコード（6文字）</label>
+      <input class="form-input ch-code-input" id="watchCode" aria-describedby="watchError" maxlength="6" autocorrect="off" autocapitalize="characters" autocomplete="off" spellcheck="false">
+      <p class="ch-alert" id="watchError" role="alert" hidden></p>
+      <button type="button" class="btn btn-primary btn-full mt-md" id="btnWatchOpen">画面をひらく</button>
+    </div>
+  </section>
+
+  <!-- 1台の画面であそぶ -->
+  <section class="ch-screen ch-front" id="screen-local">
+    <div class="ch-panel ch-panel--wide">
+      <button type="button" class="ch-quiet ch-back" id="btnLocalBack">トップへ戻る</button>
+      <h2 class="ch-panel__title ch-panel__title--sub">1台の画面であそぶ</h2>
+      <p class="ch-panel__lead">1台の画面をみんなで見てあそぶ。駒を動かすのは、画面を動かす人。相手を CPU にすると、CPU と対戦できる。</p>
+      <fieldset class="ch-fieldset">
+        <legend class="ch-legend">対戦の相手</legend>
+        <div class="ch-seg ch-seg--3" id="localVs">
+          <label class="ch-seg__opt"><input type="radio" name="localVs" value="" checked><span>人どうし</span></label>
+          <label class="ch-seg__opt"><input type="radio" name="localVs" value="1"><span>CPU（自分が白）</span></label>
+          <label class="ch-seg__opt"><input type="radio" name="localVs" value="0"><span>CPU（自分が黒）</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="ch-fieldset" id="localLevelBox" hidden>
+        <legend class="ch-legend">CPU の強さ</legend>
+        <div class="ch-seg ch-seg--3" id="localLevel">
+          <label class="ch-seg__opt"><input type="radio" name="localLevel" value="weak"><span>よわい</span></label>
+          <label class="ch-seg__opt"><input type="radio" name="localLevel" value="normal" checked><span>ふつう</span></label>
+          <label class="ch-seg__opt"><input type="radio" name="localLevel" value="strong"><span>つよい</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="ch-fieldset mt-md">
+        <legend class="ch-legend">対戦する人の名前（なくてもいい）</legend>
+        <div class="ch-names">
+          <label class="ch-name">
+            <span class="ch-name__label"><span class="ch-side__dot is-white" aria-hidden="true"></span>白（先に指す）</span>
+            <input id="localName0" class="form-input" type="text" maxlength="8" autocomplete="off">
+          </label>
+          <button id="btnLocalSwap" type="button" class="ch-iconbtn" aria-label="白と黒の名前を入れかえる">
+            <span class="material-symbols-rounded" aria-hidden="true">swap_horiz</span>
+          </button>
+          <label class="ch-name">
+            <span class="ch-name__label"><span class="ch-side__dot is-black" aria-hidden="true"></span>黒</span>
+            <input id="localName1" class="form-input" type="text" maxlength="8" autocomplete="off">
+          </label>
+        </div>
+      </fieldset>
+      <fieldset class="ch-fieldset mt-md">
+        <legend class="ch-legend">持ち時間</legend>
+        <div class="ch-clockset">
+          <label class="ch-seatsel">
+            <span class="ch-name__label">持ち時間</span>
+            <select id="localClockMain" class="form-input"></select>
+          </label>
+          <label class="ch-seatsel">
+            <span class="ch-name__label">秒読み</span>
+            <select id="localClockByo" class="form-input"></select>
+          </label>
+        </div>
+        <p class="ch-note">時間が切れたら負け。秒読みは、持ち時間を使い切ったあと、1手ごとに使える時間。</p>
+      </fieldset>
+      <div id="localAid" class="ch-aid"></div>
+      <button type="button" class="btn btn-primary btn-full mt-lg" id="btnLocalStart">はじめる</button>
+    </div>
+  </section>
+
+  <!-- ゲームの画面（ルーム・1台の画面・みんなにみせる画面） -->
+  <header class="ch-bar" id="appBar" hidden>
+    <h1 class="ch-bar__title">チェス</h1>
+    <p class="ch-bar__badge" id="watchBadge" hidden>みんなにみせる画面</p>
+    <p class="ch-bar__me" id="barMe" hidden></p>
+  </header>
+  <div class="ch-roombar" id="roomBar" hidden>
+    <span class="ch-roombar__code">ルーム <strong id="roomCodeLabel"></strong></span>
+    <button type="button" class="btn btn-ghost btn-sm" id="btnCopyCode">コードをコピー</button>
+    <button type="button" class="btn btn-ghost btn-sm" id="btnCopyLink">リンクをコピー</button>
+    <button type="button" class="btn btn-ghost btn-sm" id="btnShowQr">QRコードを出す</button>
+    <button type="button" class="btn btn-ghost btn-sm" id="btnOpenWatch" hidden>みんなにみせる画面</button>
+    <button type="button" class="btn btn-ghost btn-sm" id="btnLeave">退出する</button>
+  </div>
+
+  <!-- 待合室 -->
+  <section class="ch-screen" id="screen-waiting">
+    <div class="ch-main ch-phase">
+      <div id="lobbyJoin" class="ch-joininfo" hidden>
+        <p class="ch-joininfo__label">参加のしかた</p>
+        <p class="ch-joininfo__text">「ルームに参加する」で、名前とルームコードを入れてね</p>
+        <p id="lobbyJoinCode" class="ch-joininfo__code"></p>
+      </div>
+
+      <div class="card">
+        <h2 class="ch-h2">対戦する人</h2>
+        <div id="seatEdit" class="ch-seats-edit" hidden>
+          <label class="ch-seatsel">
+            <span class="ch-name__label"><span class="ch-side__dot is-white" aria-hidden="true"></span>白（先に指す）</span>
+            <select id="seat0" class="form-input"></select>
+          </label>
+          <button id="btnSeatSwap" type="button" class="ch-iconbtn" aria-label="白と黒を入れかえる">
+            <span class="material-symbols-rounded" aria-hidden="true">swap_horiz</span>
+          </button>
+          <label class="ch-seatsel">
+            <span class="ch-name__label"><span class="ch-side__dot is-black" aria-hidden="true"></span>黒</span>
+            <select id="seat1" class="form-input"></select>
+          </label>
+        </div>
+        <div id="seatView" class="ch-seats-view" hidden></div>
+        <p id="seatNote" class="ch-note" hidden></p>
+      </div>
+
+      <div class="card">
+        <h2 class="ch-h2">参加している人</h2>
+        <ul id="lobbyPeople" class="ch-people"></ul>
+        <p class="ch-note">対戦しない人は、自分の画面で対局を見られるよ。</p>
+        <div id="proxyForm" class="ch-proxyadd" hidden>
+          <label class="form-label" for="proxyName">端末なしの参加者を足す</label>
+          <div class="ch-row ch-row--nowrap">
+            <input id="proxyName" aria-describedby="proxyError" class="form-input" type="text" maxlength="8" autocomplete="off">
+            <button id="btnAddProxy" type="button" class="btn btn-secondary">足す</button>
+          </div>
+          <p class="ch-note">その人の番には、ホストが代わりに指す。</p>
+          <p id="proxyError" class="ch-alert" role="alert" hidden></p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="ch-h2">設定</h2>
+        <dl class="ch-setsum">
+          <div class="ch-setsum__row"><dt>持ち時間</dt><dd id="sumClock"></dd></div>
+          <div class="ch-setsum__row"><dt>補助</dt><dd id="sumAid"></dd></div>
+        </dl>
+        <button id="btnLobbySet" type="button" class="btn btn-secondary btn-full mt-md" hidden>設定を変える</button>
+      </div>
+      <button id="btnStartGame" type="button" class="btn btn-primary btn-full btn-lg" hidden>はじめる</button>
+      <p id="lobbyWait" class="ch-wait" hidden>ホストがはじめるのを待っているよ</p>
+    </div>
+  </section>
+
+  <!-- 対局 -->
+  <section class="ch-screen" id="screen-game">
+    <div class="ch-main ch-game">
+      <p id="gameStatus" class="ch-status" role="status" aria-live="polite"></p>
+      <div id="sideTop" class="ch-side"></div>
+      <div id="board" class="ch-boardbox"></div>
+      <div id="sideBottom" class="ch-side"></div>
+      <p id="gameMsg" class="ch-msg" aria-live="polite"></p>
+      <div id="hintBox" class="ch-hintbox" hidden>
+        <button id="btnHint" type="button" class="btn btn-secondary btn-sm">おすすめの手を見る</button>
+        <p id="hintText" class="ch-hinttext" aria-live="polite"></p>
+      </div>
+      <div id="pieceInfo" class="ch-info" aria-live="polite" hidden></div>
+      <p id="lastLine" class="ch-lastline"></p>
+
+      <div id="resultBox" class="ch-result" hidden>
+        <div id="resultHost" class="ch-result__actions" hidden>
+          <button id="btnAgain" type="button" class="btn btn-primary btn-full"></button>
+          <button id="btnRelobby" type="button" class="btn btn-secondary btn-full"></button>
+        </div>
+        <p id="resultWait" class="ch-wait" hidden>ホストが次を決めるのを待っているよ</p>
+      </div>
+
+      <div id="tools" class="ch-tools">
+        <button id="btnUndo" type="button" class="ch-quiet">
+          <span class="material-symbols-rounded" aria-hidden="true">undo</span>1手もどす
+        </button>
+        <button id="btnFlip" type="button" class="ch-quiet">
+          <span class="material-symbols-rounded" aria-hidden="true">swap_vert</span>盤の向きを変える
+        </button>
+        <button id="btnAid" type="button" class="ch-quiet">
+          <span class="material-symbols-rounded" aria-hidden="true">tune</span>補助の設定
+        </button>
+        <button id="btnResign" type="button" class="ch-quiet">
+          <span class="material-symbols-rounded" aria-hidden="true">flag</span>投了する
+        </button>
+        <button id="btnReset" type="button" class="ch-quiet"></button>
+        <button id="btnQuit" type="button" class="ch-quiet" hidden>トップへ戻る</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- みんなにみせる画面のおわり -->
+  <section class="ch-screen ch-front" id="screen-watch-end">
+    <div class="ch-panel">
+      <h2 class="ch-panel__title ch-panel__title--sub" id="watchEndTitle">このルームは終わりました</h2>
+      <p class="ch-panel__lead">遊んでくれてありがとう。</p>
+      <button type="button" class="btn btn-secondary btn-full" id="btnWatchEndTop">トップへ戻る</button>
+    </div>
+  </section>
+
+  <!-- 待合室の設定（ホストだけ。変えるとすぐ全員に届く） -->
+  <dialog id="lobbySetDialog" class="ch-dialog" aria-labelledby="lobbySetTitle">
+    <h2 id="lobbySetTitle" class="ch-h2" tabindex="-1" autofocus>設定を変える</h2>
+    <h3 class="ch-h3">持ち時間</h3>
+    <div id="lobbyClock" class="ch-clockset">
+      <label class="ch-seatsel">
+        <span class="ch-name__label">持ち時間</span>
+        <select id="clockMain" class="form-input"></select>
+      </label>
+      <label class="ch-seatsel">
+        <span class="ch-name__label">秒読み</span>
+        <select id="clockByo" class="form-input"></select>
+      </label>
+    </div>
+    <p class="ch-note">時間が切れたら負け。秒読みは、持ち時間を使い切ったあと、1手ごとに使える時間。</p>
+    <h3 class="ch-h3">補助</h3>
+    <div id="lobbyAid" class="ch-aid"></div>
+    <div class="ch-row ch-row--center mt-lg">
+      <button id="btnLobbySetClose" type="button" class="btn btn-primary">閉じる</button>
+    </div>
+  </dialog>
+
+  <!-- 補助の設定（あそんでいる間） -->
+  <dialog id="aidDialog" class="ch-dialog" aria-labelledby="aidDialogTitle">
+    <h2 id="aidDialogTitle" class="ch-h2">補助の設定</h2>
+    <div id="dialogAid" class="ch-aid"></div>
+    <div class="ch-row ch-row--center mt-lg">
+      <button id="btnAidClose" type="button" class="btn btn-primary">閉じる</button>
+    </div>
+  </dialog>
+
+  <!-- ポーンが奥まで進んだとき、何になるか -->
+  <dialog id="promoDialog" class="ch-dialog ch-dialog--promo" aria-labelledby="promoTitle">
+    <h2 id="promoTitle" class="ch-h2">ポーンを何にする？</h2>
+    <p class="ch-note">いちばん奥まで進んだポーンは、ほかの駒になれる。迷ったらクイーン（いちばん強い）。</p>
+    <div class="ch-choices" id="promoChoices"></div>
+    <button type="button" class="ch-quiet" id="btnPromoCancel">やめる</button>
+  </dialog>
+
+  <div class="ch-overlay" id="hostOffOverlay" role="dialog" aria-modal="true" aria-labelledby="hostOffTitle" aria-describedby="hostOffText" hidden>
+    <div class="ch-overlay__panel">
+      <h2 id="hostOffTitle">ホストの戻りを待っています</h2>
+      <p id="hostOffText">しばらく待っても戻らないときは退出してね。</p>
+      <button type="button" class="btn btn-secondary" id="btnOverlayLeave">退出する</button>
+    </div>
+  </div>
+
+  <script type="module" src="app.js?v=20261118a"></script>
+  <script src="../shared/js/stats.js?v=1" defer></script>
+  <script src="../shared/js/howto.js"></script>
+  <script>
+    RoomkHowto.init({
+      title: 'あそびかた',
+      lead: '2人で白と黒に分かれて、交互に駒を動かす。相手のキングが、どう動いても取られてしまう形（チェックメイト）にしたら勝ち。',
+      sections: [
+        { heading: 'はじめかた', items: [
+          'ホストが「ルームを作る」で名前を入れる。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる。スマホやタブレットで入る人には「QRコードを出す」をカメラで読み取ってもらう',
+          '参加する人は「ルームに参加する」で名前、ルームコード（6文字）の順に入れ、「参加する」を押す。リンクから開いたときは、ルームコードは入っているので名前だけ入れる',
+          '対戦するのは2人。ほかの人は、自分の画面で対局を見られる',
+          '1台の画面でみんなで見るときは「1台の画面であそぶ」。そこで相手を「CPU」にすると、CPU と対戦できる。CPU の強さは「よわい・ふつう・つよい」から選べる',
+          'ルームでも、ホストが席に「CPU」を選ぶと、CPU と対戦できる',
+          'ルームでは、ホストが待合室の「設定を変える」で、持ち時間と補助を選ぶ',
+          '「持ち時間」を選ぶと、時計が出る。自分の番の時間だけが減り、なくなると「秒読み」になる。秒読みは1手ごとにもとにもどる。時間が切れたら負け',
+        ] },
+        { heading: '指しかた', items: [
+          '白から指す。自分の駒を押してから、動かしたい所を押す',
+          '相手の駒がある所へ動くと、その駒を取れる。取った駒は盤から外れ、もう使えない',
+          '駒は6種類。キングはまわりに1マス、クイーンはたて・横・ななめにどこまでも、ルークはたて・横にどこまでも、ビショップはななめにどこまでも、ナイトは「L」の形に跳ぶ、ポーンは前に1マス（取るときはななめ前）',
+          'ポーンがいちばん奥まで進むと、クイーン・ルーク・ビショップ・ナイトのどれかになれる',
+          'キャスリング: キングとルークがまだ動いていなければ、キングを横に2マス動かして、ルークをキングの反対側へ動かせる（1回の手で2つ動く）',
+          'アンパッサン: 相手のポーンが2マス進んで自分のポーンのとなりに来たら、すぐ次の手だけ、ななめ前へ動いてそのポーンを取れる',
+          'キングをねらわれること（チェック）になったら、かならずよける。キングが取られる所へ動く手は指せない',
+        ] },
+        { heading: '補助', items: [
+          '「動ける所を見せる」: 駒を選ぶと、動ける所に点が出る。取れる所は輪',
+          '「駒の名前と動き方を出す」: 盤の駒の下に名前が出る。駒を選ぶと、盤の下にその駒の動き方が出る',
+          '「おすすめの手を見られるようにする」: 自分の番に「おすすめの手を見る」を押すと、CPU が考えた手のマスが光る',
+        ] },
+        { heading: 'おわりかた', items: [
+          'チェックメイト（相手のキングが、どう動いても取られてしまう形）にしたら勝ち',
+          '「投了する」を押すと、負けを認めて終わりにできる（相手の番でもよい）',
+          '引き分けになるのは、指せる手がないのにチェックされていない（ステイルメイト）・同じ形が3回出た・50手のあいだポーンが動かず駒も取られなかった・どちらも駒が足りずチェックメイトにできない、のとき',
+          '場所は、盤のふちの文字（a〜h）と数字（1〜8）を合わせて「e4」のように言うと伝わるよ',
+        ] },
+      ],
+    });
+  </script>
+</body>
+</html>
