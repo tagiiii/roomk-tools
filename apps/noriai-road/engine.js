@@ -313,6 +313,18 @@
       hint: 'これまでのしかけが全部出てくる。カギは、ばねで上がるかべの上にあるよ。',
       parts: [['start'], ['springPit'], ['split'], ['tower'], ['boxSwitch', 2], ['springWall', 'key'], ['bridge', 'all'], ['numPair'], ['door', true]],
     },
+    // 11・12: むずかしい道（2026-11-18。これまでの区間を、長く・続けてつなぐ。新しいしかけはない）
+    {
+      name: 'ひもでつながる長い道',
+      hint: 'となりの番号の人と、ひもでつながっている（5人からは、いくつかの組に分かれる）。穴・箱の足場・穴の上の足場・高い台が、何回も続く長い道。はなれすぎないように、声をかけ合って進もう。',
+      rope: true,
+      parts: [['start'], ['pit', 3], ['boxStep'], ['floats'], ['tower'], ['pit', 3], ['stairs'], ['ledge'], ['tower'], ['door', false]],
+    },
+    {
+      name: 'いちばん長い道',
+      hint: 'ステージ1〜10のしかけが、ほとんど全部出てくる長い道。ボールはシーソーの先、カギはばねで上がるかべの上にあるよ。',
+      parts: [['start'], ['ledge'], ['tower'], ['boxSwitch', 'all'], ['springPit'], ['numPair'], ['seesaw', 'ball'], ['ballHoop', false], ['split'], ['lift', 'all'], ['springWall', 'key'], ['bridge', 'all'], ['colorGate', 2], ['door', true]],
+    },
   ];
 
   function buildStage(index, n) {

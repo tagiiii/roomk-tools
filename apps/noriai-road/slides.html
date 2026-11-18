@@ -72,6 +72,7 @@
   .cols--tight .panel{ padding:18px 24px; gap:8px; }
   .cols--tight .role-row b{ font-size:21px; }
   .cols--tight .role-row .d{ font-size:16px; margin-top:0; line-height:1.4; }
+  .cols--3{ grid-template-columns:repeat(3,1fr); gap:18px; }
 
   /* 箇条書き行 */
   .rows{ display:flex; flex-direction:column; gap:16px; }
@@ -338,7 +339,7 @@ const SLIDES = [
     body: rows(
       ['key', 'カギがいるステージもある', 'カギを持ってとびらにふれると、とびらが開く'],
       ['meeting_room', '開いたとびらにふれると、中に入る', 'まだ手伝うことがあったら、下の矢印か「出る」のボタンで出られる'],
-      ['skip_next', 'クリアしたら、ホストが「次のステージへ」', 'ステージは10こあるよ'],
+      ['skip_next', 'クリアしたら、ホストが「次のステージへ」', 'ステージは12こあるよ'],
     ),
     note:'ゴールは、とびら。カギがいるステージでは、カギを持ってとびらにふれると開くよ。\n開いたとびらにふれると、中に入る。まだ手伝うことがあったら、下の矢印か「出る」のボタンで出られるよ。\n全員が入るとクリア！ ホストが「次のステージへ」を押すと、次のステージがはじまるよ。' },
 
@@ -351,8 +352,8 @@ const SLIDES = [
     note:'声のほかに、「ひとこと」でも伝えられるよ。\n「ひとこと」を押すと言葉の一覧が出るから、1つえらんでね。自分のキャラの上に、吹き出しが出るよ。\n「待って」「乗って」「押して」などがあるよ。\n声でも、ひとことでも、どちらで伝えてもOK！' },
 
   /* 13 */ { type:'content', accent:'blue', section:'ステージ', sectionEn:'stages',
-    headline:'ステージは<span class="hl">10こ</span>',
-    body:`<div class="cols cols--tight">
+    headline:'ステージは<span class="hl">12こ</span>',
+    body:`<div class="cols cols--tight cols--3">
       <div class="panel">
         <div class="team-head"><div class="team-ic teal-bg"><span class="material-symbols-rounded">extension</span></div><div class="team-name">しかけを1つずつ</div></div>
         ${role('looks_one', '1. のりあいの練習', '頭に乗る・スイッチ・番号のかべ・カギ')}
@@ -367,10 +368,15 @@ const SLIDES = [
         ${role('filter_7', '7. ばねでとぶ', 'ばねで、広い穴と高いかべをこえる')}
         ${role('filter_8', '8. 手分けの道', '同時におさえるスイッチと、番号のスイッチ')}
         ${role('filter_9', '9. ひもと高い台', 'ひもでつながったまま、高い台に上がる')}
+      </div>
+      <div class="panel">
+        <div class="team-head"><div class="team-ic blue-bg"><span class="material-symbols-rounded">trending_up</span></div><div class="team-name">むずかしい道</div></div>
         ${role('filter_9_plus', '10. さいごの道', 'ステージ6〜9のしかけが全部出てくる')}
+        ${role('trending_up', '11. ひもでつながる長い道', 'ひもでつながったまま、長い道を進む')}
+        ${role('trending_up', '12. いちばん長い道', 'ほとんど全部のしかけが出てくる')}
       </div>
     </div>`,
-    note:'ステージは10こあるよ。\n1つ目は「のりあいの練習」。頭に乗る、スイッチ、番号のかべ、カギが出てくるよ。\n2つ目は「重い箱と動く床」、3つ目は「シーソーとボール」、4つ目は「ひもでつながる」、5つ目は「ぜんぶ」。\n6つ目からは新しいしかけ。「高い台」「ばねでとぶ」「手分けの道」「ひもと高い台」、さいごの10こ目は「さいごの道」だよ。' },
+    note:'ステージは12こあるよ。\n1つ目は「のりあいの練習」。頭に乗る、スイッチ、番号のかべ、カギが出てくるよ。\n2つ目は「重い箱と動く床」、3つ目は「シーソーとボール」、4つ目は「ひもでつながる」、5つ目は「ぜんぶ」。\n6つ目からは新しいしかけ。「高い台」「ばねでとぶ」「手分けの道」「ひもと高い台」、10こ目からは、むずかしい道。「さいごの道」「ひもでつながる長い道」「いちばん長い道」だよ。' },
 
   /* 14 */ { type:'content', accent:'coral', section:'Q&A', sectionEn:'question & answer',
     headline:'よくある質問',

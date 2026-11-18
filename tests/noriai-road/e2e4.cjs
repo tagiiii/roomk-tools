@@ -16,7 +16,7 @@ const { check, sleep, st } = L;
     await L.waitScreen(g1, 'waiting');
     await L.joinRoom(g2, 'にい', code);
     await L.waitScreen(g2, 'waiting');
-    check('ステージは10こから選べる', (await host.page.$$('#lobbySet .nr-seg__btn')).length === 10);
+    check('ステージは12こから選べる', (await host.page.$$('#lobbySet .nr-seg__btn')).length === 12);
     await host.page.click('#lobbySet .nr-seg__btn:nth-child(8)');
     await L.roomWhen(code, (r) => r.set.stage === 7);
     await g1.page.waitForFunction(() => document.querySelector('#lobbySetNote').textContent.includes('8. 手分けの道'));
@@ -61,7 +61,7 @@ const { check, sleep, st } = L;
     await L.open(solo);
     await solo.page.click('#btnGoLocal');
     await L.waitScreen(solo, 'local');
-    check('1台のパソコンでもステージは10こ', (await solo.page.$$('#localStageSeg .nr-seg__btn')).length === 10);
+    check('1台のパソコンでもステージは12こ', (await solo.page.$$('#localStageSeg .nr-seg__btn')).length === 12);
     await solo.page.click('#localStageSeg .nr-seg__btn:nth-child(7)');
     await solo.page.click('#btnLocalStart');
     await L.waitScreen(solo, 'game');
@@ -77,7 +77,7 @@ const { check, sleep, st } = L;
     await sleep(900);
     await L.shot(solo, 'stage7-spring-wall');
     // ステージ6（高い台）・10（さいごの道）の画面
-    for (const [nth, name] of [[6, 'stage6'], [10, 'stage10']]) {
+    for (const [nth, name] of [[6, 'stage6'], [10, 'stage10'], [11, 'stage11'], [12, 'stage12']]) {
       await solo.page.click('#btnLocalTop');
       await L.waitScreen(solo, 'top');
       await solo.page.click('#btnGoLocal');
