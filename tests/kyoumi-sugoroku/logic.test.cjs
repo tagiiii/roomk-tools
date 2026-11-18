@@ -54,10 +54,12 @@ function test(name, fn) {
     assert.deepStrictEqual(next.game.order, ['あお', 'みどり']);
   });
 
-  test('はじめる: 遊ぶ人0人・7人以上・待合室以外は進めない', () => {
+  test('はじめる: 遊ぶ人0人・11人以上・待合室以外は進めない', () => {
     assert.strictEqual(L.startGame(waitingRoom({ hostPlays: false, players: { 'ホスト': { isHost: true, uid: 'uH', joinedAt: 1 } } }), COUNTS), null);
-    const proxies = Object.fromEntries(['い', 'ろ', 'は', 'に', 'ほ'].map((n, i) => [n, { joinedAt: 10 + i }]));
-    assert.strictEqual(L.startGame(waitingRoom({ proxies }), COUNTS), null); // 3 + 5 = 8人
+    const proxies = Object.fromEntries(['い', 'ろ', 'は', 'に', 'ほ', 'へ', 'と', 'ち'].map((n, i) => [n, { joinedAt: 10 + i }]));
+    assert.strictEqual(L.startGame(waitingRoom({ proxies }), COUNTS), null); // 3 + 8 = 11人
+    const ten = Object.fromEntries(['い', 'ろ', 'は', 'に', 'ほ', 'へ', 'と'].map((n, i) => [n, { joinedAt: 10 + i }]));
+    assert.strictEqual(L.startGame(waitingRoom({ proxies: ten }), COUNTS).game.order.length, 10); // 10人までは遊べる
     assert.strictEqual(L.startGame({ ...waitingRoom(), status: L.STATUS.PLAYING }, COUNTS), null);
   });
 
@@ -238,11 +240,14 @@ function test(name, fn) {
   const kikuWho = { kind: 'kiku', scene: 's1', n: 1 };
 
   test('人生の道: マス数は人数と長さから・マスの種類・場面', () => {
-    assert.deepStrictEqual([1, 2, 3, 4, 5, 6].map((n) => L.lifeSizeFor(n, 0)), [28, 28, 24, 20, 16, 16]);
+    assert.deepStrictEqual([1, 2, 3, 4, 5, 6, 7, 10].map((n) => L.lifeSizeFor(n, 0)), [28, 28, 24, 20, 16, 16, 12, 12]);
+    assert.strictEqual(L.lifeKinds(12).length, 12);
+    assert.strictEqual(L.lifeSizeFor(10, 1), 16);
     assert.strictEqual(L.lifeSizeFor(4, -1), 16);
     assert.strictEqual(L.lifeSizeFor(4, 1), 24);
     assert.strictEqual(L.lifeSizeFor(1, 1), 28);
-    assert.strictEqual(L.lifeSizeFor(6, -1), 16);
+    assert.strictEqual(L.lifeSizeFor(6, -1), 12);
+    assert.strictEqual(L.lifeSizeFor(10, -1), 12);
     const kinds = L.lifeKinds(20);
     assert.strictEqual(kinds[0], '');
     assert.strictEqual(kinds[19], '');

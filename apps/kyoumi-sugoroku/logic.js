@@ -2,7 +2,7 @@
 // 質問はテーマのキーと、app.js の QUESTIONS の中の番号で共有する。
 // そのため QUESTIONS は並べ替え・途中の削除をしない（足すのは末尾だけ）。
 
-export const MAX_PLAYERS = 6;
+export const MAX_PLAYERS = 10; // 2026-11-18 オーナー「10人くらいまで」（それまでは6人）
 export const MIN_PLAYERS = 1;
 export const MIN_THEMES = 2;
 export const SQUARE_OPTIONS = [10, 15, 20];
@@ -34,7 +34,7 @@ export const KIND = { ERABU: 'erabu', KIKU: 'kiku', DEKIGOTO: 'dekigoto' };
 export const PHASE = { WHO: 'who', CARD: 'card', ANSWER: 'answer' };
 export const ASK_CARDS = 3;
 export const LIFE_ROWS = 4;
-export const LIFE_SIZES = [16, 20, 24, 28];
+export const LIFE_SIZES = [12, 16, 20, 24, 28];
 // マスの種類の並び（スタートの次のマスから、この順にくり返す）
 export const LIFE_PATTERN = ['erabu', 'kiku', 'erabu', 'dekigoto', 'erabu', 'kiku', 'erabu', 'dekigoto', 'kiku', 'erabu'];
 export const TARGET_ALL = -1;   // 「きく」の相手: みんな
@@ -51,7 +51,8 @@ export function lifeDefaultSize(players) {
   if (players <= 2) return 28;
   if (players === 3) return 24;
   if (players === 4) return 20;
-  return 16;
+  if (players <= 6) return 16;
+  return 12; // 7人からは、いちばん短い盤（みんながゴールするまでが長くなりすぎないように）
 }
 // 「長さ」（-1 みじかい・0 ふつう・1 ながい）で1段階ずらす
 export function lifeSizeFor(players, len) {

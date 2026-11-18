@@ -1,4 +1,4 @@
-// 興味スゴロク E2E その2: 6人まで・途中参加は不可・退出で番をとばす・切断した人の番をとばす・
+// 興味スゴロク E2E その2: 10人まで・途中参加は不可・退出で番をとばす・切断した人の番をとばす・
 // 同じ名前で入りなおし・話す番の人が抜けたら次へ・ホストの切断と復帰
 const L = require('./lib.cjs');
 const { check, sleep } = L;
@@ -13,32 +13,33 @@ const { check, sleep } = L;
   const B = await L.newClient('sora');
   const C = await L.newClient('midori');
 
-  // ── A. 6人まで ──
+  // ── A. 10人まで ──
+  const PROXIES = ['い', 'ろ', 'は', 'に', 'ほ', 'へ', 'と'];
   const code = await L.createRoom(H, 'メンター');
   await L.joinRoom(A, 'あおい', code);
   await L.joinRoom(B, 'そら', code);
-  for (const name of ['い', 'ろ', 'は']) {
+  for (const name of PROXIES) {
     await H.page.fill('#proxyName', name);
     await H.page.click('#btnAddProxy');
     await L.roomWhen(code, (r) => !!r.proxies?.[name]);
   }
-  await L.waitText(H, '#waitingCount', '遊ぶ人 6人');
-  check('A1 6人になったら足せない', await H.page.isDisabled('#btnAddProxy'));
+  await L.waitText(H, '#waitingCount', '遊ぶ人 10人');
+  check('A1 10人になったら足せない', await H.page.isDisabled('#btnAddProxy'));
   await L.open(C, '?room=' + code);
   await C.page.fill('#guestName', 'みどり');
   await C.page.click('#btnJoinRoom');
   await L.waitText(C, '#joinError', 'いっぱい');
-  check('A2 7人目は参加できない', true);
+  check('A2 11人目は参加できない', true);
   // ホストが進行だけになれば、もう1人入れる。そのあとホストは遊ぶにもどせない
   await H.page.click('#hostPlays');
   await L.roomWhen(code, (r) => r.hostPlays === false);
   await C.page.click('#btnJoinRoom');
   await L.waitScreen(C, 'waiting');
-  await L.waitText(H, '#waitingCount', '遊ぶ人 6人');
-  check('A3 ホストが進行だけなら6人目の参加者が入れる', true);
-  check('A4 6人のときホストは遊ぶにもどせない', await H.page.isDisabled('#hostPlays'));
+  await L.waitText(H, '#waitingCount', '遊ぶ人 10人');
+  check('A3 ホストが進行だけなら10人目の参加者が入れる', true);
+  check('A4 10人のときホストは遊ぶにもどせない', await H.page.isDisabled('#hostPlays'));
   // 端末なしの参加者を外して5人に
-  for (const name of ['い', 'ろ', 'は']) {
+  for (const name of PROXIES) {
     await H.page.click(`#waitingPlayers li:has-text("${name}") button`);
     await L.roomWhen(code, (r) => !r.proxies?.[name]);
   }
