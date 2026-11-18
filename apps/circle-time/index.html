@@ -293,6 +293,22 @@
   .p-words button{ border:2px solid var(--color-border); background:#fff; border-radius:999px; padding:10px 16px; font:700 16px 'Zen Maru Gothic',var(--font-base); color:var(--color-text); cursor:pointer; min-height:44px; }
   .p-words button[aria-pressed="true"]{ border-color:var(--color-accent); background:var(--color-accent-soft); color:var(--color-accent); }
   .p-sub{ font-size:14px; font-weight:700; color:var(--color-accent); margin:16px 0 6px; }
+  /* 参加者の「みんなとこれまで」（見るだけ） */
+  .p-look-btn{ display:flex; align-items:center; justify-content:center; gap:6px; width:100%; max-width:520px; margin:12px auto 0; }
+  .p-look{ margin-top:12px; }
+  .p-look h3{ margin:0 0 8px; font-size:16px; color:var(--color-primary); }
+  .p-look h3 + * { margin-bottom:16px; }
+  .lk-people{ display:flex; flex-wrap:wrap; gap:6px; }
+  .lk-chip{ display:inline-flex; align-items:center; border-radius:999px; padding:4px 12px; font-size:15px; font-weight:700; background:#fff; border:2px solid var(--color-border); }
+  .lk-step{ border:1px solid var(--color-border); border-radius:12px; margin:0 0 8px; background:#fff; }
+  .lk-step > summary{ cursor:pointer; padding:12px 14px; font-weight:700; font-size:16px; list-style-position:inside; min-height:44px; box-sizing:border-box; }
+  .lk-step > summary .now{ font-size:12px; color:var(--color-accent); margin-left:6px; }
+  .lk-body{ padding:0 14px 12px; font-size:15px; }
+  .lk-body ul{ list-style:none; margin:0; padding:0; }
+  .lk-body li{ padding:6px 0; border-bottom:1px dashed var(--color-border); line-height:1.6; }
+  .lk-body li:last-child{ border-bottom:none; }
+  .lk-body .nt{ display:block; color:var(--color-muted); font-size:14px; }
+  .p-look .mt{ color:var(--color-muted); }
   .p-link{ display:flex; align-items:center; gap:10px; padding:14px 16px; border-radius:14px; background:var(--color-accent-soft); color:var(--color-accent); font-weight:700; text-decoration:none; margin-top:10px; }
   .p-big{ font:700 26px 'Zen Maru Gothic',var(--font-base); color:var(--color-primary); text-align:center; padding:24px 0 8px; }
   .p-lines{ font-size:17px; line-height:1.8; margin:0; padding-left:0; list-style:none; }
@@ -927,6 +943,8 @@
       <button type="button" class="btn btn-outline" id="btn-leave">退出する</button>
     </div>
     <div class="player" id="player-card"></div>
+    <button type="button" class="btn btn-outline p-look-btn" id="btn-look" aria-expanded="false" aria-controls="player-look"><span class="material-symbols-rounded">groups</span><span id="btn-look-t">みんなとこれまでを見る</span></button>
+    <div class="player p-look" id="player-look" hidden></div>
   </div>
 </section>
 
@@ -1630,7 +1648,7 @@ function render() {
   const room = c.data;
   if (c.watch) renderWatch(room);
   else if (c.session.role === 'host') renderHost(room);
-  else renderPlayer(room);
+  else { renderPlayer(room); renderLook(room); }
 }
 
 // ── 舞台の描画（みんなにみせる画面・ホストのプレビュー） ──
@@ -1902,6 +1920,57 @@ function renderPlayer(room) {
   card.innerHTML = html;
   card.dataset.key = cur.id + '|' + (room.view || '');
 }
+// 参加者の「みんなとこれまで」: ルームにいる人と、ここまでの画面を、自分の端末で見るだけ（書き込まない）。
+// 心・体のわけは、みんなの画面で名前を押すと出るものと同じ。ふりかえりの自由に書いたことは進行役にだけとどくので出さない
+let lookOpen = false, lookInit = false;
+const lookShown = new Set();
+function lookStepHtml(room, s) {
+  const players = playersOf(room), ans = answered(room, s.id), revealed = isRevealed(room, s);
+  const nm = (p) => `<b>${esc(p.name)}</b>`;
+  const who = (list) => list.length ? list.map((p) => esc(p.name)).join('・') : '<span class="mt">（いません）</span>';
+  const list = (items) => items.length ? `<ul>${items.join('')}</ul>` : '<p class="mt">まだ答えはありません</p>';
+  if (s.type === 'scale' || s.type === 'review') {
+    if (!revealed) return '<p class="mt">答えは伏せたままです</p>';
+    const labels = s.labels || LABELS.review, notes = s.type === 'scale' ? room.notes?.[s.id] || {} : {};
+    return list(players.filter((p) => Object.hasOwn(ans, p.id)).map((p) => {
+      const a = ans[p.id], n = a && typeof a === 'object' ? a.n : a;
+      const ws = a && typeof a === 'object' && a.w ? Object.keys(a.w).filter((k) => a.w[k]).map((k) => (s.words || WORDS)[k]).filter(Boolean) : [];
+      const v = a === 'pass' ? 'パス' : typeof n === 'number' ? `${n}　${esc(labels[5 - n] || '')}` : '';
+      return `<li>${nm(p)}　${v}${ws.length ? `<span class="nt">${ws.map(esc).join('・')}</span>` : ''}${notes[p.id] ? `<span class="nt">${esc(notes[p.id])}</span>` : ''}</li>`;
+    }));
+  }
+  if (s.type === 'choice') {
+    const shown = !!room.answerShown?.[s.id];
+    const items = (s.options || []).map((o, i) => `<li>${'①②③④⑤⑥'[i]} ${esc(o)}${shown && (s.answer === 'all' || s.answer === i) ? '　<b>（答え）</b>' : ''}${revealed ? `<span class="nt">${who(players.filter((p) => ans[p.id] === i))}</span>` : ''}</li>`);
+    return `<ul>${items.join('')}</ul>${shown && s.note ? `<p class="mt">${esc(s.note)}</p>` : ''}`;
+  }
+  if (s.type === 'weather') return `<ul>${WX_OPTIONS.map((o, i) => `<li>${o.t}<span class="nt">${who(players.filter((p) => ans[p.id] === i))}</span></li>`).join('')}</ul>`;
+  if (s.type === 'talk') return `<p>${esc(s.topic || '')}</p>`;
+  if (s.type === 'game') return `<p>${s.game ? esc(s.game.name) : 'これから決めます'}</p>`;
+  if (s.type === 'show') {
+    const items = (s.lines || []).map(parseLine).filter((x) => x.name);
+    return `<ul>${items.map((x) => `<li>${x.tm && x.tm !== '—' ? esc(x.tm) + '　' : ''}${esc(x.name)}${x.place ? `（${esc(x.place)}）` : ''}</li>`).join('')}</ul>${s.note ? `<p class="mt">${esc(s.note)}</p>` : ''}`;
+  }
+  if (s.type === 'free') return '<p>すきなことをして過ごす時間</p>';
+  return '';
+}
+function renderLook(room) {
+  const box = $('player-look'), btn = $('btn-look');
+  btn.setAttribute('aria-expanded', String(lookOpen));
+  $('btn-look-t').textContent = lookOpen ? 'みんなとこれまでをとじる' : 'みんなとこれまでを見る';
+  box.hidden = !lookOpen;
+  if (!lookOpen) return;
+  const players = playersOf(room), cur = curStep(room), vis = visibleSteps(room), ci = vis.findIndex((s) => s.id === cur?.id);
+  // ここまでの画面（いまの画面の表紙を出しているあいだは、いまの画面はまだ入れない）
+  const done = sectionsOf(room).filter((s) => { const i = vis.indexOf(s); return i < ci || (i === ci && !onCover(room, s)); });
+  if (cur && !lookInit) { lookInit = true; lookShown.add(cur.id); }
+  const steps = done.map((s) => `<details class="lk-step" data-look="${esc(s.id)}"${lookShown.has(s.id) ? ' open' : ''}><summary>${esc(coverOf(s)[1])}${s.id === cur?.id ? '<span class="now">いま</span>' : ''}</summary><div class="lk-body">${lookStepHtml(room, s)}</div></details>`).join('');
+  box.innerHTML = `<h3>ルームにいる人（${players.length}人）</h3><div class="lk-people">${players.map((p) => `<span class="lk-chip">${esc(p.name)}</span>`).join('')}</div>`
+    + `<h3>これまでの画面</h3>${steps || '<p class="mt">まだありません</p>'}`;
+}
+$('btn-look').addEventListener('click', () => { lookOpen = !lookOpen; if (ctx?.data) renderLook(ctx.data); });
+$('player-look').addEventListener('toggle', (e) => { const d = e.target.closest?.('[data-look]'); if (!d) return; if (d.open) lookShown.add(d.dataset.look); else lookShown.delete(d.dataset.look); }, true);
+
 // 心・体・ふりかえりの下書き（送るまでは自分の端末だけ）
 const NOTE_MAX = 60;
 let draft = null, renderLater = false;
@@ -2346,7 +2415,7 @@ window.addEventListener('load', async () => {
 })();
 </script>
 <script>RoomkHowto.init({ title: 'つかいかた', lead: '午前と午後のサークルタイムを、ひとつのルームで進めるよ。画面を見ながら、ボタン・チャット・声のどれで答えてもいいよ。', sections: [
-  { heading: '参加する人', items: ['「ルームに参加する」でニックネーム、ルームコード（6文字）の順に入れて「参加する」。リンクからひらいたときは、ニックネームだけでいいよ。', '画面が変わったら、自分の端末でえらんで「送る」を押してね。選びなおして送りなおすことも、「パスする」もできるよ。', '心・体・ふりかえりでは、わけやひとことを書いて送れるよ（なくてもOK）。心・体で書いたことは、みんなの画面で名前を押すと出るよ。ふりかえりで書いたことは進行役にだけとどくよ。', 'チェックインでは、マイクで話す人は「話したい」、MetaLife のチャットに書いた人は「チャットに書いたよ」を押してね。', '自由タイムは自由にすごしてOK。ニュースやおしゃべりのお題が出たら、MetaLife のチャットで話そう。ニュースは「くわしく読む」で元の記事が開くよ。', 'みんなでゲームは、きょうあそぶゲームが出るよ。進行役がルームを作ると、自分の端末に「ゲームに入る」が出るよ。押して入ってね。', '端末がない人は、チャットに数字や言葉を書くか、声で言えばOK。進行役が代わりに入れるよ。'] },
+  { heading: '参加する人', items: ['「ルームに参加する」でニックネーム、ルームコード（6文字）の順に入れて「参加する」。リンクからひらいたときは、ニックネームだけでいいよ。', '画面が変わったら、自分の端末でえらんで「送る」を押してね。選びなおして送りなおすことも、「パスする」もできるよ。', '心・体・ふりかえりでは、わけやひとことを書いて送れるよ（なくてもOK）。心・体で書いたことは、みんなの画面で名前を押すと出るよ。ふりかえりで書いたことは進行役にだけとどくよ。', 'チェックインでは、マイクで話す人は「話したい」、MetaLife のチャットに書いた人は「チャットに書いたよ」を押してね。', '自由タイムは自由にすごしてOK。ニュースやおしゃべりのお題が出たら、MetaLife のチャットで話そう。ニュースは「くわしく読む」で元の記事が開くよ。', 'みんなでゲームは、きょうあそぶゲームが出るよ。進行役がルームを作ると、自分の端末に「ゲームに入る」が出るよ。押して入ってね。', '「みんなとこれまでを見る」で、ルームにいる人と、ここまでの画面（心・体のみんなの答えとわけ、選んだものなど）を自分の端末で見られるよ。', '端末がない人は、チャットに数字や言葉を書くか、声で言えばOK。進行役が代わりに入れるよ。'] },
   { heading: '進行役', items: ['「ルームを作る」を押して、「きょうやること」（午前は自由タイムのあそび、午後はチェックインのお題とみんなでゲーム）をえらんで「はじめる」。天気・今日は何の日・room-K ポータルのプログラム・ニュースは自動で入るよ。直したいときは「中身を確かめる・直す」。', '自由タイムのあそびは「自由タイムのあそびを変える」で変えられるよ。ニュースは「つぎのニュース」で次の話題へ。', 'みんなでゲームは、準備でえらんだゲームが出るよ。「○○のルームを作る（タブを開く）」でゲームのルームを作り、その画面を共有すれば、参加者は自分の端末の「ゲームに入る」から入れるよ。リンクを貼るのは、なくてもOK。子どもたちの声で変えたいときは「ゲームを変える」。', 'セクションごとに表紙が出るよ。「次へ」で表紙から中身に進む。', 'ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れるよ。スマホやタブレットで入る人には、「QRコードを出す」をカメラで読みとってもらってね。', '画面共有には「みんなにみせる画面を開く」でひらいた窓を使ってね。進行役の画面は共有しないよ。', '「次へ」「前へ」（矢印キー）で進める。答えを伏せる画面は「せーので見せる」（スペース）でいっせいに出るよ。', '流れの一覧から、好きな画面へ移る・飛ばす・並べかえる、ができるよ。「文を直す」「その場で聞く」で、その場で変えられるよ。', 'チャットや声で答えた人、端末のない人の分は「代わりに入れる」で名前の横を押してね（入れなくても進められるよ）。わけ・ひとことは参加者の一覧に出るよ。', '終わるときは「ルームを閉じる」。'] },
 ] });</script>
 </body>
