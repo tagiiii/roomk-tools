@@ -1,4 +1,4 @@
-// サークルタイム E2E その7: 参加者の「みんなとこれまで」（ルームにいる人・ここまでの画面・心のわけ・ふりかえりの自由記述は出さない）
+// サークルタイム E2E その7: 参加者の「ルームにいる人・これまでの画面」（ルームにいる人・ここまでの画面・心のわけ・ふりかえりの自由記述）
 const L = require('./lib.cjs');
 const { check, sleep } = L;
 const lookText = (c) => c.page.evaluate(() => document.querySelector('#player-look')?.innerText || '');
@@ -48,7 +48,7 @@ const lookText = (c) => c.page.evaluate(() => document.querySelector('#player-lo
   await B.page.click('#btn-look');
   check('G10 もう一度押すと閉じる', await B.page.evaluate(() => document.querySelector('#player-look').hidden));
 
-  // ── 午後: ふりかえりの自由に書いたことは出さない ──
+  // ── 午後: ふりかえりの自由に書いたことも出る ──
   const H2 = await L.newClient('host2');
   const C = await L.newClient('sora', { viewport: { width: 375, height: 812 } });
   const code2 = await L.createRoom(H2, 'みほ', { kind: 'pm' });
@@ -64,7 +64,9 @@ const lookText = (c) => c.page.evaluate(() => document.querySelector('#player-lo
   await L.waitText(C, '#player-look', 'たのしかった');
   t = await lookText(C);
   check('G11 ふりかえりは番号と決まった言葉', t.includes('5') && t.includes('とても楽しかった') && t.includes('たのしかった'), t);
-  check('G12 ふりかえりの自由に書いたことは出さない', !t.includes('ないしょのはなし'), t);
+  check('G12 ふりかえりの自由に書いたことも出る', t.includes('ないしょのはなし'), t);
+  check('G13 書く欄の上に、ルームにいる人も見られると出る', (await L.text(C, '#player-card')).includes('ルームにいる人も自分の端末で見られるよ'));
+  check('G14 ボタンの名前', (await L.text(C, '#btn-look')).includes('ルームにいる人・これまでの画面'));
   await L.shot(C, '72-look-review');
   await L.finishAll(server);
 })().catch((e) => { console.error(e); process.exit(1); });
