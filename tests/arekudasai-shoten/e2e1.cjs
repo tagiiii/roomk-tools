@@ -81,10 +81,25 @@ async function offer(c, name) {
   await other.page.click('#stage .ak-choice:has-text("お客さんに質問する")');
   const askTag = E.TAGS.find((t) => !tags.includes(t));
   await other.page.click(`#stage .ak-chip-btn:has-text("${askTag}")`);
-  const yes = E.item(want).tags.includes(askTag);
+  // 答えは自動で決めず、お客さんが「はい」「いいえ」をえらぶ（データの特徴とちがう答えでもよい）
+  const yes = !E.item(want).tags.includes(askTag);
+  const ans = yes ? 'はい' : 'いいえ';
+  const os = g.seats.indexOf(other.name);
   await waitText(other, '#stage', 'それは、' + askTag + '？');
-  check('answer right', (await text(other, '#stage')).includes(cust + '「' + (yes ? 'はい' : 'いいえ') + '」'));
-  await waitText(C, '#stage', 'それは、' + askTag);
+  await waitText(other, '#stage', cust + 'が答えているよ');
+  check('ask disabled while waiting', await other.page.evaluate(() => [...document.querySelectorAll('#stage .ak-choice')].find((b) => b.textContent.includes('質問する'))?.disabled === true));
+  check('raw q pending', (await gameOf(code)).r.q[os] === askTag + ':?');
+  await waitText(C, '#stage', 'お店の人から質問がきたよ');
+  check('customer sees wanted to answer', (await text(C, '#stage')).includes(E.item(want).name));
+  check('watch: waiting', (await text(watch, '#stage')).includes('答えているよ'));
+  await shot(C, '03b-customer-answer');
+  await C.page.click('#stage .ak-asked__btns button:has-text("' + ans + '")');
+  await waitText(other, '#stage .ak-asked__a', ans);
+  check('answer chosen by customer', (await text(other, '#stage .ak-asked__a')) === ans);
+  check('raw a', (await gameOf(code)).r.a[os] === (yes ? '1' : '0'));
+  await waitText(watch, '#stage .ak-asked__a', ans);
+  check('customer buttons gone', (await C.page.$$('#stage .ak-asked__btns')).length === 0);
+  await shot(other, '03c-shop-answer');
   check('rest count', (await text(other, '#stage')).includes('あと1回'));
   await other.page.click('#stage .ak-choice:has-text("出さない")');
   // 札には特徴の言葉を出さない・名前にも入っていない
