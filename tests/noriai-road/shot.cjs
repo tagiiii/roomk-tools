@@ -6,6 +6,9 @@
 // 時計の字が読めるよう、画面の幅を600（ステージの枠が幅いっぱいになる幅）にして、2倍の細かさで撮る
 // 同じ日に、ステージ13「しかけブロック」の場面にした: 開いたしかけブロックの上に3番、穴の手前に置いたばね、
 // その手前に4番と1番、ばねで穴を跳んでいる2番（「行くよ」）。位置・時間は撮影用に置き、撮る間だけ動きを止める
+// 2026-11-19、ステージ14「細い橋」の場面にした: 「1人まで」の橋の上に2番、手前で待つ1番（「待って」）と3番、
+// わたり終えた4番。時計は「タイム 0:48」（位置・時間・カメラは撮影用。撮る間だけ動きを止める。
+// 説明スライドの3枚目は、この画像を正方形に左から切って出すので、場面が左の約15マスに入るようカメラを置く）
 // → $NR_WORK/out/thumb-raw.png（上の行からステージの枠の下まで）
 const L = require('./lib.cjs');
 const path = require('path');
@@ -19,27 +22,28 @@ const path = require('path');
     await c.page.click('#btnGoLocal');
     await L.waitScreen(c, 'local');
     await c.page.click('#localCountSeg .nr-seg__btn:nth-child(3)'); // 4人
-    await c.page.click('#localStageSeg .nr-seg__btn:nth-child(13)');
+    await c.page.click('#localStageSeg .nr-seg__btn:nth-child(14)');
     await c.page.check('#localTimer'); // タイムアタック
     await c.page.click('#btnLocalStart');
     await L.waitScreen(c, 'game');
     const place = (s, E) => {
       const w = s.world;
-      const k = w.blocks[0];
-      let px = k.x + 2;
-      while (E.solidTile(w, px, 10, 99)) px++; // 穴のはじめ
-      k.open = true;
-      const sp = w.items.find((it) => it.kind === 'spring' && Math.abs(it.x0 - (k.x + 0.7)) < 0.5);
-      Object.assign(sp, { hidden: false, armed: true, holder: 0, x: px - E.ITEM - 0.05, y: 10 - E.ITEM, vx: 0, vy: 0 });
-      const at = [[px - 2.6, 10 - E.PH, 1], [px + 0.5, 6.2, 1], [k.x + 0.6, k.y - E.PH, 1], [px - 1.5, 10 - E.PH, 1]];
+      const br = w.plats[0]; // 1人までの細い橋
+      // 2番が橋の上、1番・3番は手前で待つ、4番はわたり終えた
+      const at = [[br.x - 1.6, 10 - E.PH, 1], [br.x + 2.6, br.y - E.PH, 1], [br.x - 2.7, 10 - E.PH, 1], [br.x + br.w + 1.0, 10 - E.PH, -1]];
       w.players.forEach((p, i) => { p.x = at[i][0]; p.y = at[i][1]; p.vx = 0; p.vy = 0; p.ground = null; p.face = at[i][2]; });
+      br.riders = 1;
       // 撮る間だけ、動きを止める（描くのは続ける）
       E.stepLocal = () => {};
+      // カメラは撮影用に決める: 説明スライドは画像を正方形に左から切って出すので、場面を左の約15マスに入れる
+      const camL = br.x - 4.2;
+      E.camLeft = () => camL;
+      s.camX = camL;
       return 1;
     };
     await L.st(c, place);
     await c.page.waitForTimeout(1500);
-    await L.st(c, (s) => { s.says[2] = { text: '行くよ', until: performance.now() + 60000 }; s.local.t0 = performance.now() - 65300; return 1; });
+    await L.st(c, (s) => { s.says[1] = { text: '待って', until: performance.now() + 60000 }; s.local.t0 = performance.now() - 48300; return 1; });
     await c.page.evaluate(() => {
       // 右下の「？」とフィードバックのボタンは撮影時だけ隠す（body の howto-has-fab は残す）
       document.querySelectorAll('[class*="fab"]').forEach((n) => { if (n !== document.body && n !== document.documentElement) n.style.visibility = 'hidden'; });
