@@ -506,9 +506,9 @@ test('10人: 頭の上に積み重なっても、リフトの人数に数える'
 const STAGE = Object.fromEntries(E.STAGES.map((st, i) => [st.name, i]));
 const GROUND = 10 - E.PH;
 
-test('ステージは13こ', () => {
-  assert.strictEqual(E.STAGES.length, 13);
-  for (const name of ['高い台', 'ばねでとぶ', '手分けの道', 'ひもと高い台', 'さいごの道', 'ひもでつながる長い道', 'いちばん長い道', 'しかけブロック']) assert(name in STAGE, name);
+test('ステージは14こ', () => {
+  assert.strictEqual(E.STAGES.length, 14);
+  for (const name of ['高い台', 'ばねでとぶ', '手分けの道', 'ひもと高い台', 'さいごの道', 'ひもでつながる長い道', 'いちばん長い道', 'しかけブロック', '細い橋']) assert(name in STAGE, name);
 });
 test('むずかしい道（11・12）: これまでのステージで使った区間だけで、前より長い', () => {
   const old = E.STAGES.slice(0, 10);
@@ -905,4 +905,76 @@ test('しかけブロック: ルームに置く形（ばねが出ているか・
   assert(v.blocks[0].open && !v.items.find((it) => it.kind === 'spring').hidden);
 });
 
+
+/* ── 細い橋（ステージ14。2026-11-19）── */
+test('細い橋: 人数までなら沈まず、こえると沈み、へると戻る（頭の上の人も数える）', () => {
+  const w = E.createWorld(STAGE['細い橋'], 2);
+  const br = w.plats[0];
+  assert.strictEqual(br.cap, 1, '2人のときは1人まで');
+  const [a, b] = w.players;
+  place(a, br.x + 2.5, br.y - E.PH);
+  place(b, 2, GROUND);
+  run(w, 60);
+  assert(near(br.y, 10), '1人では沈まない y=' + br.y);
+  place(b, br.x + 2.5, br.y - E.PH * 2 - 0.05);
+  run(w, 20);
+  assert.strictEqual(b.ground, 's1', '頭に乗った');
+  assert(br.y > 10.15, '2人で沈みはじめる y=' + br.y);
+  // 上の人が向こうの床へ跳んで戻ると、浮き上がる
+  place(b, br.x - 1.5, GROUND);
+  run(w, 90);
+  assert(near(br.y, 10), '戻った y=' + br.y);
+  assert(a.ground === 'p0', '下の人は橋に乗ったまま');
+});
+test('細い橋: 沈みきると、乗っている人は区間のはじめに戻り、橋は戻る', () => {
+  const w = E.createWorld(STAGE['細い橋'], 3);
+  const br = w.plats[0];
+  assert.strictEqual(br.cap, 1);
+  const [a, b] = w.players;
+  place(a, br.x + 3, br.y - E.PH);
+  place(b, br.x + 4, br.y - E.PH);
+  run(w, 60 * 7);
+  assert(a.x < br.x && b.x < br.x, '区間のはじめに戻った ' + a.x + ',' + b.x);
+  run(w, 60 * 4);
+  assert(near(br.y, 10), '橋が戻った y=' + br.y);
+});
+test('細い橋: 橋がないと、ふつうのジャンプでも人の頭からでもわたれない（6マス）', () => {
+  for (let k = 1; k <= 4; k++) {
+    const w = E.createWorld(STAGE['細い橋'], 4);
+    const br = w.plats[0];
+    br.y = br.ay = 40; br.cap = 99;
+    const edge = br.x;
+    const ps = w.players.slice(0, k);
+    // k 人重なった上から、穴のふちで跳ぶ
+    ps.forEach((p, i) => place(p, edge - E.PW - 0.02, GROUND - i * (E.PH + 0.01)));
+    w.players.slice(k).forEach((p, i) => place(p, 2 + i, GROUND));
+    run(w, 30);
+    const top = ps[k - 1];
+    let crossed = false;
+    for (let f = 0; f < 90; f++) {
+      run(w, 1, () => { const r = []; r[k - 1] = { r: true, jump: f < 40 }; return r; });
+      if (top.ground === 't' && top.x > edge + 5.9) crossed = true;
+    }
+    assert(!crossed, k + '人重なった上から、わたれてしまった');
+  }
+});
+test('細い橋で箱をはこぶ: 押す人と箱で2人ぶん、3人ぶんで沈む。箱に乗っている人も数える', () => {
+  const w = E.createWorld(STAGE['細い橋'], 4);
+  const br = w.plats[1];
+  const box = w.boxes[0];
+  assert.strictEqual(br.cap, 2);
+  place(box, br.x + 2, br.y - 1);
+  box.x0 = box.x; box.y0 = box.y;
+  const [a, b, c] = w.players;
+  place(a, br.x + 0.5, br.y - E.PH);
+  w.players.slice(1).forEach((p, i) => place(p, 2 + i, GROUND));
+  run(w, 60);
+  assert(near(br.y, 10), '箱と1人では沈まない y=' + br.y);
+  assert.strictEqual(br.riders, 2);
+  place(b, box.x + 0.1, box.y - E.PH - 0.05);
+  run(w, 20);
+  assert.strictEqual(b.ground, 'b0', '箱に乗った');
+  assert(br.y > 10.1, '箱に乗った人も数えて沈む y=' + br.y);
+  void c;
+});
 console.log(`\n${passed} ok`);

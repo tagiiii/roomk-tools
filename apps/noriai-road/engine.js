@@ -26,7 +26,10 @@
   const PUSH_REACH = 0.25;        // 止まっている箱を押しはじめる近さ
   const PUSH_REACH_MOVING = 2.0;  // 動いている箱を押しつづけていると数える近さ
   const PLAT_SPEED = 2.4;
-  const PLAT_WAIT = 1.5;      // 人数がへってから戻りはじめるまで（秒）
+  const PLAT_WAIT = 1.5;
+  // 細い橋: 決まった人数より多く乗ると沈み、へると浮き上がる（2026-11-19）
+  const SINK_SPEED = 1.0;
+  const RISE_SPEED = 2.0;      // 人数がへってから戻りはじめるまで（秒）
   const SEESAW_UNIT = 1.5;    // 重さの差1つぶんで傾く高さ
   const SEESAW_MAX = 1.5;     // 傾きの上限（下がった側からも床へ跳んで出られる高さ）
   const SEESAW_SPEED = 2.2;
@@ -264,6 +267,27 @@
       b.fill(o + 8, o + 12, 10, H - 1, '.');
       b.advance(16);
     },
+    // 細い橋: 6マスの穴にかかる橋。cap 人（人の頭の上の人・箱も数える）より多く乗ると、ゆっくり沈む。
+    // へると浮き上がる。沈みきると乗っている人は落ちて、区間のはじめに戻る。人数は遊ぶ人数より1少ない数で頭打ち
+    // （みんなで一度にわたれないように）。穴は6マスで、ふつうのジャンプでも人の頭からでもわたれない（2026-11-19）
+    thinBridge(b, cap, n) {
+      b.begin();
+      const o = b.ox;
+      b.fill(o + 2, o + 7, 10, H - 1, '.');
+      const c = Math.max(1, Math.min(cap, (n || 2) - 1));
+      b.meta.plats.push({ x: o + 2, y: 10, w: 6, ax: o + 2, ay: 10, bx: o + 2, by: 10, need: 0, cap: c });
+      b.advance(10);
+    },
+    // 細い橋（2人まで）で箱をはこぶ: 押す人と箱で2人ぶん。向こうの2マスのかべは、最後の1人は箱に乗らないと上がれない
+    thinBox(b) {
+      b.begin();
+      const o = b.ox;
+      b.meta.boxes.push({ x: o + 2, y: 9, need: 1 });
+      b.fill(o + 5, o + 10, 10, H - 1, '.');
+      b.meta.plats.push({ x: o + 5, y: 10, w: 6, ax: o + 5, ay: 10, bx: o + 5, by: 10, need: 0, cap: 2 });
+      b.fill(o + 14, o + 22, 8, 9, '#');
+      b.advance(24);
+    },
     // ゴールのとびら。locked ならカギを持った人がふれると開く
     door(b, locked) {
       b.begin();
@@ -348,6 +372,12 @@
       hint: 'しかけブロックの数字の人数がブロックに乗ると、ばねが出てくる。ばねは「ひろう」で持って、「置く」で目の前に置ける。広い穴は、穴の手前に置いたばねで跳ばないとわたれないよ。',
       parts: [['start'], ['springBlock', 2], ['boxStep'], ['seesaw', 'key'], ['springBlock', 'all'], ['door', true]],
     },
+    // 14: 細い橋（2026-11-19）
+    {
+      name: '細い橋',
+      hint: '細い橋は、書いてある人数までしか乗れない。それより多く乗ると沈むよ（人の頭の上の人や、箱も数える）。「待って」「行くよ」と声をかけて、順番にわたろう。箱は、押す人と2人で橋をわたれる。',
+      parts: [['start'], ['thinBridge', 1], ['ledge'], ['thinBox'], ['thinBridge', 2], ['door', false]],
+    },
   ];
 
   function buildStage(index, n) {
@@ -382,7 +412,7 @@
   // 動く床が動くのに要る人数: 数字の人数と、まだ向こうへ行っていない人の少ないほう
   // （人数が多くて何回かに分けて運ぶとき、最後の組が数字より少なくても動けるように）
   function platNeed(p, players) {
-    if (p.seesaw >= 0) return 0;
+    if (p.seesaw >= 0 || p.cap) return 0;
     const edge = p.bx !== p.ax ? Math.max(p.ax, p.bx) : p.ax + p.w;
     let left = 0;
     for (const q of players) if (!q.entered && !q.absent && q.x + PW / 2 < edge) left++;
@@ -400,7 +430,7 @@
       boxes: meta.boxes.map((b) => ({ x: b.x, y: b.y, w: 1, h: 1, x0: b.x, y0: b.y, need: resolveNeed(b.need, n), vx: 0, vy: 0, ground: null, dx: 0, dy: 0, pushers: 0 })),
       plats: meta.plats.map((p) => ({
         x: p.x, y: p.y, w: p.w, h: 0.35, ax: p.ax, ay: p.ay, bx: p.bx, by: p.by,
-        need: p.seesaw == null ? resolveNeed(p.need, n) : 0, seesaw: p.seesaw == null ? -1 : p.seesaw, side: p.side || 0,
+        need: p.seesaw == null && !p.cap ? resolveNeed(p.need, n) : 0, seesaw: p.seesaw == null ? -1 : p.seesaw, side: p.side || 0, cap: p.cap || 0,
         riders: 0, dx: 0, dy: 0,
       })),
       seesaws: meta.seesaws.map((s) => ({ ...s, off: 0, wl: 0, wr: 0 })),
@@ -800,11 +830,27 @@
     }
     // 箱の重さは、押すのに要る人数（シーソーの重い箱は2）
     world.boxes.forEach((b) => { if (b.ground && b.ground[0] === 'p') weight[+b.ground.slice(1)] += b.need; });
+    // 細い橋では、橋の上の箱に乗っている人も数える
+    for (const q of live) {
+      const r = rootOf(q.ground, players, 0);
+      if (!r || r[0] !== 'b') continue;
+      const bx = world.boxes[+r.slice(1)];
+      if (bx && bx.ground && bx.ground[0] === 'p' && world.plats[+bx.ground.slice(1)].cap) weight[+bx.ground.slice(1)] += 1;
+    }
 
     // 動く床
     world.plats.forEach((p, i) => {
       p.riders = weight[i];
       if (p.seesaw >= 0) return;
+      if (p.cap) {
+        const over = p.riders > p.cap;
+        const ty = over ? H + 2 : p.ay;
+        const d = ty - p.y;
+        const oy = p.y;
+        p.y += Math.sign(d) * Math.min(Math.abs(d), (over ? SINK_SPEED : RISE_SPEED) * dt);
+        p.dx = 0; p.dy = p.y - oy;
+        return;
+      }
       // 人数がそろったら向こうへ。へっても少し待ってから戻る（おりる間に下がらないように）
       if (p.riders >= platNeed(p, players)) p.hold = PLAT_WAIT; else p.hold = Math.max(0, (p.hold || 0) - dt);
       const toB = p.hold > 0;
