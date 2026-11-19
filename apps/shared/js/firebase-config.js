@@ -12,6 +12,7 @@ import { getFirestore } from "https://www.gstatic.com/firebasejs/13.3.0/firebase
 import {
   initializeAuth, indexedDBLocalPersistence, browserLocalPersistence, browserSessionPersistence, signInAnonymously,
 } from "https://www.gstatic.com/firebasejs/13.3.0/firebase-auth.js";
+import { showToast } from "./utils.js";
 
 // TODO: Firebase コンソールの「プロジェクトの設定」から取得してここに貼り付ける
 // 参照: docs/firebase-setup.md
@@ -38,3 +39,11 @@ export const authReady = signInAnonymously(auth).catch((error) => {
   console.error("匿名認証に失敗しました:", error);
   return null;
 });
+
+// ログインが 10 秒たっても終わらないときに、読み込み直すように知らせる（rtdb-utils.js の noticeSlowAuth と同じ。2026-11-19）。
+// Safari の IndexedDB（ログイン状態の保存先）が返事をしなくなる不具合では、ログインがいつまでも終わらない。読み込み直すと直ることが多い
+let authSettled = false;
+authReady.then(() => { authSettled = true; });
+setTimeout(() => {
+  if (!authSettled) showToast("つながるまで時間がかかっています。ページを読み直してみてね", "error", 15000);
+}, 10000);
