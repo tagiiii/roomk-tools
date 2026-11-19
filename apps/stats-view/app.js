@@ -10,7 +10,9 @@
 // =============================================
 
 import { getApp, initializeApp } from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js';
-import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-auth.js';
+import {
+  getAuth, initializeAuth, indexedDBLocalPersistence, browserLocalPersistence, browserSessionPersistence, signInAnonymously,
+} from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-auth.js';
 import { getDatabase, get, ref } from 'https://www.gstatic.com/firebasejs/13.3.0/firebase-database.js';
 
 // stats.js の FIREBASE_CONFIG と同一内容（databaseURL 必須）
@@ -90,7 +92,18 @@ function ensureDb() {
       } catch (_) {
         app = initializeApp(FIREBASE_CONFIG, FIREBASE_APP_NAME);
       }
-      await signInAnonymously(getAuth(app));
+      // getAuth() と同じ保存先で作るが、ポップアップ・リダイレクト用の部品は付けない。
+      // getAuth() のままだと、Safari・iPad ではログインの前に Google の部品（apis.google.com）を読み、
+      // 終わるまで待たされる（2026-11-19。shared/js/stats.js・firebase-config.js と同じ理由）
+      let auth;
+      try {
+        auth = initializeAuth(app, {
+          persistence: [indexedDBLocalPersistence, browserLocalPersistence, browserSessionPersistence],
+        });
+      } catch (_) {
+        auth = getAuth(app); // 失敗のあとの読み直しで、すでに作られていたとき
+      }
+      await signInAnonymously(auth);
       return getDatabase(app);
     })().catch((err) => {
       dbPromise = null; // 再読み込みでリトライできるようにする
