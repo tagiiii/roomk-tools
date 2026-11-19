@@ -977,4 +977,22 @@ test('細い橋で箱をはこぶ: 押す人と箱で2人ぶん、3人ぶんで�
   assert(br.y > 10.1, '箱に乗った人も数えて沈む y=' + br.y);
   void c;
 });
+test('細い橋: 画面の下まで沈んだら、人数がへっても1秒ほど戻らない（遅れて動く人もいっしょに落ちるように）', () => {
+  const w = E.createWorld(STAGE['細い橋'], 3);
+  const br = w.plats[0];
+  const [a, b] = w.players;
+  place(a, br.x + 2, br.y - E.PH);
+  place(b, br.x + 3.5, br.y - E.PH);
+  let f = 0;
+  while (br.y < E.H + 0.2 && f++ < 60 * 8) run(w, 1);
+  assert(br.y >= E.H + 0.2, '画面の下まで沈んだ');
+  // 1人だけ先に落ちて、人数がへったとする（もう1人は、遅れてまだ橋の上）
+  place(a, 2, GROUND);
+  b.y = br.y - E.PH; b.ground = 'p0';
+  const keep = br.y;
+  E.stepObjects(w, DT * 30, w.players);
+  assert(br.y >= keep - 0.01, '人数がへっても、すぐには戻らない y=' + br.y);
+  run(w, 60 * 5);
+  assert(near(br.y, 10), 'あとで戻る y=' + br.y);
+});
 console.log(`\n${passed} ok`);

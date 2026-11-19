@@ -29,7 +29,9 @@
   const PLAT_WAIT = 1.5;
   // 細い橋: 決まった人数より多く乗ると沈み、へると浮き上がる（2026-11-19）
   const SINK_SPEED = 1.0;
-  const RISE_SPEED = 2.0;      // 人数がへってから戻りはじめるまで（秒）
+  const RISE_SPEED = 2.0;
+  const SINK_BOTTOM = H + 2;   // ここまで沈むと、乗っている人は落ちる（人の y が H + 1 をこえる）
+  const SUNK_WAIT = 1.0;       // 画面の下まで沈んでから人数がへっても、浮き上がりはじめるまで（秒）      // 人数がへってから戻りはじめるまで（秒）
   const SEESAW_UNIT = 1.5;    // 重さの差1つぶんで傾く高さ
   const SEESAW_MAX = 1.5;     // 傾きの上限（下がった側からも床へ跳んで出られる高さ）
   const SEESAW_SPEED = 2.2;
@@ -843,8 +845,12 @@
       p.riders = weight[i];
       if (p.seesaw >= 0) return;
       if (p.cap) {
-        const over = p.riders > p.cap;
-        const ty = over ? H + 2 : p.ay;
+        // 沈みきったら、少しの間そのまま（ほかの人の画面は少し遅れて動くので、先に落ちた人で人数がへっても、
+        // 遅れている人がいっしょに落ちるまで戻らない。2026-11-19 ルームの2ブラウザ確認で、参加者だけ残った）
+        if (p.y >= H && p.riders > p.cap) p.sunk = SUNK_WAIT; // 画面の下まで沈んだら（乗っている人は、底に着く前に落ちはじめる）
+        else p.sunk = Math.max(0, (p.sunk || 0) - dt);
+        const over = p.riders > p.cap || p.sunk > 0;
+        const ty = over ? SINK_BOTTOM : p.ay;
         const d = ty - p.y;
         const oy = p.y;
         p.y += Math.sign(d) * Math.min(Math.abs(d), (over ? SINK_SPEED : RISE_SPEED) * dt);
