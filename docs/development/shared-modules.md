@@ -184,6 +184,7 @@ Realtime Database を使う単一ファイルアプリは、Firebase compat SDK 
 - 記録先は Realtime Database `stats/{アプリ名}/{YYYY-MM}/{項目}`。既存のセキュリティルール（ワイルドカード）で書けるためルール変更は不要
 - **記録するのは回数のみ。** UID・ニックネーム・自由入力の内容は絶対に記録しない。計測値やランキングを子ども向け画面に表示しない
 - localhost からは送信しない（動作確認したいときだけ `localStorage.setItem('roomk-stats-force', '1')`）
+- Auth は `getAuth()` ではなく、同じ保存先を指定した `initializeAuth()` で作る（2026-11-19）。`getAuth()` だと Safari・iPad ではログインの前に Google の部品（`apis.google.com`）を読んで待たされ、つながりにくい所では数えられなかった（firebase-config.js・rtdb-utils.js と同じ理由）
 - 集計の閲覧は Firebase コンソールの Realtime Database で `stats` ノードを開く
 - 新しいアプリを追加するときも必ず組み込む（リダイレクトスタブは除く）
 
