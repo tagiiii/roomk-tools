@@ -9,13 +9,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
   <!-- index.html と app.js・engine.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261115f">
+  <link rel="stylesheet" href="style.css?v=20261119a">
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
-  <script src="engine.js?v=20261115c"></script>
+  <script src="engine.js?v=20261119a"></script>
 </head>
 <body data-genre="board">
 
@@ -145,6 +145,9 @@
     <h1 class="sh-bar__title">将棋</h1>
     <p class="sh-bar__badge" id="watchBadge" hidden>みんなにみせる画面</p>
     <p class="sh-bar__me" id="barMe" hidden></p>
+    <button type="button" class="sh-bar__rules" id="btnRules" aria-expanded="false" aria-controls="rulePanel">
+      <span class="material-symbols-rounded" aria-hidden="true">menu_book</span>ルール
+    </button>
   </header>
   <div class="sh-roombar" id="roomBar" hidden>
     <span class="sh-roombar__code">ルーム <strong id="roomCodeLabel"></strong></span>
@@ -313,7 +316,16 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261115f"></script>
+  <!-- ルールの板（バーの「ルール」で出る。開いたまま指せる。中身は app.js の renderRulePanel） -->
+  <aside class="sh-rulepanel" id="rulePanel" aria-labelledby="rulePanelTitle" hidden>
+    <div class="sh-rulepanel__head">
+      <h2 class="sh-rulepanel__title" id="rulePanelTitle" tabindex="-1"><span class="material-symbols-rounded" aria-hidden="true">menu_book</span>ルール</h2>
+      <button type="button" class="sh-rulepanel__close" id="btnRulesClose" aria-label="ルールを閉じる"><span class="material-symbols-rounded" aria-hidden="true">close</span></button>
+    </div>
+    <div class="sh-rulepanel__tabs" id="ruleTabs" role="group" aria-label="見る所"></div>
+    <div class="sh-rulepanel__body" id="ruleBody"></div>
+  </aside>
+  <script type="module" src="app.js?v=20261119a"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -349,6 +361,7 @@
           '同じ形が4回くり返されると「千日手」。本将棋は引き分け、5五将棋は先手の負け。王手を続けて千日手になったときは、王手をかけていた人の負け',
           '本将棋で、自分の王が相手の陣に入り、条件がそろうと「入玉宣言で勝ちにする」が出る。押すと勝ち',
           '場所は、盤のふちの数字（１〜９）と漢数字（一〜九）を合わせて「７六」のように言うと伝わるよ',
+          '駒の動き・指せない手・勝ち負けは、画面の上の「ルール」でいつでも見られる。開いたままでも指せる',
         ] },
       ],
     });
