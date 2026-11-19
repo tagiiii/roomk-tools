@@ -44,6 +44,7 @@ const STAGE_NOTE = [
   'ひもでつながったまま、長い道を進む。むずかしい。',
   'ほとんど全部のしかけが出てくる、いちばんむずかしい道。',
   'みんなで乗ると開くしかけブロックと、持ち運べるばね。',
+  '決まった人数までしか乗れない細い橋。順番にわたる。',
 ];
 // 1台のパソコンで遊ぶときのキー（1〜4番）
 const KEYSETS = [
@@ -1709,6 +1710,25 @@ function drawPlats(w, T) {
   }
   w.plats.forEach((p) => {
     const x = p.x * T, y = p.y * T, pw = p.w * T, ph = p.h * T;
+    if (p.cap) {
+      // 細い橋: 板を並べた形。人数をこえると赤い字
+      const over = p.riders > p.cap;
+      g.fillStyle = '#D8B07A';
+      rr(x, y, pw, ph, T * 0.05);
+      g.fill();
+      g.strokeStyle = '#8A6238';
+      g.lineWidth = Math.max(1, T * 0.035);
+      for (let k = 1; k < p.w * 2; k++) { g.beginPath(); g.moveTo(x + k * T * 0.5, y); g.lineTo(x + k * T * 0.5, y + ph); g.stroke(); }
+      g.lineWidth = Math.max(1.5, T * 0.05);
+      rr(x, y, pw, ph, T * 0.05);
+      g.stroke();
+      const tx = x + pw / 2, ty = y + ph + T * 0.34;
+      g.fillStyle = 'rgba(255,255,255,0.92)';
+      rr(tx - T * 1.5, ty - T * 0.22, T * 3.0, T * 0.44, T * 0.2);
+      g.fill();
+      label(p.cap + '人まで・いま' + p.riders + '人', tx, ty, T * 0.3, over ? '#B3261E' : '#5C5146');
+      return;
+    }
     g.fillStyle = p.seesaw >= 0 ? '#C79A62' : '#B9834C';
     rr(x, y, pw, ph, T * 0.08);
     g.fill();

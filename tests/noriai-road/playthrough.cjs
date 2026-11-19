@@ -4,7 +4,7 @@
 // （シーソーの段で、箱を押した最後の1人が右のシーソーへ移れなかった。PR #369）を見落としたため。
 // 区間ごとに「越え方」を1通り書いてあり、行き詰まったら、どの区間のどの場面かを出す。
 // 新しい区間（SEG）を足したら、ここにも越え方を足す。
-//   node tests/noriai-road/playthrough.cjs            全部（13ステージ × 2〜10人。1秒ほど）
+//   node tests/noriai-road/playthrough.cjs            全部（14ステージ × 2〜10人。1秒ほど）
 //   node tests/noriai-road/playthrough.cjs 5 2        ステージ5を2人で（区間ごとの時間も出す）
 'use strict';
 const { E, makeBot, Stuck, PW, PH } = require('./playthrough-bot.cjs');
@@ -346,6 +346,40 @@ function play(stageIndex, n, opts = {}) {
         bot.run(30);
         bot.setAll({ go: end, tol: 0.25, hop: false });
         bot.until(() => allPast(end - 0.3), 60 * 20, 'springBlock cross');
+        return;
+      }
+      case 'thinBridge': case 'thinBox': {
+        // 細い橋: 橋に乗れる人数ずつ、順番にわたる（ほかの人は手前で待つ）
+        const box = name === 'thinBox' ? w.boxes.find((b) => near(b.x0, o + 2)) : null;
+        const bx0 = name === 'thinBox' ? o + 5 : o + 2;
+        const pi = w.plats.findIndex((p) => p.cap && near(p.ax, bx0));
+        const pl = w.plats[pi];
+        const wait = o + 0.3;
+        const far = name === 'thinBox' ? o + 12.2 : end;
+        const home = () => near(pl.y, pl.ay, 0.02);
+        let rest = all.slice();
+        bot.setAll({ go: wait, tol: 0.3, hop: false });
+        bot.until(() => all.every((s) => P(s).x < bx0 - PW - 0.1 && P(s).ground), T, name + ' wait');
+        if (box) {
+          // 1番が箱を押してわたる（箱と押す人で2人ぶん）
+          bot.set(1, { go: box.x - PW - 0.02, tol: 0.05, hop: false });
+          bot.until(() => box.x - (P(1).x + PW) < 0.2 && P(1).x < box.x && P(1).ground, T, name + ' line up');
+          bot.set(1, { dir: 1, hop: false });
+          bot.until(() => box.x >= o + 13 - 0.02, T, name + ' push (riders ' + pl.riders + ', y ' + pl.y.toFixed(2) + ')');
+          bot.set(1, {});
+          bot.until(() => P(1).ground && P(1).ground !== 'p' + pi && home(), T, name + ' push off');
+          rest = rest.filter((s) => s !== 1);
+        }
+        while (rest.length) {
+          const grp = rest.slice(0, pl.cap);
+          rest = rest.slice(pl.cap);
+          bot.until(home, T, name + ' home');
+          bot.setAll({ go: far, tol: 0.3, hop: false }, grp);
+          bot.until(() => grp.every((s) => P(s).x >= far - 0.35 && P(s).ground === 't'), T, name + ' cross (riders ' + pl.riders + ', y ' + pl.y.toFixed(2) + ')');
+          bot.setAll({}, grp);
+        }
+        bot.until(home, T, name + ' home after');
+        goAll(end, all, name + ' after');
         return;
       }
       case 'door': {

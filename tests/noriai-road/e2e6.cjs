@@ -27,7 +27,7 @@ const info = (c) => st(c, (s) => {
     const code = await L.createRoom(host, 'ホスト');
     await L.joinRoom(guest, 'ゲスト', code);
     await L.waitScreen(guest, 'waiting');
-    check('ステージは13こ', (await host.page.$$('#lobbySet .nr-seg__btn')).length === 13);
+    check('ステージは14こ', (await host.page.$$('#lobbySet .nr-seg__btn')).length === 14);
     await host.page.click('#lobbySet .nr-seg__btn:nth-child(13)');
     await L.roomWhen(code, (r) => r.set.stage === 12);
     await host.page.waitForFunction(() => !document.querySelector('#btnStartGame').disabled);
