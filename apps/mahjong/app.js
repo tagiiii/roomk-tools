@@ -85,6 +85,7 @@ function showScreen(id) {
   document.querySelectorAll('.mj-screen').forEach((node) => node.classList.remove('active'));
   $('screen-' + id).classList.add('active');
   state.currentScreen = id;
+  if (id !== 'game') setRulePanel(false, { focus: false });
   $('roomBar').hidden = !state.roomRef;
   const fold = id === 'game';
   $('roomBar').classList.toggle('is-fold', fold);
@@ -605,7 +606,7 @@ function clearSession() {
 
 /* ── ルームへの出入り ── */
 function resetBoxes() {
-  ['lobbyPeople', 'lobbyRulesView', 'lobbyRules', 'opps', 'me', 'actions', 'hintLine', 'log', 'gameRules', 'resultHand', 'resultYaku', 'resultDora', 'doraLine'].forEach((id) => $(id).replaceChildren());
+  ['lobbyPeople', 'lobbyRulesView', 'lobbyRules', 'opps', 'me', 'actions', 'hintLine', 'log', 'resultHand', 'resultYaku', 'resultDora', 'doraLine'].forEach((id) => $(id).replaceChildren());
   state.rulesKey = null;
   state.shown = null;
   state.picked = null;
@@ -1245,6 +1246,221 @@ function rulesSummary(S) {
   });
 }
 
+/* ── ルールの板（ゲームの画面の「ルール」。開いたまま打てる。2026-11-19 オーナー「ゲームをしながらルールを確認できるといい」） ──
+   中身はいまのルール（かんたん／役あり・ポン・チー・七対子）に合うものだけ。牌の種類の番号は engine.js と同じ
+   （0〜8 萬子・9〜17 筒子・18〜26 索子・27 東 28 南 29 西 30 北 31 白 32 發 33 中） */
+const RULE_TABS = [['agari', 'あがりの形'], ['play', '打ちかた'], ['yaku', '役'], ['now', 'いまの設定']];
+const MAN = (n) => n - 1;
+const PIN = (n) => 8 + n;
+const SOU = (n) => 17 + n;
+const [TON, NAN, SHA, PEI, HAKU, HATSU, CHUN] = [27, 28, 29, 30, 31, 32, 33];
+const seq3 = (k) => [k, k + 1, k + 2];
+const tri3 = (k) => [k, k, k];
+
+// 役ありの役（名前・よく言う読み・説明・例の牌）。翻数ごと。判定の本体は yaku.js
+const YAKU_GUIDE = [
+  ['1翻', [
+    ['立直', 'リーチ', '鳴かずにテンパイしたら「リーチ」を押して宣言する。それだけで役が1つつく'],
+    ['一発', 'イッパツ', 'リーチしてから1巡のうちにあがる（間にだれかが鳴くと消える）'],
+    ['門前清自摸和', 'メンゼンツモ', '鳴かずに、自分で引いた牌であがる'],
+    ['平和', 'ピンフ', '鳴かずに、4組とも続いた数・あたまが役牌でない・両側で待つ形（例: 4・5で3か6を待つ）'],
+    ['断么九', 'タンヤオ', '2〜8の数の牌だけで作る（鳴いてもよい）', [seq3(MAN(2)), seq3(PIN(5)), tri3(SOU(6)), [PIN(8), PIN(8)]]],
+    ['一盃口', 'イーペーコー', '鳴かずに、まったく同じ続いた数の組を2つ', [seq3(MAN(2)), seq3(MAN(2))]],
+    ['役牌', 'ヤクハイ', '白・發・中、場風（東場は東・南場は南）、自風（自分の席の風）の同じ3枚', [tri3(HATSU)]],
+    ['嶺上開花', 'リンシャンカイホウ', 'カンしたあとに引いた牌であがる'],
+    ['槍槓', 'チャンカン', 'ほかの人がポンした組に足した4枚目でロンする'],
+    ['海底摸月', 'ハイテイ', '山の最後の1枚を引いてツモ'],
+    ['河底撈魚', 'ホウテイ', '最後に捨てられた牌でロン'],
+  ]],
+  ['2翻', [
+    ['ダブル立直', 'ダブルリーチ', '最初の自分の番でリーチ（それまでにだれも鳴いていない）'],
+    ['七対子', 'チートイツ', '同じ2枚を7組（あがりの形のひとつ）'],
+    ['三色同順', 'サンショクドウジュン', '萬子・筒子・索子で同じ数の続いた組（鳴くと1翻）', [seq3(MAN(3)), seq3(PIN(3)), seq3(SOU(3))]],
+    ['一気通貫', 'イッキツウカン', '同じ種類で1・2・3と4・5・6と7・8・9（鳴くと1翻）', [seq3(SOU(1)), seq3(SOU(4)), seq3(SOU(7))]],
+    ['混全帯么九', 'チャンタ', 'どの組にも、あたまにも、1・9か字牌が入る（鳴くと1翻）'],
+    ['対々和', 'トイトイ', '4組とも同じ3枚', [tri3(MAN(2)), tri3(PIN(9)), tri3(SOU(5)), tri3(NAN)]],
+    ['三暗刻', 'サンアンコー', '鳴かずに自分でそろえた同じ3枚が3組（ロンでそろった組は数えない）'],
+    ['三色同刻', 'サンショクドウコー', '萬子・筒子・索子で同じ数の同じ3枚'],
+    ['三槓子', 'サンカンツ', 'カンを3回'],
+    ['小三元', 'ショウサンゲン', '白・發・中のうち2つが同じ3枚、残り1つがあたま', [tri3(HAKU), tri3(HATSU), [CHUN, CHUN]]],
+    ['混老頭', 'ホンロウトウ', '1・9と字牌だけで作る'],
+  ]],
+  ['3翻', [
+    ['二盃口', 'リャンペーコー', '鳴かずに、一盃口を2つ'],
+    ['混一色', 'ホンイツ', '1種類の数の牌と字牌だけで作る（鳴くと2翻）', [seq3(PIN(1)), seq3(PIN(5)), tri3(PIN(9)), tri3(TON), [HAKU, HAKU]]],
+    ['純全帯么九', 'ジュンチャン', 'どの組にも、あたまにも、1か9が入る。字牌は使わない（鳴くと2翻）'],
+  ]],
+  ['6翻', [
+    ['清一色', 'チンイツ', '1種類の数の牌だけで作る（鳴くと5翻）', [seq3(SOU(1)), seq3(SOU(3)), seq3(SOU(6)), tri3(SOU(8)), [SOU(9), SOU(9)]]],
+  ]],
+  ['役満', [
+    ['国士無双', 'コクシムソウ', '1・9・字牌の13種類を1枚ずつと、そのどれか1枚（あがりの形のひとつ）'],
+    ['四暗刻', 'スーアンコー', '鳴かずに自分でそろえた同じ3枚が4組'],
+    ['大三元', 'ダイサンゲン', '白・發・中を3つとも同じ3枚で', [tri3(HAKU), tri3(HATSU), tri3(CHUN)]],
+    ['字一色', 'ツーイーソー', '字牌だけで作る'],
+    ['緑一色', 'リューイーソー', '2・3・4・6・8の索子と發だけで作る'],
+    ['清老頭', 'チンロウトウ', '1と9の数の牌だけで作る'],
+    ['小四喜', 'ショウスーシー', '東・南・西・北のうち3つが同じ3枚、残り1つがあたま'],
+    ['大四喜', 'ダイスーシー', '東・南・西・北を4つとも同じ3枚で'],
+    ['四槓子', 'スーカンツ', 'カンを4回'],
+    ['九蓮宝燈', 'チューレンポートー', '鳴かずに、1種類で 1112345678999 と、同じ種類をもう1枚'],
+    ['天和', 'テンホー', '親が、配られた14枚であがる'],
+    ['地和', 'チーホー', '親でない人が、最初に引いた牌であがる（それまでにだれも鳴いていない）'],
+  ]],
+];
+
+// 牌の並び（組ごとに少しあける）。groups は種類の番号の配列の配列
+function ruleTiles(groups, label) {
+  const row = el('div', 'mj-rx');
+  if (label) row.setAttribute('aria-label', label);
+  groups.forEach((g) => {
+    const box = el('span', 'mj-rx__group');
+    g.forEach((k) => box.append(tileEl(k, { size: 'xs', caption: false })));
+    row.append(box);
+  });
+  return row;
+}
+
+function ruleItem(title, text, groups) {
+  const box = el('div', 'mj-rx__item');
+  if (title) box.append(el('h4', 'mj-rx__title', title));
+  if (text) box.append(el('p', 'mj-rx__text', text));
+  if (groups) box.append(ruleTiles(groups, '例: ' + groups.map((g) => g.map((k) => E.kindName(k)).join('・')).join('、')));
+  return box;
+}
+
+function ruleSection(heading, ...items) {
+  const sec = el('section', 'mj-rx__sec');
+  sec.append(el('h3', 'mj-rx__head', heading), ...items);
+  return sec;
+}
+
+function ruleBodies(S) {
+  const yaku = S.rule === 'yaku';
+  const calls = !!S.calls;
+  const chiitoi = yaku || S.chiitoi;
+  const out = {};
+
+  // あがりの形
+  const agari = [
+    ruleSection('あがりの形',
+      ruleItem(null, '3枚の組を4つと、同じ2枚（あたま）を1組。ぜんぶで14枚そろえたら「あがり」', [seq3(MAN(1)), seq3(PIN(4)), seq3(SOU(7)), tri3(TON), [HAKU, HAKU]]),
+      ruleItem('組は2種類', '同じ種類で続いた数3枚か、同じ牌3枚'),
+      ruleItem('続いた数3枚', '萬子・筒子・索子のどれか1種類で。9と1はつながらない', [seq3(PIN(3)), seq3(MAN(6))]),
+      ruleItem('同じ牌3枚', '字牌（東・南・西・北・白・發・中）は、続いた数にはならないので、同じ3枚で組にする', [tri3(SOU(2)), tri3(CHUN)]),
+    ),
+    ruleSection('テンパイ',
+      ruleItem(null, 'あと1枚であがれる形のこと。下の形なら、白が来たらあがり', [seq3(MAN(1)), seq3(PIN(4)), seq3(SOU(7)), tri3(TON), [HAKU]]),
+    ),
+  ];
+  const other = [];
+  if (chiitoi) other.push(ruleItem('七対子', '同じ2枚を7組でもあがり', [[MAN(1), MAN(1)], [MAN(5), MAN(5)], [PIN(2), PIN(2)], [PIN(9), PIN(9)], [SOU(4), SOU(4)], [NAN, NAN], [CHUN, CHUN]]));
+  if (yaku) other.push(ruleItem('国士無双', '1・9・字牌の13種類を1枚ずつと、そのどれか1枚', [[MAN(1), MAN(9), PIN(1), PIN(9), SOU(1), SOU(9)], [TON, NAN, SHA, PEI, HAKU, HATSU, CHUN, CHUN]]));
+  if (other.length) agari.push(ruleSection('ほかのあがりの形', ...other));
+  if (!yaku) agari.push(ruleSection('かんたんのルールでは', ruleItem(null, '役はない。あがりの形になれば、いつでもあがれる')));
+  else agari.push(ruleSection('役ありのルールでは', ruleItem(null, '形のほかに、役が1つ以上要る。役の名前は「役」に。ドラだけでは役にならない')));
+  out.agari = agari;
+
+  // 打ちかた
+  const play = [
+    ruleSection('自分の番',
+      ruleItem('引いて、捨てる', '山から1枚引いて、手の中のいらない牌を1枚捨てる'),
+      ruleItem('ツモ', '引いた牌であがりの形になったら「ツモ」であがり'),
+    ),
+  ];
+  const others = [ruleItem('ロン', 'だれかが捨てた牌であがりの形になったら「ロン」であがり' + (yaku ? '（フリテンのときはできない）' : ''))];
+  if (calls) {
+    others.push(
+      ruleItem('ポン', 'だれかが捨てた牌と、手の中の同じ2枚で、同じ3枚の組にする', [tri3(SOU(5))]),
+      ruleItem('チー', '左の人（自分の前の番）が捨てた牌と手の中の2枚で、続いた数の組にする', [seq3(MAN(3))]),
+    );
+    if (yaku) others.push(ruleItem('カン（明槓）', 'だれかが捨てた牌と、手の中の同じ3枚で、4枚の組にする'));
+    others.push(ruleItem(null, 'もらった組はみんなに見せる。もらったら引かずに1枚捨てる。いらないときは「パス」。2人があがれるときは、捨てた人の次に近い人'));
+  }
+  play.push(ruleSection('ほかの人が捨てたとき', ...others));
+  if (yaku) {
+    play.push(ruleSection('役ありのルール',
+      ruleItem('リーチ', '鳴かずにテンパイしたら「リーチ」を押して、捨てる牌を選ぶ。リーチのあとは引いた牌を捨てる（待ちが変わらないカンはできる）'),
+      ruleItem('カン', (calls ? '手の中に同じ牌が4枚そろったとき、ポンした組の4枚目を引いたときにできる。' : '手の中に同じ牌が4枚そろったときにできる。') + 'カンすると、もう1枚引いて、ドラ表示牌が1枚ふえる', [[PIN(7), PIN(7), PIN(7), PIN(7)]]),
+      ruleItem('ドラ', 'ドラ表示牌の次の牌がドラ（9の次は1、北の次は東、中の次は白）。1枚で1翻ふえる。リーチであがると裏ドラも数える'),
+      ruleItem('フリテン', '自分の待ちの牌を自分で捨てているとき、待ちの牌を見逃したときは、ロンできない（ツモはできる）'),
+      ruleItem('喰い替え', '鳴いた牌と同じ牌（チーでは反対側の牌も）は、すぐには捨てられない'),
+      ruleItem('九種九牌', '最初の番で、1・9・字牌が9種類以上あれば「流す（九種九牌）」で局を流せる'),
+      ruleItem('親と局', '局は東1局から。親があがるか、流局で親がテンパイなら、同じ人が続けて親'),
+    ));
+  }
+  play.push(ruleSection('引き分け', ruleItem(null, '山がなくなったら、だれもあがらずに引き分け')));
+  out.play = play;
+
+  // 役（役ありだけ）
+  if (yaku) {
+    const secs = [ruleSection('役とは', ruleItem(null, 'あがりの形のほかに、そろえると数えられる形。1つ以上ないとあがれない。点数は出さず、あがったときに役の名前と翻数を出す'))];
+    YAKU_GUIDE.forEach(([han, list]) => {
+      secs.push(ruleSection(han, ...list.map(([name, yomi, text, groups]) => ruleItem(name + '（' + yomi + '）', text, groups))));
+    });
+    out.yaku = secs;
+  }
+
+  // いまの設定
+  const ul = el('ul', 'mj-rulesview');
+  ul.append(...rulesSummary(S));
+  out.now = [ruleSection('このルームのルール', ul, el('p', 'mj-note', 'ホストが待合室で選んだもの。'))];
+  return out;
+}
+
+function ruleTabsFor(S) {
+  return RULE_TABS.filter(([key]) => key !== 'yaku' || S.rule === 'yaku');
+}
+
+function renderRulePanel(S) {
+  const key = JSON.stringify([S.rule, S.calls, S.chiitoi, S.level, S.time]);
+  if (state.ruleKey === key) return;
+  state.ruleKey = key;
+  const tabs = ruleTabsFor(S);
+  if (!tabs.some(([k]) => k === state.ruleTab)) state.ruleTab = 'agari';
+  const bodies = ruleBodies(S);
+  $('ruleTabs').replaceChildren(...tabs.map(([k, label]) => {
+    const b = el('button', 'mj-rulepanel__tab', label);
+    b.type = 'button';
+    b.dataset.tab = k;
+    b.setAttribute('aria-pressed', k === state.ruleTab ? 'true' : 'false');
+    return b;
+  }));
+  $('ruleBody').replaceChildren(...tabs.map(([k, label]) => {
+    const page = el('div', 'mj-rulepanel__page');
+    page.dataset.tab = k;
+    page.setAttribute('aria-label', label);
+    page.hidden = k !== state.ruleTab;
+    page.append(...bodies[k]);
+    return page;
+  }));
+}
+
+function selectRuleTab(k) {
+  state.ruleTab = k;
+  $('ruleTabs').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.tab === k ? 'true' : 'false'));
+  $('ruleBody').querySelectorAll('.mj-rulepanel__page').forEach((p) => { p.hidden = p.dataset.tab !== k; });
+  $('ruleBody').scrollTop = 0;
+}
+
+// 下から出す形（せまい画面）か。CSS の @media と同じ幅
+const RULE_SIDE_MQ = window.matchMedia('(min-width: 1180px)');
+
+function setRulePanel(open, { focus = true } = {}) {
+  const was = !$('rulePanel').hidden;
+  $('rulePanel').hidden = !open;
+  document.documentElement.classList.toggle('mj-rules-open', open);
+  $('btnRules').setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (open && !was) {
+    if (state.view?.settings) renderRulePanel(state.view.settings);
+    if (focus) $('rulePanelTitle').focus({ preventScroll: true });
+    // 下から出したとき、自分の手牌が板の下に隠れるなら、番の文が上に来るまで動かす
+    if (!RULE_SIDE_MQ.matches && state.currentScreen === 'game' && $('me').childElementCount) revealMyArea(false);
+  } else if (!open && was && focus && $('rulePanel').contains(document.activeElement)) {
+    $('btnRules').focus({ preventScroll: true });
+  }
+}
+
 function renderLobby(R) {
   const isHost = state.role === 'host';
   const watch = state.role === 'spectator';
@@ -1527,8 +1743,8 @@ function renderGame(R) {
 
   const logs = G.log.slice();
   $('log').replaceChildren(...logs.map((x, k) => el('li', 'mj-log__item' + (k === logs.length - 1 ? ' is-new' : ''), x.text)));
-  $('gameRules').replaceChildren(...rulesSummary(R.settings));
-  $('yakuList').hidden = !yaku;
+  renderRulePanel(R.settings);
+  $('btnRules').hidden = document.body.classList.contains('is-watch');
   $('gameTools').hidden = !isHost || over;
   updateTimer();
 
@@ -1539,17 +1755,25 @@ function renderGame(R) {
   else if (becameDue && pend && focusInGame) $('actions').querySelector('button')?.focus({ preventScroll: true });
   // 自分の番になったのに、手牌・ヒント・操作のボタンが画面の外か、右下の丸ボタン（意見・？）の下なら、見える所まで動かす
   // （せまい画面で、相手の席の下や丸ボタンの下に隠れないように。丸ボタンの分は 2026-11-15）
-  if (becameDue && state.currentScreen === 'game') {
-    const box = $('me').getBoundingClientRect();
-    const bottom = Math.max(box.bottom, ...['hintLine', 'actions'].map((id) => $(id).getBoundingClientRect().bottom));
-    const fab = document.documentElement.classList.contains('howto-has-fab') ? FAB_ZONE_PX : 0;
-    if (bottom > window.innerHeight - fab || box.top < 0) {
-      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      $('gameStatus').scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' });
-    }
-  }
+  if (becameDue && state.currentScreen === 'game') revealMyArea(true);
   if (!watch) playSounds(prev, R, g, myDue, over);
   state.shown = { round: R.round, rev: g.rev, disc: g.disc, drawn: drawnNow, logLen: g.log.length, doraN: g.doraN || 0, myDue };
+}
+
+// 手牌・ヒント・操作のボタンが画面の外か、右下の丸ボタン・下から出したルールの板の下なら、見える所まで動かす。
+// ふつうは番の文を上へ。ルールの板を下から出していて入りきらないときは、番の文より手牌と操作のボタンを優先する（2026-11-19）
+function revealMyArea(smooth) {
+  const box = $('me').getBoundingClientRect();
+  const bottom = Math.max(box.bottom, ...['hintLine', 'actions'].map((id) => $(id).getBoundingClientRect().bottom));
+  const sheetOpen = !$('rulePanel').hidden && !RULE_SIDE_MQ.matches;
+  const fab = !sheetOpen && document.documentElement.classList.contains('howto-has-fab') ? FAB_ZONE_PX : 0;
+  const sheet = sheetOpen ? $('rulePanel').getBoundingClientRect().height : 0;
+  const limit = window.innerHeight - Math.max(fab, sheet);
+  if (bottom <= limit && box.top >= 0) return;
+  let delta = $('gameStatus').getBoundingClientRect().top;
+  if (sheetOpen && bottom - delta > limit) delta = Math.min(bottom - limit + 8, box.top);
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  window.scrollBy({ top: delta, behavior: smooth && !reduce ? 'smooth' : 'auto' });
 }
 
 // 局の終わりの1行（結果の文と同じ言い方）
@@ -1867,6 +2091,12 @@ $('btnJoinRoom').addEventListener('click', joinRoom);
 submitOnEnter($('hostName'), createRoom);
 submitOnEnter($('guestName'), joinRoom);
 submitOnEnter($('joinCode'), joinRoom);
+$('btnRules').addEventListener('click', () => setRulePanel($('rulePanel').hidden));
+$('btnRulesClose').addEventListener('click', () => setRulePanel(false));
+$('ruleTabs').addEventListener('click', (event) => {
+  const b = event.target.closest('button[data-tab]');
+  if (b) selectRuleTab(b.dataset.tab);
+});
 $('btnRoomMore').addEventListener('click', () => setRoomMore(!$('roomBar').classList.contains('is-open')));
 $('btnCopyCode').addEventListener('click', (event) => RoomkRTDB.copyRoomCode(state.roomCode, event.currentTarget));
 $('btnCopyLink').addEventListener('click', (event) => {
@@ -1952,6 +2182,12 @@ $('me').addEventListener('click', (event) => {
   act(riichi ? { type: 'discard', id, riichi: true } : { type: 'discard', id });
 });
 // Esc で、選んだ牌をもどす
+// Esc で、ルールの板を閉じる（板の中にいるとき）
+document.addEventListener('keydown', (event) => {
+  if (event.key !== 'Escape' || $('rulePanel').hidden || !$('rulePanel').contains(document.activeElement)) return;
+  event.stopImmediatePropagation();
+  setRulePanel(false);
+});
 document.addEventListener('keydown', (event) => {
   if (event.key !== 'Escape' || state.picked === null || state.view?.phase !== 'play') return;
   state.picked = null;
