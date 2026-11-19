@@ -1,0 +1,32 @@
+{
+  "date": "2026-11-20",
+  "items": [
+    {
+      "title": "ボイジャー1号、地球から「1光日」へ",
+      "text": "NASAの探査機ボイジャー1号が18日、地球から光が1日かけて進む距離（約259億キロ）に、人が作ったものとして初めて届きました。1977年に打ち上げられてから49年、今も宇宙を飛び続けています。",
+      "ask": "宇宙に行けたら、どこを見てみたい？",
+      "source": "共同通信",
+      "url": "https://news.yahoo.co.jp/articles/c47ed99fa39b658864de98775305d26ef51d26d7",
+      "on": "11月18日",
+      "img": { "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Voyager_spacecraft.jpg/960px-Voyager_spacecraft.jpg", "credit": "NASA/JPL", "license": "Public domain" }
+    },
+    {
+      "title": "気仙沼湾に立ちのぼる白い「気嵐」",
+      "text": "寒い朝、海から白い霧がゆらゆら立ちのぼる「気嵐（けあらし）」の季節です。気象予報士が宮城県の気仙沼湾で、日の出のころに観察しました。お風呂の湯気と同じしくみで、海と空気の温度差が大きいと見られます。",
+      "ask": "寒い朝に見つけたもの、何かある？",
+      "source": "ウェザーマップ",
+      "url": "https://news.yahoo.co.jp/articles/591fa2444756fb817ed3ac33623d0be91593334d",
+      "on": "11月19日",
+      "img": { "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Sea_smoke_January_2013.jpg/960px-Sea_smoke_January_2013.jpg", "credit": "Arild", "license": "CC BY-SA 2.0" }
+    },
+    {
+      "title": "ミスドの「ポン・デ・ライオン」CMが復活",
+      "text": "ミスタードーナツが19日、キャラクター「ポン・デ・ライオン」のアニメのCMが戻ってきたと発表しました。2004年に生まれたキャラクターで、新しいCMでもたてがみのポン・デ・リングを食べる姿が見られます。",
+      "ask": "好きなドーナツの味はある？",
+      "source": "クランクイン！",
+      "url": "https://news.yahoo.co.jp/articles/5bc804f45f23b4ec26707b9feddd4b4235bc0332",
+      "on": "11月19日",
+      "img": { "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Doughnut.jpg/960px-Doughnut.jpg", "credit": "Angeldm", "license": "CC BY-SA 3.0" }
+    }
+  ]
+}
