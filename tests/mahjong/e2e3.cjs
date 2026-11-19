@@ -1,5 +1,5 @@
 // 麻雀の E2E その3（隔離エミュレーター）: 役ありのルール。待合室で選ぶ・ドラ表示牌・自風・リーチ（捨てる牌を選ぶ・
-// 宣言牌の印・リーチ中は引いた牌だけ）・ツモの結果に役と翻数・裏ドラ・次の局（東2局・親が移る）・暗槓・役の一覧。
+// 宣言牌の印・リーチ中は引いた牌だけ）・ツモの結果に役と翻数・裏ドラ・次の局（東2局・親が移る）・暗槓・ルールの板（役の一覧・開いたまま打てる・せまい画面で下から）。
 // 配ったあとに game を REST で書きかえて局面を作る
 const L = require('./lib.cjs');
 const { check, sleep } = L;
@@ -43,7 +43,34 @@ const F = (k0, n, copy) => Array.from({ length: n }, (_, i) => id(k0 + i, copy))
   check('round line 東1局', (await L.text(host, '#roundLine')).startsWith('東1局'));
   check('dora line shown', await L.visible(host, '#doraLine') && (await host.page.$$('#doraLine .mj-tile')).length === 2);
   check('seat wind tag (host is 東・親)', (await L.text(host, '#me .mj-seat__head')).includes('東・親'));
-  check('yaku list shown', await L.visible(host, '#yakuList'));
+  // ── ルールの板（2026-11-19）: 広い画面は右に立てる・役ありは「役」がある・Esc で閉じてボタンへもどる ──
+  await host.page.setViewportSize({ width: 1280, height: 860 });
+  check('rule button', await L.visible(host, '#btnRules'));
+  await host.page.click('#btnRules');
+  await L.waitVisible(host, '#rulePanel');
+  const tabs = await host.page.$$eval('#ruleTabs button', (xs) => xs.map((x) => x.textContent));
+  check('rule tabs (yaku)', JSON.stringify(tabs) === JSON.stringify(['あがりの形', '打ちかた', '役', 'いまの設定']), tabs);
+  check('rule panel: focus on title', await host.page.evaluate(() => document.activeElement?.id === 'rulePanelTitle'));
+  check('rule panel: side on wide screen', await host.page.evaluate(() => {
+    const p = document.getElementById('rulePanel').getBoundingClientRect();
+    const w = document.querySelector('.wrapper').getBoundingClientRect();
+    return p.right >= window.innerWidth - 1 && p.height >= window.innerHeight - 1 && w.right <= p.left;
+  }));
+  check('rule panel: agari tiles', (await host.page.$$('#ruleBody .mj-rulepanel__page[data-tab="agari"]:not([hidden]) .mj-tile')).length >= 14);
+  check('rule panel: kokushi shown in yaku rule', (await L.text(host, '#ruleBody')).includes('国士無双'));
+  await host.page.click('#ruleTabs button:text-is("役")');
+  check('rule panel: yaku page', (await L.visible(host, '#ruleBody [data-tab="yaku"]')) && !(await L.visible(host, '#ruleBody [data-tab="agari"]')));
+  const yakuText = await host.page.$eval('#ruleBody [data-tab="yaku"]', (n) => n.textContent);
+  check('rule panel: yaku names', ['断么九（タンヤオ）', '立直（リーチ）', '清一色（チンイツ）', '九蓮宝燈'].every((x) => yakuText.includes(x)));
+  check('rule panel: now tab has settings', (await L.text(host, '#ruleBody [data-tab="now"]')).includes('役あり'));
+  await host.page.screenshot({ path: L.OUT + '/rules-wide.png' });
+  await host.page.keyboard.press('Escape');
+  check('rule panel: Esc closes', !(await L.visible(host, '#rulePanel')) && (await host.page.evaluate(() => document.activeElement?.id === 'btnRules')));
+  check('rule panel: aria-expanded false', (await host.page.getAttribute('#btnRules', 'aria-expanded')) === 'false');
+  await host.page.setViewportSize({ width: 1280, height: 720 });
+  // うみはリーチの間、板を開いたまま打つ（下の「リーチ」の局面）
+  await guest.page.click('#btnRules');
+  await L.waitVisible(guest, '#rulePanel');
   let room = await L.roomOf(code);
   let G = L.gameOf(room);
   check('dead wall 14', G.s.dead.rinshan.length + G.s.dead.dora.length + G.s.dead.ura.length === 14);
@@ -72,6 +99,9 @@ const F = (k0, n, copy) => Array.from({ length: n }, (_, i) => id(k0 + i, copy))
   room = await L.roomWhen(code, (r) => L.gameOf(r).s.seats[1].riichi);
   G = L.gameOf(room);
   check('riichi set', !!G.s.seats[1].riichi);
+  check('rule panel stayed open while playing', await L.visible(guest, '#rulePanel'));
+  await guest.page.click('#btnRulesClose');
+  check('rule panel closed by button', !(await L.visible(guest, '#rulePanel')));
   await host.page.waitForFunction(() => document.querySelector('#opps .mj-tag--riichi'));
   check('host sees riichi tag', true);
   check('riichi tile marked in river', (await host.page.$$('#opps .mj-river .is-riichi')).length === 1);
@@ -158,6 +188,9 @@ const F = (k0, n, copy) => Array.from({ length: n }, (_, i) => id(k0 + i, copy))
   // せまい画面で自分の番が来たら、手牌と操作のボタンが右下の丸ボタン（意見・？）の下に入らないところまで動かす（2026-11-15）
   const underFab = () => guest.page.evaluate(() => {
     const fabs = [...document.querySelectorAll('.howto-fab, .howto-feedback-fab')].map((n) => n.getBoundingClientRect()).filter((r) => r.width);
+    // 下から出したルールの板も、隠れる所として数える（2026-11-19）
+    const panel = document.getElementById('rulePanel');
+    if (!panel.hidden) fabs.push(panel.getBoundingClientRect());
     const hit = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
     // 手牌・操作のボタン・ヒントの文が、丸ボタンに重なるか、画面の下からはみ出していたら挙げる
     const hint = document.getElementById('hintLine');
@@ -165,7 +198,7 @@ const F = (k0, n, copy) => Array.from({ length: n }, (_, i) => id(k0 + i, copy))
       .filter((n) => { const r = n.getBoundingClientRect(); return r.bottom > window.innerHeight || fabs.some((f) => hit(r, f)); })
       .map((n) => n.dataset.id || n.id || n.textContent);
   });
-  for (const [w, h] of [[320, 640], [375, 812]]) {
+  for (const [w, h, rules] of [[320, 640, false], [375, 812, false], [375, 812, true]]) {
     await guest.page.setViewportSize({ width: w, height: h });
     // ほかの人の番にしてから、うみの番にする（自分の番に「なった」ときに動かすので）
     room = await L.roomOf(code);
@@ -182,6 +215,14 @@ const F = (k0, n, copy) => Array.from({ length: n }, (_, i) => id(k0 + i, copy))
     G.s.rev += 1;
     await putGame(code, G);
     await guest.page.waitForFunction(() => document.querySelectorAll('#me .mj-hand button').length === 13);
+    if (rules) {
+      await guest.page.click('#btnRules');
+      await L.waitVisible(guest, '#rulePanel');
+      check('375: rule panel is a bottom sheet', await guest.page.evaluate(() => {
+        const p = document.getElementById('rulePanel').getBoundingClientRect();
+        return p.left === 0 && Math.abs(p.bottom - window.innerHeight) < 1 && p.height < window.innerHeight * 0.5;
+      }));
+    }
     await guest.page.evaluate(() => window.scrollTo(0, 0));
     await sleep(200);
     G.s.seats[0].hand = G.s.seats[0].hand.filter((x) => x !== id(17, 3));
@@ -192,9 +233,13 @@ const F = (k0, n, copy) => Array.from({ length: n }, (_, i) => id(k0 + i, copy))
     await guest.page.waitForFunction(() => document.querySelectorAll('#me .mj-hand button:not(:disabled)').length === 14);
     await sleep(900);
     const hidden = await underFab();
-    check(w + ': my turn: tiles, buttons and hint are above the round buttons and on screen', hidden.length === 0, hidden);
+    check(w + (rules ? ' with rules' : '') + ': my turn: tiles, buttons and hint are above the round buttons and on screen', hidden.length === 0, hidden);
+    if (rules) {
+      check('375 with rules: no overflow', (await L.overflow(guest)) <= 0, await L.overflow(guest));
+      await guest.page.screenshot({ path: L.OUT + '/rules-375.png' });
+      await guest.page.click('#btnRulesClose');
+    } else await guest.page.screenshot({ path: L.OUT + '/yaku-375-turn.png' });
   }
-  await guest.page.screenshot({ path: L.OUT + '/yaku-375-turn.png' });
 
   await host.page.click('#btnLeave');
   await L.waitScreen(guest, 'top', 10000);

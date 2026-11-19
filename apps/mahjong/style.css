@@ -257,9 +257,6 @@
 .mj-yaku__total { background: var(--color-accent-soft); font-weight: 700; }
 .mj-dora--result { justify-content: center; margin-bottom: 14px; }
 .mj-dora--result:empty { display: none; }
-.mj-yakulist { margin: 0; padding: 0 0 12px; display: grid; grid-template-columns: 3.5em 1fr; gap: 6px 10px; line-height: 1.7; font-size: 14px; }
-.mj-yakulist dt { font-weight: 700; color: var(--color-primary); }
-.mj-yakulist dd { margin: 0; }
 
 /* ── 結果 ── */
 .mj-result { text-align: center; }
@@ -273,13 +270,69 @@
 .mj-tile.is-win { transform: translateY(-8px); }
 .mj-tile.is-win .mj-svg { filter: drop-shadow(0 0 4px var(--mj-turn)) drop-shadow(0 0 4px var(--mj-turn)); }
 
-/* ── できごと・いまのルール ── */
-.mj-logbox, .mj-rulesbox { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 12px; padding: 4px 14px; }
-.mj-logbox summary, .mj-rulesbox summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 500; color: var(--color-accent); }
+/* ── ルールの板（ゲームの画面の「ルール」。開いたまま打てる） ──
+   広い画面: 右に立てて、卓は左へ寄せる。せまい画面: 下から出し、ページの下をその分あけて手牌を板の上まで動かせるようにする */
+:root { --mj-sheet-h: min(40vh, 380px); --mj-side-w: 360px; }
+.mj-rulebtn { margin-left: auto; }
+.mj-rulebtn[aria-expanded="true"] { background: var(--color-accent-soft); }
+.mj-rulepanel {
+  position: fixed; z-index: 550; display: flex; flex-direction: column;
+  background: var(--color-surface); color: var(--color-text);
+  left: 0; right: 0; bottom: 0; height: var(--mj-sheet-h);
+  border-top: 1px solid var(--color-border); border-radius: 16px 16px 0 0;
+  box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.18);
+}
+.mj-rulepanel[hidden] { display: none; }
+.mj-rulepanel__head { display: flex; align-items: center; gap: 8px; padding: 6px 8px 0 16px; }
+.mj-rulepanel__title { display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: 17px; color: var(--color-primary); }
+.mj-rulepanel__title:focus { outline: none; }
+.mj-rulepanel__title:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 2px; border-radius: 4px; }
+.mj-rulepanel__title .material-symbols-rounded { font-size: 22px; color: var(--color-accent); }
+.mj-rulepanel__close {
+  margin-left: auto; width: 44px; height: 44px; display: grid; place-items: center;
+  border: none; background: none; border-radius: 50%; color: var(--color-muted); cursor: pointer;
+}
+.mj-rulepanel__close:hover { background: rgba(0, 0, 0, 0.06); }
+.mj-rulepanel__tabs { display: flex; gap: 4px; padding: 4px 12px 8px; border-bottom: 1px solid var(--color-border); overflow-x: auto; }
+.mj-rulepanel__tab {
+  flex: 1 0 auto; min-height: 40px; padding: 6px 10px; border-radius: var(--radius-full);
+  border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text);
+  font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap;
+}
+.mj-rulepanel__tab[aria-pressed="true"] { background: var(--color-accent-soft); border: 2px solid var(--color-accent); color: var(--color-primary); font-weight: 700; }
+.mj-rulepanel__tab:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 2px; }
+.mj-rulepanel__body { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 4px 16px 16px; }
+.mj-rx__sec { padding: 10px 0 4px; }
+.mj-rx__sec + .mj-rx__sec { border-top: 1px dashed var(--color-border); }
+.mj-rx__head { margin: 0 0 6px; font-size: 15px; color: var(--color-primary); }
+.mj-rx__item { margin: 0 0 10px; }
+.mj-rx__title { margin: 0; font-size: 14px; font-weight: 700; }
+.mj-rx__text { margin: 2px 0 0; font-size: 14px; line-height: 1.65; }
+.mj-rx { display: flex; flex-wrap: wrap; gap: 4px 8px; margin: 6px 0 0; }
+.mj-rx__group { display: inline-flex; gap: 1px; }
+.mj-rx .mj-tile--xs { width: 22px; }
+html.mj-rules-open body { padding-bottom: var(--mj-sheet-h); }
+/* 下から出している間は、右下の丸ボタン（意見・？）を隠す（手牌の下の文・ボタンにかぶらないように。板は自分の × で閉じる） */
+html.mj-rules-open .howto-fab, html.mj-rules-open .howto-feedback-fab { display: none; }
+@media (min-width: 1180px) {
+  .mj-rulepanel {
+    left: auto; top: 0; height: auto; width: var(--mj-side-w);
+    border-top: none; border-left: 1px solid var(--color-border); border-radius: 0;
+    box-shadow: -6px 0 20px rgba(0, 0, 0, 0.12);
+  }
+  .mj-rulepanel__head { padding-top: 12px; }
+  html.mj-rules-open body { padding-bottom: 0; padding-right: var(--mj-side-w); }
+  html.mj-rules-open .howto-fab, html.mj-rules-open .howto-feedback-fab { display: flex; }
+  html.mj-rules-open .howto-fab--right { right: calc(var(--mj-side-w) + 16px); }
+  html.mj-rules-open .howto-feedback-fab--right { right: calc(var(--mj-side-w) + 76px); }
+}
+
+/* ── できごと ── */
+.mj-logbox { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 12px; padding: 4px 14px; }
+.mj-logbox summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 500; color: var(--color-accent); }
 .mj-log { list-style: none; margin: 0; padding: 0 0 12px; display: grid; gap: 2px; }
 .mj-log__item { font-size: 14px; color: var(--color-muted); line-height: 1.6; }
 .mj-log__item.is-new { color: var(--color-text); font-weight: 500; }
-.mj-rulesbox .mj-rulesview { padding: 0 0 12px; }
 .mj-tools { display: flex; justify-content: center; }
 .mj-broken { display: grid; gap: 12px; justify-items: center; text-align: center; }
 .mj-broken__text { margin: 0; line-height: 1.7; }

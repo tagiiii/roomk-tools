@@ -30,6 +30,16 @@ const id = (k, copy) => k * 4 + copy;
   await L.roomWhen(code, (r) => r.settings.time === 0);
   await host.page.click('#btnStartGame');
   await Promise.all([L.waitScreen(host, 'game'), L.waitScreen(guest, 'game')]);
+  // ルールの板（かんたん）: 「役」はなく、七対子（はじめはオン）がある。国士無双は出さない（2026-11-19）
+  await guest.page.click('#btnRules');
+  await L.waitVisible(guest, '#rulePanel');
+  const simpleTabs = await guest.page.$$eval('#ruleTabs button', (xs) => xs.map((x) => x.textContent));
+  check('rule tabs (simple)', JSON.stringify(simpleTabs) === JSON.stringify(['あがりの形', '打ちかた', 'いまの設定']), simpleTabs);
+  const simpleText = await L.text(guest, '#ruleBody');
+  check('rule panel (simple): chiitoi, no kokushi, no riichi', simpleText.includes('七対子') && !simpleText.includes('国士無双') && !simpleText.includes('リーチ'));
+  check('rule panel (simple): pon and chi', simpleText.includes('ポン') && simpleText.includes('チー'));
+  await guest.page.click('#btnRules');
+  check('rule panel toggles closed', !(await L.visible(guest, '#rulePanel')));
   await L.open(watch, '?watch=' + code);
   await L.waitScreen(watch, 'game');
 
