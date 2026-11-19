@@ -147,17 +147,19 @@
     // シーソー: 重いほうが下がる。上がった側から、右の3マスの段（上にカギかボール）へ上がる。
     // 段は右のシーソーのすぐとなりで、下の床はない。最後の1人は、左に重い箱（重さ2）を乗せないと上がれない
     // （人は人の頭から上がれるが、最後の人の下にはだれもいないため。2026-11-18）
+    // 上がった右のシーソーへは、左の床から跳び移れる近さにする（2026-11-19。前は左の板が 2.8 マスで遠く、
+    // 箱を押した人のうち最後の1人が、左側から右のシーソーへ移れずに進めなかった）
     seesaw(b, item) {
       b.begin();
       const o = b.ox;
-      b.fill(o + 3, o + 8, 10, H - 1, '.');
-      b.fill(o + 9, o + 13, 7, 9, '#');
+      b.fill(o + 3, o + 7, 10, H - 1, '.');
+      b.fill(o + 8, o + 12, 7, 9, '#');
       const ss = b.meta.seesaws.length;
-      b.meta.plats.push({ x: o + 3, y: 10, w: 2.8, ax: o + 3, ay: 10, bx: o + 3, by: 10, need: 0, seesaw: ss, side: -1 });
-      b.meta.plats.push({ x: o + 6.2, y: 10, w: 2.8, ax: o + 6.2, ay: 10, bx: o + 6.2, by: 10, need: 0, seesaw: ss, side: 1 });
-      b.meta.seesaws.push({ left: b.meta.plats.length - 2, right: b.meta.plats.length - 1, rest: 10, cx: o + 6 });
+      b.meta.plats.push({ x: o + 3, y: 10, w: 1.8, ax: o + 3, ay: 10, bx: o + 3, by: 10, need: 0, seesaw: ss, side: -1 });
+      b.meta.plats.push({ x: o + 5.2, y: 10, w: 2.8, ax: o + 5.2, ay: 10, bx: o + 5.2, by: 10, need: 0, seesaw: ss, side: 1 });
+      b.meta.seesaws.push({ left: b.meta.plats.length - 2, right: b.meta.plats.length - 1, rest: 10, cx: o + 5.0 });
       b.meta.boxes.push({ x: o + 1, y: 9, need: 2 });
-      if (item) b.meta.items.push({ kind: item, x: o + 11.7, y: 6.4 });
+      if (item) b.meta.items.push({ kind: item, x: o + 10.7, y: 6.4 });
       b.advance(16);
     },
     // ボールを高いかごに入れると、とびらが開いたままになる。ボールを持つとジャンプできない
