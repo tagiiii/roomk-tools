@@ -41,6 +41,46 @@ test('どのステージも作れて、スタートの場所が空いている',
   });
 });
 
+test('ひもで大きく引かれても、かべ・床の中に入らない（穴に落ちた人に引かれたとき）', () => {
+  // 2026-11-19 フィードバック「ロープのコースで道にめりこんで抜け出せない」。前は1こまで2マス以上引かれると、
+  // 行き先の列だけを見て止める位置をかべの内側にしていた
+  const inside = (w, p) => {
+    for (let tx = Math.floor(p.x + 0.01); tx <= Math.floor(p.x + E.PW - 0.01); tx++) {
+      for (let ty = Math.floor(p.y + 0.01); ty <= Math.floor(p.y + E.PH - 0.01); ty++) if (E.solidTile(w, tx, ty, p.seat)) return true;
+    }
+    return false;
+  };
+  E.STAGES.forEach((st, i) => {
+    if (!st.rope) return;
+    const w0 = E.createWorld(i, 2);
+    for (let ax = 3; ax < w0.W - 20; ax += 1.5) {
+      for (const off of [2, 4, 6, 9]) {
+        for (const oy of [-4, 0, 3]) {
+          const w = E.createWorld(i, 2);
+          const [a, b] = w.players;
+          place(a, ax, E.surfaceY(w, ax) - E.PH);
+          place(b, ax + off, E.surfaceY(w, ax + off) - E.PH + oy);
+          if (inside(w, a) || inside(w, b)) continue;
+          run(w, 5);
+          assert(!inside(w, a) && !inside(w, b), `stage ${i} ax=${ax} off=${off} oy=${oy} で中に入った`);
+        }
+      }
+    }
+  });
+});
+
+test('かべ・床の中に入ってしまった人は、外へ出て動ける', () => {
+  const w = E.createWorld(3, 2);
+  const [a, b] = w.players;
+  place(b, 2, 10 - E.PH);
+  place(a, 5.1, 10.5); // 床の中
+  run(w, 2);
+  assert(a.y + E.PH <= 10 + 0.01, '床の上に出ていない y=' + a.y);
+  const x = a.x;
+  run(w, 20, () => [{ r: true }]);
+  assert(a.x > x + 0.3, '動けない');
+});
+
 test('2マスの段は、ひとりでは上がれない', () => {
   const w = E.createWorld(0, 2);
   const g = w.gates[0]; // 台の下のとびら（台の左はしと同じ x）

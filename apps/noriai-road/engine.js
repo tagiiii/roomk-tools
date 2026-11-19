@@ -468,8 +468,18 @@
     return out;
   }
 
+  // 1回に動かす量は半マスまで（ひもで大きく引かれたとき、かべ・床の向こうの列だけを見て、中に入ってしまわないように）
+  const MOVE_STEP = 0.5;
   function moveX(e, dx, world, mode, solids) {
     if (!dx) return false;
+    const n = Math.ceil(Math.abs(dx) / MOVE_STEP);
+    if (n > 1) {
+      for (let i = 0; i < n; i++) if (moveX1(e, dx / n, world, mode, solids)) return true;
+      return false;
+    }
+    return moveX1(e, dx, world, mode, solids);
+  }
+  function moveX1(e, dx, world, mode, solids) {
     let nx = e.x + dx;
     let hit = false;
     const y0 = Math.floor(e.y + EPS);
@@ -496,6 +506,18 @@
 
   // 返り値: { land: ref|null, bump: bool }
   function moveY(e, dy, world, mode, solids, tops) {
+    const n = Math.ceil(Math.abs(dy) / MOVE_STEP);
+    if (n > 1) {
+      let res = { land: null, bump: false };
+      for (let i = 0; i < n; i++) {
+        res = moveY1(e, dy / n, world, mode, solids, tops);
+        if (res.land || res.bump) break;
+      }
+      return res;
+    }
+    return moveY1(e, dy, world, mode, solids, tops);
+  }
+  function moveY1(e, dy, world, mode, solids, tops) {
     const res = { land: null, bump: false };
     if (!dy) return res;
     let ny = e.y + dy;
@@ -546,6 +568,33 @@
     }
   }
 
+  // かべ・床の中に入ってしまった人を、近い空いている所へ出す（上を先に。見つからなければ区間のはじめへ）
+  function inTerrain(world, e, mode) {
+    for (let tx = Math.floor(e.x + EPS); tx <= Math.floor(e.x + e.w - EPS); tx++) {
+      for (let ty = Math.floor(e.y + EPS); ty <= Math.floor(e.y + e.h - EPS); ty++) if (solidTile(world, tx, ty, mode)) return true;
+    }
+    return false;
+  }
+  function unstick(world, p) {
+    const e = { x: p.x, y: p.y, w: PW, h: PH };
+    if (!inTerrain(world, e, p.seat)) return false;
+    const tries = [];
+    for (let k = 1; k <= 4; k++) {
+      tries.push([0, -k]);
+      tries.push([-k, 0], [k, 0], [-k, -k], [k, -k]);
+    }
+    for (const [ox, oy] of tries) {
+      // 1マスの目にそろえて置く（横は、いまの位置のマスのはし）
+      const x = ox ? (ox < 0 ? Math.floor(p.x) + ox + 1 - PW - 0.01 : Math.floor(p.x + PW) + ox - 1 + 0.01) : p.x;
+      const y = oy ? Math.floor(p.y + PH) + oy - PH : p.y;
+      if (x < 0 || x + PW > world.W) continue;
+      e.x = x; e.y = y;
+      if (!inTerrain(world, e, p.seat)) { p.x = x; p.y = y; p.vx = 0; p.vy = 0; p.ground = null; return true; }
+    }
+    respawn(world, p);
+    return true;
+  }
+
   function findPlayer(list, seat) {
     for (const q of list) if (q.seat === seat) return q;
     return null;
@@ -590,6 +639,7 @@
     const solids = solidsFor(p.seat, ctx);
     const tops = topsFor(ctx, p.seat);
     depenetrate(p, solids);
+    unstick(world, p);
 
     // 乗っているものといっしょに動く
     const carrier = carryOf(p.ground, ctx);
