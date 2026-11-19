@@ -1790,6 +1790,7 @@
       round: state.playRound,
       b: E.packBoard(g.board),
       score: g.score, bestChain: g.bestChain, pops: g.pops, clears: g.clears, allClears: g.allClears,
+      jamaRest: g.jamaRest,   // じゃま1つに届かなかったのこりの点（読み込み直し用）
       taken: g.taken - (g.piece ? 1 : 0),   // 落ちている途中の組は、読み込み直したら出しなおす
       sent: run.sent, pending: run.pending,
       back: state.backFrom || null, // 最後にじゃまを送ってきた人（読み込み直し用）

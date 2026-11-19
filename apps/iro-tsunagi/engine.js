@@ -14,6 +14,7 @@
   const DX = [0, 1, 0, -1];
   const DY = [-1, 0, 1, 0];
   const JAMA = 9;
+  const JAMA_RATE = 70;    // 対戦で、この点ごとにじゃまの玉を1つ送る
   const JAMA_MAX = 30;     // 1回に落ちてくるじゃまの玉の数（5段ぶん）。のこりはつぎに置いたあと
 
   // 盤は rows[y + 1][x]（y = -1 から H-1 まで）
@@ -75,6 +76,7 @@
       clears: 0,        // からにしてつづけた回数
       allClears: 0,     // 消して盤が全部なくなった回数
       taken: 0,         // 出した組の数（読み込み直したとき、同じ順番の続きにするため）
+      jamaRest: 0,      // 対戦で、じゃま1つ（JAMA_RATE 点）に届かなかったのこりの点。つぎに消したときに足す
       bag: [],
     };
     // 袋の色の数は、はじめは3色、1袋使い切ってから選んだ数にする（いきなり手づまりになりにくく）
@@ -278,7 +280,9 @@
     }
     const allClear = chain > 0 && isEmpty(g.board);
     if (allClear) g.allClears++;
-    return { steps, chain, allClear, attack: attackOf(steps, allClear) };
+    const sent = attackOf(steps, allClear, g.jamaRest);
+    g.jamaRest = sent.rest;
+    return { steps, chain, allClear, attack: sent.n };
   }
 
   function isEmpty(board) {
@@ -308,21 +312,16 @@
     });
   }
 
-  // 対戦で送るじゃまの玉の数（いろつなぎの数え方）。
-  // れんさ1つめは5つ以上で消したぶん（4つなら0）、2れんさ目から 3・6・10・14…（4ずつ増える）に、5つ以上のぶんを足す。全部消えたら＋6
-  function chainSend(c) {
-    if (c <= 1) return 0;
-    if (c === 2) return 3;
-    if (c === 3) return 6;
-    return 10 + (c - 4) * 4;
-  }
-  function attackOf(steps, allClear) {
-    let n = 0;
+  // 対戦で送るじゃまの玉の数（2026-11-19 フィードバックからオーナーが決めた数え方）:
+  // 消して入った点 70 点ごとに1つ。70点に届かないのこりは、つぎに消したときに足す。全部消えたら＋6
+  function attackOf(steps, allClear, rest) {
+    let pts = Math.max(0, Number(rest) || 0);
     steps.forEach(function (st) {
-      if (st.type === 'pop') n += chainSend(st.chain) + Math.max(0, st.count - POP);
+      if (st.type === 'pop') pts += st.points || 0;
     });
+    let n = Math.floor(pts / JAMA_RATE);
     if (allClear) n += 6;
-    return n;
+    return { n, rest: pts % JAMA_RATE };
   }
 
   // じゃまの玉を n 個（JAMA_MAX まで）上から落とす。6つごとに1段そろえ、あまりはばらばらの列に。rand は 0〜1 の関数
@@ -371,7 +370,7 @@
     const taken = Math.max(0, Math.min(100000, Number(saved.taken) || 0));
     for (let i = 0; i < taken; i++) { g.queue.shift(); g.queue.push(nextPair(g)); }
     g.taken = taken;
-    ['score', 'bestChain', 'pops', 'clears', 'allClears'].forEach(function (k) { g[k] = Math.max(0, Number(saved[k]) || 0); });
+    ['score', 'bestChain', 'pops', 'clears', 'allClears', 'jamaRest'].forEach(function (k) { g[k] = Math.max(0, Number(saved[k]) || 0); });
     return g;
   }
 
@@ -379,7 +378,7 @@
     W, H, TOP, POP, DX, DY,
     emptyBoard, get, set, rng, newGame, cells, fits, spawn, move, down, rotate,
     hardDropRows, lock, gravity, findGroups, popOnce, settle, clearBoard, ghost, isEmpty, PER_COLOR,
-    JAMA, JAMA_MAX, chainSend, attackOf, pointsOf, chainBonus, groupBonus, colorBonus, addJama, packBoard, unpackBoard, restoreGame,
+    JAMA, JAMA_MAX, JAMA_RATE, attackOf, pointsOf, chainBonus, groupBonus, colorBonus, addJama, packBoard, unpackBoard, restoreGame,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.IroEngine = api;

@@ -145,12 +145,32 @@ t('じゃまの玉はつながらず、となりの玉が消えるといっし�
   assert.strictEqual(E.findGroups(g.board).length, 0);
 });
 
-t('送るじゃまの数（独自の数え方）', () => {
-  assert.deepStrictEqual([1, 2, 3, 4, 5, 6].map(E.chainSend), [0, 3, 6, 10, 14, 18]);
-  const steps = [{ type: 'pop', chain: 1, count: 4 }, { type: 'pop', chain: 2, count: 5 }, { type: 'fall' }];
-  assert.strictEqual(E.attackOf(steps, false), 0 + 3 + 1);
-  assert.strictEqual(E.attackOf(steps, true), 4 + 6);
-  assert.strictEqual(E.attackOf([{ type: 'pop', chain: 1, count: 6 }], false), 2);
+t('送るじゃまの数（70点で1つ・のこりは持ち越し）', () => {
+  assert.strictEqual(E.JAMA_RATE, 70);
+  const steps = [{ type: 'pop', chain: 1, points: 40 }, { type: 'pop', chain: 2, points: 360 }, { type: 'fall' }];
+  assert.deepStrictEqual(E.attackOf(steps, false, 0), { n: 5, rest: 50 });
+  assert.deepStrictEqual(E.attackOf(steps, true, 0), { n: 11, rest: 50 });
+  // 4つだけ（40点）は送らず、のこりを持ち越す。つぎの40点で80点 → 1つ、のこり10
+  const one = [{ type: 'pop', chain: 1, points: 40 }];
+  assert.deepStrictEqual(E.attackOf(one, false, 0), { n: 0, rest: 40 });
+  assert.deepStrictEqual(E.attackOf(one, false, 40), { n: 1, rest: 10 });
+  // 消さなかったときは、のこりをそのまま
+  assert.deepStrictEqual(E.attackOf([], false, 30), { n: 0, rest: 30 });
+});
+
+t('settle が持ち越しの点を盤に覚え、読み込み直しで戻る', () => {
+  const g = game();
+  E.set(g.board, 5, E.H - 1, 3);   // 全部消えないように1つ置いておく
+  for (let x = 0; x < 4; x++) E.set(g.board, x, E.H - 1, 1);
+  const r = E.settle(g);
+  assert.strictEqual(r.attack, 0);
+  assert.strictEqual(g.jamaRest, 40);
+  for (let x = 0; x < 4; x++) E.set(g.board, x, E.H - 1, 2);
+  const r2 = E.settle(g);
+  assert.strictEqual(r2.attack, 1);
+  assert.strictEqual(g.jamaRest, 10);
+  const back = E.restoreGame({ colors: 4, seed: 1 }, { b: E.packBoard(g.board), taken: 0, jamaRest: g.jamaRest });
+  assert.strictEqual(back.jamaRest, 10);
 });
 
 t('じゃまは6つで1段そろい、あまりはちがう列に。30個まで', () => {

@@ -240,12 +240,12 @@ function boardRows(rows) {
   await sleep(100);
   const post = await st(G);
   check('R34 2れんさが出る', await waitFor(async () => (await text(G, '#chainText')).includes('2れんさ'), 4000));
-  check('R35 送ったじゃま 3こ（2れんさ）', await waitFor(async () => (await st(G)).sent === 3), { sent: (await st(G)).sent, p, prePiece: pre.piece, preMode: pre.mode, postMode: post.mode, post: post.board.map((r) => r.join('')).join('/') });
-  check('R36 ホストの「来るじゃま」が3になる', await waitFor(async () => (await st(H)).pending === 3), (await st(H)).pending);
-  check('R37 ルームの盤に来るじゃまを書く', await waitFor(async () => { const r = await roomOf(code); return r.boards && r.boards['ホスト'] && r.boards['ホスト'].pending === 3; }));
+  check('R35 送ったじゃま 5こ（2れんさ 360点）', await waitFor(async () => (await st(G)).sent === 5), { sent: (await st(G)).sent, p, prePiece: pre.piece, preMode: pre.mode, postMode: post.mode, post: post.board.map((r) => r.join('')).join('/') });
+  check('R36 ホストの「来るじゃま」が5になる', await waitFor(async () => (await st(H)).pending === 5), (await st(H)).pending);
+  check('R37 ルームの盤に来るじゃまを書く', await waitFor(async () => { const r = await roomOf(code); return r.boards && r.boards['ホスト'] && r.boards['ホスト'].pending === 5; }));
   await waitPieceTop(H);
   await H.page.evaluate(() => window.__iro.place());
-  check('R38 置くと、じゃまの玉が落ちてくる', await waitFor(async () => { const v = await st(H); return v.pending === 0 && v.board.flat().filter((x) => x === E.JAMA).length === 3; }), await st(H));
+  check('R38 置くと、じゃまの玉が落ちてくる', await waitFor(async () => { const v = await st(H); return v.pending === 0 && v.board.flat().filter((x) => x === E.JAMA).length === 5; }), await st(H));
   await shot(H, 'room-battle-host');
   // ホストの盤をいっぱいにして「ここまで」にする
   await waitPieceTop(H);
