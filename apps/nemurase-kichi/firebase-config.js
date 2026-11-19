@@ -24,6 +24,8 @@
       console.error('[auth] anonymous sign-in failed', error);
       throw error;
     });
+    // ログインが 10 秒たっても終わらないときに、読み込み直すように知らせる（共通の初期化と同じ。2026-11-19）
+    if (RoomkRTDB.noticeSlowAuth) RoomkRTDB.noticeSlowAuth(authReady);
     const db = firebaseNamespace.database();
     RoomkRTDB.initServerTime(db);
     return { authReady, db };

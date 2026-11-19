@@ -55,6 +55,7 @@ Realtime Database 単一ファイルアプリ向けの共有ヘルパー。`wind
 
 | API | 説明 |
 |-----|------|
+| `noticeSlowAuth(authReady)` | 匿名ログインが10秒たっても終わらないとき、`showToast` で「つながるまで時間がかかっています。ページを読み直してみてね」を15秒出す（2026-11-19）。Safari の IndexedDB（ログイン状態の保存先）が返事をしなくなる不具合への備え。不具合そのものは SDK の中のことで直せない（返事を待たずに localStorage へ切りかえる細工は、SDK がほかの所でも待つので効かなかった）。`initFirebase` は中で呼ぶ。自分で初期化するアプリ（ねむらせ基地）は `signInAnonymously()` のあとに呼ぶ |
 | `skipPopupResolverPreload(auth)` | Safari・iPad で、Firebase Auth がログインの前に Google の部品（`apis.google.com`）を読んで待たせるのを止める。`initFirebase` は中で呼ぶ。自分で `initializeApp` するアプリ（ねむらせ基地）は、`auth()` のすぐあと・`signInAnonymously()` の前に呼ぶ（2026-11-19） |
 | `initServerTime(db)` | `db.ref('.info/serverTimeOffset')` を購読し、共有JS内部に時刻オフセットを保持 |
 | `now()` | `Date.now() + offset` を返す（未初期化時は offset 0） |
@@ -166,6 +167,7 @@ import { db, auth } from '../shared/js/firebase-config.js';
 ```
 
 - Auth は `getAuth()` ではなく、同じ保存先を指定した `initializeAuth()` で作り、ポップアップ・リダイレクト用の部品を付けない（2026-11-19）。`getAuth()` だと、Safari・iPad ではログインの前に Google の部品（`apis.google.com`）を読んで待たされるため（rtdb-utils.js の `skipPopupResolverPreload` と同じ理由）。同じページでほかに `getAuth()` を呼ぶと、2回目の初期化でエラーになるので、`auth` はここから import する（stats.js は名前付きの別アプリなので関係しない）
+- ログインが10秒たっても終わらないときは、`utils.js` の `showToast` で読み込み直すように知らせる（rtdb-utils.js の `noticeSlowAuth` と同じ。2026-11-19）
 
 Realtime Database を使う単一ファイルアプリは、Firebase compat SDK 読み込み後に `RoomkRTDB.initFirebase(firebase)` で初期化する。移行前のアプリは従来の個別初期化を維持し、動作確認しながら段階的に切り替える。
 

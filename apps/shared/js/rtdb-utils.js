@@ -67,6 +67,20 @@
     }
   }
 
+  // 匿名ログインが 10 秒たっても終わらないときに、読み込み直すように知らせる（2026-11-19）。
+  // Safari の IndexedDB（ログイン状態の保存先）が返事をしなくなる不具合では、ログインがいつまでも終わらず、
+  // 参加・作成のボタンを押したまま止まって見える。読み込み直すと直ることが多い。
+  // 不具合そのものは SDK の中のことで、こちらでは直せない（返事を待たずに切りかえる細工は、SDK がほかの所でも待つので効かなかった）
+  const SLOW_AUTH_MS = 10000;
+  const SLOW_AUTH_MESSAGE = 'つながるまで時間がかかっています。ページを読み直してみてね';
+  function noticeSlowAuth(authReady) {
+    let settled = false;
+    Promise.resolve(authReady).then(() => { settled = true; }, () => { settled = true; });
+    setTimeout(() => {
+      if (!settled) showToast(SLOW_AUTH_MESSAGE, true, 15000);
+    }, SLOW_AUTH_MS);
+  }
+
   function initFirebase(firebaseNamespace) {
     if (!firebaseNamespace
       || typeof firebaseNamespace.initializeApp !== 'function'
@@ -82,6 +96,7 @@
       console.error('[auth] anonymous sign-in failed', error);
       throw error;
     });
+    noticeSlowAuth(authReady);
     const db = firebaseNamespace.database();
     initServerTime(db);
     return { authReady, db };
@@ -206,6 +221,7 @@
     esc,
     initFirebase,
     skipPopupResolverPreload,
+    noticeSlowAuth,
     cancelRoomOnDisconnect,
     copyRoomCode,
     copyText,
