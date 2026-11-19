@@ -95,6 +95,7 @@ function showScreen(id) {
   state.currentScreen = id;
   const inApp = id === 'waiting' || id === 'game';
   $('appBar').hidden = !inApp;
+  if (!inApp) setRulePanel(false, { focus: false });
   $('roomBar').hidden = !inApp || !state.roomRef;
 }
 
@@ -1658,6 +1659,7 @@ function renderRoom(room) {
     showScreen(next);
   }
   renderBar(room);
+  $('btnRules').hidden = state.role === 'spectator';
   if (playing) renderGame();
   else {
     stopClock();
@@ -1724,6 +1726,7 @@ function renderBar(room) {
 }
 
 function renderWaiting(room) {
+  renderRulePanel();
   const host = state.role === 'host';
   const watch = state.role === 'spectator';
   const seats = seatsOf(room);
@@ -1984,6 +1987,210 @@ function renderGame() {
   $('btnQuit').hidden = !local;
   updateClocks();
   syncClockTick(V);
+  renderRulePanel();
+}
+
+/* ── ルールの板（バーの「ルール」。開いたまま指せる。2026-11-19 オーナー「チェスでもゲーム中にルールを見られるように」。
+   麻雀・将棋の板と同じ形） ──
+   中身はいまの持ち時間・補助・相手に合わせる。駒の動きは5×5の図にする */
+const RULE_TABS = [['piece', '駒の動き'], ['play', '指しかた'], ['end', '勝ち負け'], ['now', 'いまの設定']];
+const MV_ORTH = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+const MV_DIAG = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+// 図の中身。steps は1マス（点）、jumps は跳ぶ所（緑の点）、slides はどこまでも（線）。ポーンは別（first・takes）
+const MOVE_FIG = {
+  K: { steps: MV_ORTH.concat(MV_DIAG) },
+  Q: { slides: MV_ORTH.concat(MV_DIAG) },
+  R: { slides: MV_ORTH },
+  B: { slides: MV_DIAG },
+  N: { jumps: [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1, 2], [2, -1], [2, 1]] },
+  P: { steps: [[-1, 0]], first: [[-2, 0]], takes: [[-1, -1], [-1, 1]] },
+};
+
+// 駒の動きの図（5×5。まん中に白の駒）
+function moveDiagram(t) {
+  const N = 5;
+  const C = 2;
+  const grid = makeElement('div', 'ch-mv');
+  const cells = [];
+  for (let i = 0; i < N * N; i += 1) {
+    const cell = makeElement('span', 'ch-mv__cell ' + ((Math.floor(i / N) + i % N) % 2 ? 'is-dark' : 'is-light'));
+    cells.push(cell);
+    grid.append(cell);
+  }
+  const at = (dr, dc) => cells[(C + dr) * N + C + dc];
+  const f = MOVE_FIG[t];
+  (f.steps || []).forEach(([dr, dc]) => at(dr, dc).append(makeElement('span', 'ch-mv__dot')));
+  (f.jumps || []).forEach(([dr, dc]) => at(dr, dc).append(makeElement('span', 'ch-mv__dot is-jump')));
+  (f.first || []).forEach(([dr, dc]) => at(dr, dc).append(makeElement('span', 'ch-mv__dot is-first')));
+  (f.takes || []).forEach(([dr, dc]) => at(dr, dc).append(makeElement('span', 'ch-mv__ring')));
+  (f.slides || []).forEach(([dr, dc]) => {
+    for (let k = 1; k <= C; k += 1) {
+      const bar = makeElement('span', 'ch-mv__bar' + (k === C ? ' is-end' : ''));
+      bar.style.transform = 'translate(-50%, -50%) rotate(' + (Math.atan2(dr, dc) * 180 / Math.PI + 90) + 'deg)';
+      at(dr * k, dc * k).append(bar);
+    }
+  });
+  const center = at(0, 0);
+  center.classList.add('is-piece');
+  center.append(pieceNode(t, false));
+  return grid;
+}
+
+function ruleItem(title, text) {
+  const box = makeElement('div', 'ch-rx__item');
+  if (title) box.append(makeElement('h4', 'ch-rx__title', title));
+  if (text) box.append(makeElement('p', 'ch-rx__text', text));
+  return box;
+}
+function ruleSection(heading, ...items) {
+  const sec = makeElement('section', 'ch-rx__sec');
+  sec.append(makeElement('h3', 'ch-rx__head', heading), ...items);
+  return sec;
+}
+function pieceCard(t) {
+  const card = makeElement('div', 'ch-rx__piece');
+  const fig = moveDiagram(t);
+  fig.setAttribute('role', 'img');
+  fig.setAttribute('aria-label', E.NAME[t] + 'の動き');
+  const words = makeElement('div', 'ch-rx__words');
+  words.append(makeElement('h4', 'ch-rx__title', E.NAME[t]), makeElement('p', 'ch-rx__text', E.HOW[t]));
+  card.append(fig, words);
+  return card;
+}
+
+// いまのルール。1台の画面は対局の記録、ルームの対局は対局の記録、待合室はルームの設定
+function ruleContext() {
+  if (state.role === 'local' && state.local) {
+    const L = state.local;
+    return { clock: L.cc, aid: L.aid, cpu: L.cpu != null ? LEVEL_NAMES[L.level] || '' : null };
+  }
+  const room = state.room;
+  if (!room) return null;
+  const game = state.currentScreen === 'game' ? gameOf(room) : null;
+  const cpu = game ? cpuSideOf(game) : null;
+  return {
+    clock: game ? game.clock : room.clock,
+    aid: room.aid,
+    cpu: cpu != null ? LEVEL_NAMES[cpuLevelOfSeat(game.seats[KEYS[cpu]])] || '' : null,
+  };
+}
+
+function ruleBodies(X) {
+  const clock = normClockCfg(X.clock);
+  const out = {};
+
+  out.piece = [
+    ruleSection('図の見かた', ruleItem(null, '点は1マスだけ、線はその向きにどこまでも進める（ほかの駒は跳びこえられない。相手の駒なら取れる）。緑の点は跳んで行ける所。図は白から見た向き（上が相手の側）')),
+    ruleSection('駒', ...['K', 'Q', 'R', 'B', 'N'].map(pieceCard)),
+    ruleSection('ポーン', pieceCard('P'),
+      ruleItem(null, '薄い点は、はじめの場所からだけ進める2マス目。輪は、相手の駒があるときだけ取りに行ける所（ポーンはまっすぐ前の駒は取れない）')),
+  ];
+
+  out.play = [
+    ruleSection('自分の番',
+      ruleItem('動かす', '白から、交互に1手ずつ。自分の駒を押して、動かしたい所を押す'),
+      ruleItem('取る', '相手の駒がある所へ動くと、その駒を取れる。取った駒は盤から外れ、もう使えない（将棋のように打つことはない）'),
+    ),
+    ruleSection('特別な手',
+      ruleItem('成る（プロモーション）', 'ポーンがいちばん奥まで進むと、クイーン・ルーク・ビショップ・ナイトのどれかになれる。何にするかを聞かれるので選ぶ'),
+      ruleItem('キャスリング', 'キングを横に2マス動かすと、ルークがキングを飛びこえて反対側へ来る（1回の手で2つ動く）。キングとそのルークがまだ動いていない・間に駒がない・チェックされていない・キングが通る所と行き先がねらわれていないときだけ'),
+      ruleItem('アンパッサン', '相手のポーンが2マス進んで、自分のポーンの真横に来たら、すぐ次の手だけ、ななめ前へ動いてそのポーンを取れる'),
+    ),
+    ruleSection('チェック',
+      ruleItem(null, '次にキングが取られそうな形。逃げる・間に駒を入れる・チェックしている駒を取る、のどれかでかならずよける'),
+      ruleItem('指せない手', '自分のキングが取られる形になる手は指せない（チェックをよけない手・キングをねらわれた所へ動かす手・動かすとキングがねらわれる駒を動かす手）。押すと、指せないわけが出る'),
+    ),
+  ];
+
+  const end = [
+    ruleSection('勝ち',
+      ruleItem('チェックメイト', '相手のキングがチェックされていて、どう指してもよけられない形にしたら勝ち'),
+      ruleItem('投了', '「投了する」を押すと、負けを認めて終わりにできる（相手の番でもよい）'),
+    ),
+    ruleSection('引き分け',
+      ruleItem('ステイルメイト', '自分の番なのに指せる手がなく、チェックもされていないとき'),
+      ruleItem('同じ形が3回', '盤と番が同じ形が3回出たとき'),
+      ruleItem('50手', 'どちらも50手ずつ、ポーンが動かず駒も取られなかったとき'),
+      ruleItem('駒が足りない', 'どちらもチェックメイトにできる駒がないとき（キングだけ・キングとビショップかナイト1つ など）'),
+    ),
+  ];
+  if (clock.m || clock.b) {
+    end.push(ruleSection('時間',
+      ruleItem(null, '自分の番の時間だけが減る。' + (clock.m ? '持ち時間がなくなると' : 'はじめから') + (clock.b ? '「秒読み」で、1手ごとに' + clock.b + '秒にもどる' : '') + '。時間が切れたら負け（相手の駒がキングだけなら引き分け）'),
+    ));
+  }
+  end.push(ruleSection('場所の言い方', ruleItem(null, '盤のふちの文字（a〜h）と数字（1〜8）を合わせて「e4」のように言う')));
+  out.end = end;
+
+  const ul = makeElement('ul', 'ch-rulesview');
+  const rows = [['持ち時間', clockSummary(X.clock)], ['補助', aidSummary(X.aid)]];
+  if (X.cpu != null) rows.push(['相手', 'CPU' + (X.cpu ? '（' + X.cpu + '）' : '')]);
+  rows.forEach(([k, v]) => {
+    const li = makeElement('li', 'ch-rulesview__item');
+    li.append(makeElement('span', 'ch-rulesview__key', k), makeElement('span', 'ch-rulesview__val', v));
+    ul.append(li);
+  });
+  out.now = [ruleSection('いまのルール', ul)];
+  return out;
+}
+
+function renderRulePanel() {
+  const X = ruleContext();
+  if (!X) return;
+  const key = JSON.stringify([normClockCfg(X.clock), normAid(X.aid), X.cpu]);
+  if (state.ruleKey === key) return;
+  state.ruleKey = key;
+  if (!RULE_TABS.some(([k]) => k === state.ruleTab)) state.ruleTab = 'piece';
+  const bodies = ruleBodies(X);
+  $('ruleTabs').replaceChildren(...RULE_TABS.map(([k, label]) => {
+    const b = makeElement('button', 'ch-rulepanel__tab', label);
+    b.type = 'button';
+    b.dataset.tab = k;
+    b.setAttribute('aria-pressed', k === state.ruleTab ? 'true' : 'false');
+    return b;
+  }));
+  $('ruleBody').replaceChildren(...RULE_TABS.map(([k, label]) => {
+    const page = makeElement('div', 'ch-rulepanel__page');
+    page.dataset.tab = k;
+    page.setAttribute('aria-label', label);
+    page.hidden = k !== state.ruleTab;
+    page.append(...bodies[k]);
+    return page;
+  }));
+}
+
+function selectRuleTab(k) {
+  state.ruleTab = k;
+  $('ruleTabs').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.tab === k ? 'true' : 'false'));
+  $('ruleBody').querySelectorAll('.ch-rulepanel__page').forEach((p) => { p.hidden = p.dataset.tab !== k; });
+  $('ruleBody').scrollTop = 0;
+}
+
+// 右に立てる幅か（CSS の @media と同じ）
+const RULE_SIDE_MQ = window.matchMedia('(min-width: 1180px)');
+
+function setRulePanel(open, { focus = true } = {}) {
+  const was = !$('rulePanel').hidden;
+  $('rulePanel').hidden = !open;
+  document.documentElement.classList.toggle('ch-rules-open', open);
+  $('btnRules').setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (open && !was) {
+    renderRulePanel();
+    if (focus) $('rulePanelTitle').focus({ preventScroll: true });
+    // 下から出したとき、盤が板の下に隠れるなら、盤が板の上に入るまで動かす。
+    // ふつうは番の文を上へ。入りきらないときは盤を優先する
+    if (!RULE_SIDE_MQ.matches && state.currentScreen === 'game') {
+      const sheetTop = $('rulePanel').getBoundingClientRect().top;
+      const box = $('board').getBoundingClientRect();
+      if (box.bottom > sheetTop || box.top < 0) {
+        let delta = $('gameStatus').getBoundingClientRect().top - 8;
+        if (box.bottom - delta > sheetTop) delta = Math.min(box.bottom - sheetTop + 4, box.top);
+        window.scrollBy({ top: delta });
+      }
+    }
+  } else if (!open && was && focus && $('rulePanel').contains(document.activeElement)) {
+    $('btnRules').focus({ preventScroll: true });
+  }
 }
 
 /* ── 盤と駒 ── */
@@ -2333,6 +2540,17 @@ $('promoDialog').addEventListener('cancel', (event) => { event.preventDefault();
 $('btnUndo').addEventListener('click', () => {
   if (state.role === 'local') undoLocal();
   else if (state.role === 'host') undoMove();
+});
+$('btnRules').addEventListener('click', () => setRulePanel($('rulePanel').hidden));
+$('btnRulesClose').addEventListener('click', () => setRulePanel(false));
+$('ruleTabs').addEventListener('click', (event) => {
+  const b = event.target.closest('button[data-tab]');
+  if (b) selectRuleTab(b.dataset.tab);
+});
+// Esc で、ルールの板を閉じる（板の中にいるとき）
+document.addEventListener('keydown', (event) => {
+  if (event.key !== 'Escape' || $('rulePanel').hidden || !$('rulePanel').contains(document.activeElement)) return;
+  setRulePanel(false);
 });
 $('btnFlip').addEventListener('click', () => {
   state.flip = !state.flip;
