@@ -320,3 +320,96 @@ body { background: var(--color-bg); }
     .ch-game > * { --ch-board: min(calc(100cqw - 28px), 560px); }
   }
 }
+
+/* ── ルールの板（バーの「ルール」。開いたまま指せる。2026-11-19。麻雀・将棋の板と同じ形） ──
+   広い画面（1180px 以上）: 右に立てて、対局は左へ寄せる（盤の大きさも板の分だけ小さく）。
+   せまい画面: 下から出し、ページの下をその分あける（盤も板の上に入る大きさまで小さく） */
+:root { --ch-sheet-h: min(36vh, 360px); --ch-side-w: 360px; }
+.ch-bar__rules {
+  display: inline-flex; align-items: center; gap: 4px; min-height: 40px; padding: 4px 12px;
+  border: 1.5px solid rgba(255, 255, 255, 0.7); border-radius: var(--radius-full); background: none; color: #fff;
+  font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
+}
+.ch-bar__rules .material-symbols-rounded { font-size: 20px; }
+.ch-bar__rules:hover, .ch-bar__rules[aria-expanded="true"] { background: rgba(255, 255, 255, 0.16); }
+.ch-bar__rules:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.ch-bar__rules[hidden] { display: none; }
+.ch-rulepanel {
+  position: fixed; z-index: 550; display: flex; flex-direction: column;
+  background: var(--color-surface); color: var(--color-text);
+  left: 0; right: 0; bottom: 0; height: var(--ch-sheet-h);
+  border-top: 1px solid var(--color-border); border-radius: 16px 16px 0 0;
+  box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.18);
+}
+.ch-rulepanel[hidden] { display: none; }
+.ch-rulepanel__head { display: flex; align-items: center; gap: 8px; padding: 6px 8px 0 16px; }
+.ch-rulepanel__title { display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: 17px; color: var(--color-primary); }
+.ch-rulepanel__title:focus { outline: none; }
+.ch-rulepanel__title:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 2px; border-radius: 4px; }
+.ch-rulepanel__title .material-symbols-rounded { font-size: 22px; color: var(--color-accent); }
+.ch-rulepanel__close {
+  margin-left: auto; width: 44px; height: 44px; display: grid; place-items: center;
+  border: none; background: none; border-radius: 50%; color: var(--color-muted); cursor: pointer;
+}
+.ch-rulepanel__close:hover { background: rgba(0, 0, 0, 0.06); }
+.ch-rulepanel__tabs { display: flex; gap: 4px; padding: 4px 12px 8px; border-bottom: 1px solid var(--color-border); overflow-x: auto; }
+.ch-rulepanel__tab {
+  flex: 1 0 auto; min-height: 40px; padding: 6px 10px; border-radius: var(--radius-full);
+  border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text);
+  font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap;
+}
+.ch-rulepanel__tab[aria-pressed="true"] { background: var(--color-accent-soft); border: 2px solid var(--color-accent); color: var(--color-primary); font-weight: 700; }
+.ch-rulepanel__tab:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 2px; }
+.ch-rulepanel__body { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 4px 16px 16px; }
+.ch-rulepanel__page[hidden] { display: none; }
+.ch-rx__sec { padding: 10px 0 4px; }
+.ch-rx__sec + .ch-rx__sec { border-top: 1px dashed var(--color-border); }
+.ch-rx__head { margin: 0 0 8px; font-size: 15px; color: var(--color-primary); }
+.ch-rx__item { margin: 0 0 10px; }
+.ch-rx__title { margin: 0; font-size: 14px; font-weight: 700; }
+.ch-rx__text { margin: 2px 0 0; font-size: 14px; line-height: 1.65; }
+.ch-rx__piece { display: flex; gap: 12px; align-items: center; margin: 0 0 12px; }
+.ch-rx__words { min-width: 0; }
+/* 駒の動きの図（5×5） */
+.ch-mv { flex: none; display: grid; grid-template-columns: repeat(5, 22px); grid-template-rows: repeat(5, 22px); padding: 2px; background: var(--ch-frame); border-radius: 4px; }
+.ch-mv__cell { position: relative; display: grid; place-items: center; }
+.ch-mv__cell.is-light { background: var(--ch-light); }
+.ch-mv__cell.is-dark { background: var(--ch-dark); }
+.ch-mv__cell.is-piece .ch-piece { width: 22px; height: 22px; }
+.ch-mv__cell.is-piece .ch-piece__glyph { font-size: 19px; }
+.ch-mv__dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ch-spot); box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.8); }
+.ch-mv__dot.is-jump { background: var(--ch-hint); }
+.ch-mv__dot.is-first { background: none; border: 2px solid var(--ch-spot); width: 7px; height: 7px; }
+.ch-mv__ring { width: 16px; height: 16px; border-radius: 50%; border: 3px solid var(--ch-spot); box-sizing: border-box; box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.8); }
+.ch-mv__bar { position: absolute; left: 50%; top: 50%; width: 5px; height: 23px; border-radius: 2px; background: var(--ch-spot); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6); }
+.ch-mv__bar.is-end { height: 15px; border-radius: 99px; }
+.ch-rulesview { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.ch-rulesview__item { display: grid; grid-template-columns: 5.5em 1fr; gap: 8px; line-height: 1.6; font-size: 14px; }
+.ch-rulesview__key { color: var(--color-muted); }
+.ch-rulesview__val { font-weight: 500; }
+
+html.ch-rules-open body { padding-bottom: var(--ch-sheet-h); }
+/* 下から出している間は、右下の丸ボタン（意見・？）を隠す（板は自分の × で閉じる） */
+html.ch-rules-open .howto-fab, html.ch-rules-open .howto-feedback-fab { display: none; }
+html.ch-rules-open { --ch-board: min(calc(100vw - 64px), calc(100vh - var(--ch-sheet-h) - 150px), 600px); }
+@supports (container-type: inline-size) {
+  @media (max-width: 600px) {
+    html.ch-rules-open .ch-game > * { --ch-board: min(calc(100cqw - 28px), calc(100vh - var(--ch-sheet-h) - 150px), 560px); }
+  }
+}
+@media (min-width: 900px) {
+  html.ch-rules-open { --ch-board: min(calc(100vh - var(--ch-sheet-h) - 150px), calc(100vw - 560px), 620px); }
+}
+@media (min-width: 1180px) {
+  .ch-rulepanel {
+    left: auto; top: 0; height: auto; width: var(--ch-side-w);
+    border-top: none; border-left: 1px solid var(--color-border); border-radius: 0;
+    box-shadow: -6px 0 20px rgba(0, 0, 0, 0.12);
+  }
+  .ch-rulepanel__head { padding-top: 12px; }
+  html.ch-rules-open body { padding-bottom: 0; padding-right: var(--ch-side-w); }
+  html.ch-rules-open { --ch-board: min(calc(100vh - 230px), calc(100vw - var(--ch-side-w) - 560px), 620px); }
+  html.ch-rules-open .howto-fab, html.ch-rules-open .howto-feedback-fab { display: flex; }
+  html.ch-rules-open .howto-fab--right { right: calc(var(--ch-side-w) + 16px); }
+  html.ch-rules-open .howto-feedback-fab--right { right: calc(var(--ch-side-w) + 76px); }
+}

@@ -11,13 +11,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
   <!-- index.html と app.js・engine.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261118a">
+  <link rel="stylesheet" href="style.css?v=20261119a">
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
-  <script src="engine.js?v=20261118a"></script>
+  <script src="engine.js?v=20261119a"></script>
 </head>
 <body data-genre="board">
 
@@ -143,6 +143,9 @@
     <h1 class="ch-bar__title">チェス</h1>
     <p class="ch-bar__badge" id="watchBadge" hidden>みんなにみせる画面</p>
     <p class="ch-bar__me" id="barMe" hidden></p>
+    <button type="button" class="ch-bar__rules" id="btnRules" aria-expanded="false" aria-controls="rulePanel">
+      <span class="material-symbols-rounded" aria-hidden="true">menu_book</span>ルール
+    </button>
   </header>
   <div class="ch-roombar" id="roomBar" hidden>
     <span class="ch-roombar__code">ルーム <strong id="roomCodeLabel"></strong></span>
@@ -307,7 +310,16 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261118a"></script>
+  <!-- ルールの板（バーの「ルール」で出る。開いたまま指せる。中身は app.js の renderRulePanel） -->
+  <aside class="ch-rulepanel" id="rulePanel" aria-labelledby="rulePanelTitle" hidden>
+    <div class="ch-rulepanel__head">
+      <h2 class="ch-rulepanel__title" id="rulePanelTitle" tabindex="-1"><span class="material-symbols-rounded" aria-hidden="true">menu_book</span>ルール</h2>
+      <button type="button" class="ch-rulepanel__close" id="btnRulesClose" aria-label="ルールを閉じる"><span class="material-symbols-rounded" aria-hidden="true">close</span></button>
+    </div>
+    <div class="ch-rulepanel__tabs" id="ruleTabs" role="group" aria-label="見る所"></div>
+    <div class="ch-rulepanel__body" id="ruleBody"></div>
+  </aside>
+  <script type="module" src="app.js?v=20261119a"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -344,6 +356,7 @@
           '「投了する」を押すと、負けを認めて終わりにできる（相手の番でもよい）',
           '引き分けになるのは、指せる手がないのにチェックされていない（ステイルメイト）・同じ形が3回出た・50手のあいだポーンが動かず駒も取られなかった・どちらも駒が足りずチェックメイトにできない、のとき',
           '場所は、盤のふちの文字（a〜h）と数字（1〜8）を合わせて「e4」のように言うと伝わるよ',
+          '駒の動き・特別な手・勝ち負けは、画面の上の「ルール」でいつでも見られる。開いたままでも指せる',
         ] },
       ],
     });
