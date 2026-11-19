@@ -19,6 +19,7 @@
 - ファイル構成: `index.html` + `app.js` + `style.css`（分割構成。otona-talk と同パターン）
 - Firebase モジュール版 SDK 13.3.0 を CDN から `import`。Realtime Database + 匿名認証
   - `signInAnonymously()` の完了を **await してから** 読む
+  - Auth は `getAuth()` ではなく、同じ保存先を指定した `initializeAuth()` で作る（2026-11-19。`getAuth()` だと Safari・iPad でログインの前に `apis.google.com` を読んで待たされるため。shared/js/stats.js と同じ）
   - Firebase アプリは名前付き（`roomk-stats-view`）で初期化する
 - **読み取り専用。** `set` / `update` / `remove` / `transaction` は一切書かない
 - グラフライブラリは使わない（横棒・メーターは CSS の `width` だけ）
