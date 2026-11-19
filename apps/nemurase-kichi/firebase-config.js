@@ -17,7 +17,10 @@
   // 初期化・匿名ログイン・サーバー時刻の補正を、ここで同じ形にそろえて返す
   function init(firebaseNamespace) {
     firebaseNamespace.initializeApp(CONFIG);
-    const authReady = firebaseNamespace.auth().signInAnonymously().catch((error) => {
+    const auth = firebaseNamespace.auth();
+    // Safari・iPad で、ログインの前に Google の部品（apis.google.com）を読んで待たされないように（共通の初期化と同じ。2026-11-19）
+    if (RoomkRTDB.skipPopupResolverPreload) RoomkRTDB.skipPopupResolverPreload(auth);
+    const authReady = auth.signInAnonymously().catch((error) => {
       console.error('[auth] anonymous sign-in failed', error);
       throw error;
     });
