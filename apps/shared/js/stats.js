@@ -69,7 +69,18 @@
         } catch (_) {
           app = appMod.initializeApp(FIREBASE_CONFIG, 'roomk-stats');
         }
-        await authMod.signInAnonymously(authMod.getAuth(app));
+        // getAuth() と同じ保存先で作るが、ポップアップ・リダイレクト用の部品は付けない。
+        // getAuth() のままだと、Safari・iPad ではログインの前に Google の部品（apis.google.com）を読み、
+        // 終わるまで待たされて、つながりにくい所では数えられなかった（2026-11-19。rtdb-utils.js と同じ理由）
+        let auth;
+        try {
+          auth = authMod.initializeAuth(app, {
+            persistence: [authMod.indexedDBLocalPersistence, authMod.browserLocalPersistence, authMod.browserSessionPersistence],
+          });
+        } catch (_) {
+          auth = authMod.getAuth(app); // すでに作られていたとき（同じページで2回読まれたなど）
+        }
+        await authMod.signInAnonymously(auth);
         return { dbMod, db: dbMod.getDatabase(app) };
       });
     }
