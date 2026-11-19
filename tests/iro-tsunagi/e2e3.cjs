@@ -138,7 +138,7 @@ async function chain2(c) {
   await c.page.evaluate((b) => window.__iro.setBoard(b), boardRows([`${p.a}....${c1}`, `${p.a}${p.a}.${p.b}${p.b}${p.b}`]));
   await c.page.evaluate(() => window.__iro.place());
 }
-const sentTo = (c, name) => waitFor(async () => (await text(c, '#chainText')).includes(name + 'に3こおくったよ'), 6000);
+const sentTo = (c, name) => waitFor(async () => (await text(c, '#chainText')).includes(name + 'に5こおくったよ'), 6000);
 
 (async () => {
   syncSite();
@@ -176,7 +176,7 @@ const sentTo = (c, name) => waitFor(async () => (await text(c, '#chainText')).in
   // まだだれからも来ていない → 並びのつぎ（ホスト → あおい）
   await chain2(H);
   check('B3 まだだれからも来ていなければ、並びのつぎの人（あおい）へ', await sentTo(H, 'あおい'));
-  check('B4 あおいに3こ届く', await waitFor(async () => (await st(A)).pending === 3));
+  check('B4 あおいに5こ届く', await waitFor(async () => (await st(A)).pending === 5));
   check('B5 送ってきた人を盤に書く（boards/あおい/back）', await waitFor(async () => (await roomOf(code)).boards['あおい'].back === 'ホスト'));
 
   // あおいは、送ってきたホストへ返す（並びのつぎの はる ではなく）
@@ -203,7 +203,7 @@ const sentTo = (c, name) => waitFor(async () => (await text(c, '#chainText')).in
   check('B12 ホストがここまで', await waitFor(async () => (await roomOf(code)).boards['ホスト'].out === true));
   await chain2(A);
   check('B13 送ってきた人がここまでなら、並びのつぎの人（はる）へ', await sentTo(A, 'はる'));
-  check('B14 はるに届く', await waitFor(async () => (await st(B)).pending === 3 || (await st(B)).board.flat().includes(E.JAMA)));
+  check('B14 はるに届く', await waitFor(async () => (await st(B)).pending === 5 || (await st(B)).board.flat().includes(E.JAMA)));
 
   for (const c of clients) check('console errors: ' + c.label, c.errors.length === 0, c.errors.slice(0, 5));
   check('本番に接続しない', T.violations.length === 0, T.violations.slice(0, 5));

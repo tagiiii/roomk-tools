@@ -399,17 +399,16 @@ const SLIDES = [
     note:'対戦では、灰色のじゃまの玉が落ちてくるよ。\nじゃまの玉は、つながらない。でも、となりの玉が消えると、いっしょに消える。\n自分に来るじゃまは、横の「来るじゃま」に数が出て、つぎに置いて消えなかったときに、上から落ちてくる。1回に30こまで。\n自分がれんさをすると、来るじゃまを先にへらせるよ。へらしたぶん、送る数は少なくなる。' },
 
   /* 11 */ { type:'content', accent:'coral', section:'対戦', sectionEn:'versus', num:'2',
-    headline:'れんさが長いほど、<span class="hl">たくさん送る</span>',
+    headline:'点が多いほど、<span class="hl">たくさん送る</span>',
     body:`<div class="atk">
-      <div class="atk__i"><div class="atk__t">2れんさ</div><div class="atk__n">3こ</div></div>
-      <div class="atk__i"><div class="atk__t">3れんさ</div><div class="atk__n">6こ</div></div>
-      <div class="atk__i"><div class="atk__t">4れんさ</div><div class="atk__n">10こ</div></div>
-      <div class="atk__i"><div class="atk__t">5れんさから<small>1つ増えるごとに4こ多く</small></div><div class="atk__n">14こ…</div></div>
-      <div class="atk__i"><div class="atk__t">5つ以上つなげて消す<small>4つより多いぶんを足す</small></div><div class="atk__n">＋そのぶん</div></div>
+      <div class="atk__i"><div class="atk__t">消して入った点<small>70点ごとに</small></div><div class="atk__n">1こ</div></div>
+      <div class="atk__i"><div class="atk__t">4つだけ消す<small>40点</small></div><div class="atk__n">0こ</div></div>
+      <div class="atk__i"><div class="atk__t">2れんさ<small>4つ＋4つで360点</small></div><div class="atk__n">5こ</div></div>
+      <div class="atk__i"><div class="atk__t">70点に届かないのこり<small>つぎに消したときに足す</small></div><div class="atk__n">持ちこし</div></div>
       <div class="atk__i"><div class="atk__t">盤が全部消えた</div><div class="atk__n">＋6こ</div></div>
     </div>
-    <div class="demo-cap">送る相手は、最後にじゃまを<b>送ってきた人</b>（まだならならびでつぎの人）。1れんさ（4つだけ）だと送らないよ。</div>`,
-    note:'送るじゃまの数だよ。\n2れんさで3こ、3れんさで6こ、4れんさで10こ。5れんさからは、1つ増えるごとに4こ多くなる。\n5つ以上つなげて消すと、4つより多いぶんも足すよ。\n盤が全部消えたら、さらに6こ。\n1れんさで4つだけ消したときは送らない。送る相手は、最後にじゃまを送ってきた人。まだだれからも来ていなければ、ならびでつぎの人だよ。' },
+    <div class="demo-cap">送る相手は、最後にじゃまを<b>送ってきた人</b>（まだならならびでつぎの人）。れんさが長いほど点が多いので、たくさん送れるよ。</div>`,
+    note:'送るじゃまの数だよ。\n消して入った点の、70点ごとに1こ送る。\n4つだけ消すと40点だから、まだ送らない。のこりの点は、つぎに消したときに足すよ。\n2れんさ（4つと4つ）だと360点で、5こ。れんさが長いほど点が多いので、たくさん送れる。\n盤が全部消えたら、さらに6こ。\n送る相手は、最後にじゃまを送ってきた人。まだだれからも来ていなければ、ならびでつぎの人だよ。' },
 
   /* 12 */ { type:'content', accent:'teal', section:'対戦', sectionEn:'versus', num:'3',
     headline:'盤が<span class="hl">いっぱい</span>になったら',
