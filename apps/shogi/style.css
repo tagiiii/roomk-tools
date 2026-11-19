@@ -336,3 +336,93 @@ body { background: var(--color-bg); }
     .sh-game > * { --sh-board: min(calc(100cqw - 29px), 560px); }
   }
 }
+
+/* ── ルールの板（バーの「ルール」。開いたまま指せる。2026-11-19。麻雀の板と同じ形） ──
+   広い画面（1180px 以上）: 右に立てて、対局は左へ寄せる（盤の大きさも板の分だけ小さく）。
+   せまい画面: 下から出し、ページの下をその分あける（盤も板の上に入る大きさまで小さく） */
+:root { --sh-sheet-h: min(36vh, 360px); --sh-side-w: 360px; }
+.sh-bar__rules {
+  display: inline-flex; align-items: center; gap: 4px; min-height: 40px; padding: 4px 12px;
+  border: 1.5px solid rgba(255, 255, 255, 0.7); border-radius: var(--radius-full); background: none; color: #fff;
+  font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
+}
+.sh-bar__rules .material-symbols-rounded { font-size: 20px; }
+.sh-bar__rules:hover, .sh-bar__rules[aria-expanded="true"] { background: rgba(255, 255, 255, 0.16); }
+.sh-bar__rules:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.sh-bar__rules[hidden] { display: none; }
+.sh-rulepanel {
+  position: fixed; z-index: 550; display: flex; flex-direction: column;
+  background: var(--color-surface); color: var(--color-text);
+  left: 0; right: 0; bottom: 0; height: var(--sh-sheet-h);
+  border-top: 1px solid var(--color-border); border-radius: 16px 16px 0 0;
+  box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.18);
+}
+.sh-rulepanel[hidden] { display: none; }
+.sh-rulepanel__head { display: flex; align-items: center; gap: 8px; padding: 6px 8px 0 16px; }
+.sh-rulepanel__title { display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: 17px; color: var(--color-primary); }
+.sh-rulepanel__title:focus { outline: none; }
+.sh-rulepanel__title:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 2px; border-radius: 4px; }
+.sh-rulepanel__title .material-symbols-rounded { font-size: 22px; color: var(--color-accent); }
+.sh-rulepanel__close {
+  margin-left: auto; width: 44px; height: 44px; display: grid; place-items: center;
+  border: none; background: none; border-radius: 50%; color: var(--color-muted); cursor: pointer;
+}
+.sh-rulepanel__close:hover { background: rgba(0, 0, 0, 0.06); }
+.sh-rulepanel__tabs { display: flex; gap: 4px; padding: 4px 12px 8px; border-bottom: 1px solid var(--color-border); overflow-x: auto; }
+.sh-rulepanel__tab {
+  flex: 1 0 auto; min-height: 40px; padding: 6px 10px; border-radius: var(--radius-full);
+  border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text);
+  font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap;
+}
+.sh-rulepanel__tab[aria-pressed="true"] { background: var(--color-accent-soft); border: 2px solid var(--color-accent); color: var(--color-primary); font-weight: 700; }
+.sh-rulepanel__tab:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 2px; }
+.sh-rulepanel__body { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 4px 16px 16px; }
+.sh-rulepanel__page[hidden] { display: none; }
+.sh-rx__sec { padding: 10px 0 4px; }
+.sh-rx__sec + .sh-rx__sec { border-top: 1px dashed var(--color-border); }
+.sh-rx__head { margin: 0 0 8px; font-size: 15px; color: var(--color-primary); }
+.sh-rx__item { margin: 0 0 10px; }
+.sh-rx__title { margin: 0; font-size: 14px; font-weight: 700; }
+.sh-rx__text { margin: 2px 0 0; font-size: 14px; line-height: 1.65; }
+.sh-rx__piece { display: flex; gap: 12px; align-items: center; margin: 0 0 12px; }
+.sh-rx__words { min-width: 0; }
+/* 駒の動きの図（5×5） */
+.sh-mv { flex: none; display: grid; grid-template-columns: repeat(5, 22px); grid-template-rows: repeat(5, 22px); gap: 1px; padding: 1px; background: var(--sh-wood-dark); border-radius: 4px; }
+.sh-mv__cell { position: relative; background: var(--sh-wood); display: grid; place-items: center; }
+.sh-mv__cell.is-piece .sh-piece { width: 21px; height: 22px; }
+.sh-mv__cell.is-piece .sh-piece__face { font-size: 13px; margin-top: 2px; }
+.sh-mv__cell.is-piece .sh-piece__face.is-two { font-size: 8px; margin-top: 3px; }
+.sh-mv__dot { width: 9px; height: 9px; border-radius: 50%; background: var(--sh-spot); }
+.sh-mv__dot.is-jump { background: #2E8B47; }
+.sh-mv__bar { position: absolute; left: 50%; top: 50%; width: 5px; height: 25px; border-radius: 2px; background: var(--sh-spot); }
+.sh-mv__bar.is-end { height: 16px; border-radius: 99px; }
+.sh-rulesview { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.sh-rulesview__item { display: grid; grid-template-columns: 5.5em 1fr; gap: 8px; line-height: 1.6; font-size: 14px; }
+.sh-rulesview__key { color: var(--color-muted); }
+.sh-rulesview__val { font-weight: 500; }
+
+html.sh-rules-open body { padding-bottom: var(--sh-sheet-h); }
+/* 下から出している間は、右下の丸ボタン（意見・？）を隠す（板は自分の × で閉じる） */
+html.sh-rules-open .howto-fab, html.sh-rules-open .howto-feedback-fab { display: none; }
+html.sh-rules-open { --sh-board: min(calc(100vw - 64px), calc(100vh - var(--sh-sheet-h) - 150px), 600px); }
+@supports (container-type: inline-size) {
+  @media (max-width: 600px) {
+    html.sh-rules-open .sh-game > * { --sh-board: min(calc(100cqw - 29px), calc(100vh - var(--sh-sheet-h) - 150px), 560px); }
+  }
+}
+@media (min-width: 900px) {
+  html.sh-rules-open { --sh-board: min(calc(100vh - var(--sh-sheet-h) - 150px), calc(100vw - 560px), 620px); }
+}
+@media (min-width: 1180px) {
+  .sh-rulepanel {
+    left: auto; top: 0; height: auto; width: var(--sh-side-w);
+    border-top: none; border-left: 1px solid var(--color-border); border-radius: 0;
+    box-shadow: -6px 0 20px rgba(0, 0, 0, 0.12);
+  }
+  .sh-rulepanel__head { padding-top: 12px; }
+  html.sh-rules-open body { padding-bottom: 0; padding-right: var(--sh-side-w); }
+  html.sh-rules-open { --sh-board: min(calc(100vh - 250px), calc(100vw - var(--sh-side-w) - 560px), 620px); }
+  html.sh-rules-open .howto-fab, html.sh-rules-open .howto-feedback-fab { display: flex; }
+  html.sh-rules-open .howto-fab--right { right: calc(var(--sh-side-w) + 16px); }
+  html.sh-rules-open .howto-feedback-fab--right { right: calc(var(--sh-side-w) + 76px); }
+}

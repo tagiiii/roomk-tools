@@ -100,6 +100,7 @@ function showScreen(id) {
   state.currentScreen = id;
   const inApp = id === 'waiting' || id === 'game';
   $('appBar').hidden = !inApp;
+  if (!inApp) setRulePanel(false, { focus: false });
   $('roomBar').hidden = !inApp || !state.roomRef;
 }
 
@@ -1724,6 +1725,7 @@ function renderRoom(room) {
     showScreen(next);
   }
   renderBar(room);
+  $('btnRules').hidden = state.role === 'spectator';
   if (playing) renderGame();
   else {
     stopClock();
@@ -1790,6 +1792,7 @@ function renderBar(room) {
 }
 
 function renderWaiting(room) {
+  renderRulePanel();
   const host = state.role === 'host';
   const watch = state.role === 'spectator';
   const seats = seatsOf(room);
@@ -2043,6 +2046,227 @@ function renderGame() {
   $('btnQuit').hidden = !local;
   updateClocks();
   syncClockTick(V);
+  renderRulePanel();
+}
+
+/* ── ルールの板（バーの「ルール」。開いたまま指せる。2026-11-19 オーナー「将棋でもゲーム中にルールを見られるように」。
+   麻雀（apps/mahjong）の板と同じ形） ──
+   中身はいまの盤（本将棋／5五将棋）・持ち時間・補助に合うものだけ。駒の動きは engine.js の SPEC から図にする */
+const RULE_TABS = [['piece', '駒の動き'], ['play', '指しかた'], ['end', '勝ち負け'], ['now', 'いまの設定']];
+// 駒の説明（種類・名前・動き）。成ると変わる駒は、成ったあとも
+const PIECE_GUIDE = [
+  ['K', '玉（王）', 'まわりの8方向に1マス。取られたら負け。先手は「玉」、後手は「王」と書く'],
+  ['R', '飛車', 'たて・よこに、どこまでも（ほかの駒の手前まで）', '+R', '龍（龍王）', '飛車の動きと、ななめに1マス'],
+  ['B', '角', 'ななめに、どこまでも（ほかの駒の手前まで）', '+B', '馬（龍馬）', '角の動きと、たて・よこに1マス'],
+  ['G', '金', 'ななめうしろの2つのほかの、6方向に1マス。成らない'],
+  ['S', '銀', '前の3つと、ななめうしろの2つに1マス', '+S', '成銀', '金と同じ動き'],
+  ['N', '桂馬', '前に2つ・横に1つの所へ跳ぶ。間の駒は飛びこえる', '+N', '成桂', '金と同じ動き'],
+  ['L', '香車', '前に、どこまでも（ほかの駒の手前まで）', '+L', '成香', '金と同じ動き'],
+  ['P', '歩', '前に1マス', '+P', 'と', '金と同じ動き'],
+];
+
+// 駒の動きの図（5×5。まん中に駒、1マスは点、どこまでもは線）
+function moveDiagram(kind) {
+  const N = 5;
+  const C = 2;
+  const grid = makeElement('div', 'sh-mv');
+  const cells = [];
+  for (let i = 0; i < N * N; i += 1) {
+    const cell = makeElement('span', 'sh-mv__cell');
+    cells.push(cell);
+    grid.append(cell);
+  }
+  const sp = E.SPEC[kind];
+  sp.steps.forEach(([dr, dc]) => {
+    const dot = makeElement('span', 'sh-mv__dot' + (Math.abs(dr) === 2 ? ' is-jump' : ''));
+    cells[(C + dr) * N + C + dc].append(dot);
+  });
+  sp.slides.forEach(([dr, dc]) => {
+    for (let k = 1; k <= C; k += 1) {
+      const bar = makeElement('span', 'sh-mv__bar' + (k === C ? ' is-end' : ''));
+      bar.style.transform = 'translate(-50%, -50%) rotate(' + (Math.atan2(dr, dc) * 180 / Math.PI + 90) + 'deg)';
+      cells[(C + dr * k) * N + C + dc * k].append(bar);
+    }
+  });
+  const center = cells[C * N + C];
+  center.classList.add('is-piece');
+  center.append(pieceNode(kind, true, false));
+  return grid;
+}
+
+function ruleItem(title, text) {
+  const box = makeElement('div', 'sh-rx__item');
+  if (title) box.append(makeElement('h4', 'sh-rx__title', title));
+  if (text) box.append(makeElement('p', 'sh-rx__text', text));
+  return box;
+}
+function ruleSection(heading, ...items) {
+  const sec = makeElement('section', 'sh-rx__sec');
+  sec.append(makeElement('h3', 'sh-rx__head', heading), ...items);
+  return sec;
+}
+function pieceCard(kind, name, text) {
+  const card = makeElement('div', 'sh-rx__piece');
+  const fig = moveDiagram(kind);
+  fig.setAttribute('role', 'img');
+  fig.setAttribute('aria-label', name + 'の動き');
+  const words = makeElement('div', 'sh-rx__words');
+  words.append(makeElement('h4', 'sh-rx__title', name), makeElement('p', 'sh-rx__text', text));
+  card.append(fig, words);
+  return card;
+}
+
+// いまのルール。ゲームの画面なら対局の記録、待合室ならルームの設定
+function ruleContext() {
+  if (state.role === 'local' && state.local) {
+    const L = state.local;
+    return { v: variantOf(L.v), clock: L.cc, aid: L.aid, cpu: L.cpu != null ? LEVEL_NAMES[L.level] || '' : null };
+  }
+  const room = state.room;
+  if (!room) return null;
+  const game = state.currentScreen === 'game' ? gameOf(room) : null;
+  const cpu = game ? cpuSideOf(game) : null;
+  return {
+    v: variantOf(game ? game.v : room.v),
+    clock: game ? game.clock : room.clock,
+    aid: room.aid,
+    cpu: cpu != null ? LEVEL_NAMES[cpuLevelOfSeat(game.seats[KEYS[cpu]])] || '' : null,
+  };
+}
+
+function ruleBodies(X) {
+  const hon = X.v === 'hon';
+  const D = E.VARIANTS[X.v];
+  const clock = normClockCfg(X.clock);
+  const out = {};
+
+  // 駒の動き（5五将棋には桂・香がない）
+  const list = PIECE_GUIDE.filter(([k]) => hon || (k !== 'N' && k !== 'L'));
+  out.piece = [
+    ruleSection('図の見かた', ruleItem(null, '点は1マスだけ、線はその向きにどこまでも進める（ほかの駒は飛びこえられない。相手の駒なら取れる）。図は先手から見た向き')),
+    ruleSection('駒', ...list.map(([k, name, text]) => pieceCard(k, name, text))),
+    ruleSection('成った駒', ruleItem(null, '成ると字が赤くなって、動きが変わる。一度成った駒はもとにもどらない'),
+      ...list.filter((x) => x[3] === '+R' || x[3] === '+B').map((x) => pieceCard(x[3], x[4], x[5])),
+      ruleItem(list.filter((x) => x[3] && x[3] !== '+R' && x[3] !== '+B').map((x) => x[4]).join('・'), '金と同じ動き'),
+    ),
+  ];
+
+  // 指しかた
+  const notThere = hon ? '歩・香車を一番奥の段に、桂馬を奥の2段に、打ったり成らずに動かしたりする手' : '歩を一番奥の段に、打ったり成らずに動かしたりする手';
+  out.play = [
+    ruleSection('自分の番',
+      ruleItem('動かす', '先手（▲）から、交互に1手ずつ。自分の駒を押して、動かしたい所を押す'),
+      ruleItem('取る', '相手の駒がある所へ動くと、その駒を取れる。取った駒は「持ち駒」になる'),
+      ruleItem('打つ', '自分の番に、持ち駒を盤の空いている所へ置ける（これで1手）。持ち駒を押してから、打つ所を押す。成った駒を取ったときは、もとの駒にもどる'),
+    ),
+    ruleSection('成る',
+      ruleItem(null, '相手の陣（' + (hon ? '奥の3段' : '奥の1段') + '）に入る・その中で動く・そこから出るときに、「成る」か選べる。玉と金は成らない。打った駒は、打ったときには成らない（次に動かすときに成れる）'),
+      ruleItem(null, 'このまま行くと動けなくなる所（' + (hon ? '歩・香車の一番奥、桂馬の奥の2段' : '歩の一番奥') + '）へ動くときは、自動で成る'),
+    ),
+    ruleSection('指せない手',
+      ruleItem('二歩', '同じたての列に、自分の歩を2枚にする手（成った「と」は数えない）'),
+      ruleItem('打ち歩詰め', '歩を打って、すぐ詰みにする手（動かした歩で詰みにするのはよい）'),
+      ruleItem('行き所のない手', notThere),
+    ),
+    ruleSection('王手',
+      ruleItem(null, '次に王（玉）が取られそうな形。逃げる・間に駒を入れる・王手をかけている駒を取る、のどれかでよけよう。よけないで指すと、相手に王を取られて負けになる'),
+    ),
+  ];
+
+  // 勝ち負け
+  const end = [
+    ruleSection('勝ち',
+      ruleItem('詰み', '相手の王が、どう動いても次に取られる形にしたら勝ち（相手に指せる手がなくなったときも勝ち）'),
+      ruleItem('王を取る', '相手がうっかり王手をよけなかったときは、王を取ったら勝ち'),
+      ruleItem('投了', '「投了する」を押すと、負けを認めて終わりにできる（相手の番でもよい）'),
+    ),
+    ruleSection('千日手',
+      ruleItem(null, '同じ形（盤・持ち駒・番）が4回出たら終わり。' + (hon ? '本将棋は引き分け' : '5五将棋は先手の負け') + '。王手を続けて千日手になったときは、王手をかけていた人の負け'),
+    ),
+  ];
+  if (hon) {
+    end.push(ruleSection('入玉宣言',
+      ruleItem(null, '自分の王が相手の陣（奥の3段）に入り、王手されていない、相手の陣に王のほかの駒が10枚以上、相手の陣の駒と持ち駒の点（飛車・角とその成りは5点、ほかは1点）が先手28点・後手27点以上のとき、自分の番に宣言して勝ちにできる。条件がそろうと「入玉宣言で勝ちにする」が出る'),
+    ));
+  }
+  if (clock.m || clock.b) {
+    end.push(ruleSection('時間',
+      ruleItem(null, '自分の番の時間だけが減る。' + (clock.m ? '持ち時間がなくなると' : 'はじめから') + (clock.b ? '「秒読み」で、1手ごとに' + clock.b + '秒にもどる' : '') + '。時間が切れたら負け'),
+    ));
+  }
+  end.push(ruleSection('場所の言い方', ruleItem(null, '盤のふちの数字（１〜' + '１２３４５６７８９'[D.n - 1] + '）と漢数字（一〜' + ['一', '二', '三', '四', '五', '六', '七', '八', '九'][D.n - 1] + '）を合わせて「' + (hon ? '７六' : '３四') + '」のように言う')));
+  out.end = end;
+
+  // いまの設定
+  const ul = makeElement('ul', 'sh-rulesview');
+  const rows = [['盤', D.name + '（' + D.size + '）'], ['持ち時間', clockSummary(X.clock)], ['補助', aidSummary(X.aid)]];
+  if (X.cpu != null) rows.push(['相手', 'CPU' + (X.cpu ? '（' + X.cpu + '）' : '')]);
+  rows.forEach(([k, v]) => {
+    const li = makeElement('li', 'sh-rulesview__item');
+    li.append(makeElement('span', 'sh-rulesview__key', k), makeElement('span', 'sh-rulesview__val', v));
+    ul.append(li);
+  });
+  out.now = [ruleSection('いまのルール', ul)];
+  return out;
+}
+
+function renderRulePanel() {
+  const X = ruleContext();
+  if (!X) return;
+  const key = JSON.stringify([X.v, normClockCfg(X.clock), normAid(X.aid), X.cpu]);
+  if (state.ruleKey === key) return;
+  state.ruleKey = key;
+  if (!RULE_TABS.some(([k]) => k === state.ruleTab)) state.ruleTab = 'piece';
+  const bodies = ruleBodies(X);
+  $('ruleTabs').replaceChildren(...RULE_TABS.map(([k, label]) => {
+    const b = makeElement('button', 'sh-rulepanel__tab', label);
+    b.type = 'button';
+    b.dataset.tab = k;
+    b.setAttribute('aria-pressed', k === state.ruleTab ? 'true' : 'false');
+    return b;
+  }));
+  $('ruleBody').replaceChildren(...RULE_TABS.map(([k, label]) => {
+    const page = makeElement('div', 'sh-rulepanel__page');
+    page.dataset.tab = k;
+    page.setAttribute('aria-label', label);
+    page.hidden = k !== state.ruleTab;
+    page.append(...bodies[k]);
+    return page;
+  }));
+}
+
+function selectRuleTab(k) {
+  state.ruleTab = k;
+  $('ruleTabs').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.tab === k ? 'true' : 'false'));
+  $('ruleBody').querySelectorAll('.sh-rulepanel__page').forEach((p) => { p.hidden = p.dataset.tab !== k; });
+  $('ruleBody').scrollTop = 0;
+}
+
+// 右に立てる幅か（CSS の @media と同じ）
+const RULE_SIDE_MQ = window.matchMedia('(min-width: 1180px)');
+
+function setRulePanel(open, { focus = true } = {}) {
+  const was = !$('rulePanel').hidden;
+  $('rulePanel').hidden = !open;
+  document.documentElement.classList.toggle('sh-rules-open', open);
+  $('btnRules').setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (open && !was) {
+    renderRulePanel();
+    if (focus) $('rulePanelTitle').focus({ preventScroll: true });
+    // 下から出したとき、盤が板の下に隠れるなら、盤が板の上に入るまで動かす。
+    // ふつうは番の文を上へ。入りきらないときは盤を優先する（番は札の「の番」にも出ている）
+    if (!RULE_SIDE_MQ.matches && state.currentScreen === 'game') {
+      const sheetTop = $('rulePanel').getBoundingClientRect().top;
+      const box = $('board').getBoundingClientRect();
+      if (box.bottom > sheetTop || box.top < 0) {
+        let delta = $('gameStatus').getBoundingClientRect().top - 8;
+        if (box.bottom - delta > sheetTop) delta = Math.min(box.bottom - sheetTop + 4, box.top);
+        window.scrollBy({ top: delta });
+      }
+    }
+  } else if (!open && was && focus && $('rulePanel').contains(document.activeElement)) {
+    $('btnRules').focus({ preventScroll: true });
+  }
 }
 
 /* ── 盤と持ち駒 ── */
@@ -2391,6 +2615,17 @@ $('promoDialog').addEventListener('cancel', (event) => { event.preventDefault();
 $('btnUndo').addEventListener('click', () => {
   if (state.role === 'local') undoLocal();
   else if (state.role === 'host') undoMove();
+});
+$('btnRules').addEventListener('click', () => setRulePanel($('rulePanel').hidden));
+$('btnRulesClose').addEventListener('click', () => setRulePanel(false));
+$('ruleTabs').addEventListener('click', (event) => {
+  const b = event.target.closest('button[data-tab]');
+  if (b) selectRuleTab(b.dataset.tab);
+});
+// Esc で、ルールの板を閉じる（板の中にいるとき）
+document.addEventListener('keydown', (event) => {
+  if (event.key !== 'Escape' || $('rulePanel').hidden || !$('rulePanel').contains(document.activeElement)) return;
+  setRulePanel(false);
 });
 $('btnFlip').addEventListener('click', () => {
   state.flip = !state.flip;
