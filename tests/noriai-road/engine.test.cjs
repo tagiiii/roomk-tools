@@ -230,7 +230,7 @@ test('シーソーは重いほうが下がり、箱も重さに入る', () => {
   assert(near(L.y, R.y), '1人ずつならつり合う');
   // 箱を左に乗せる
   const box = w.boxes[0];
-  box.x = L.x + 1.6; box.y = L.y - 1; box.vy = 0;
+  box.x = L.x + L.w - 1; box.y = L.y - 1; box.vy = 0;
   run(w, 120);
   assert(near(R.y, 10 - 1.5, 0.05), '右が上がった y=' + R.y);
   // 右から台へ
@@ -244,7 +244,7 @@ test('シーソーで下がった側からも、床へ跳んで出られる', ()
   const [a, b] = w.players;
   place(a, L.x + 0.3, L.y - E.PH);
   const box = w.boxes[0];
-  box.x = L.x + 1.6; box.y = L.y - 1;
+  box.x = L.x + L.w - 1; box.y = L.y - 1;
   place(b, 2, 10 - E.PH);
   run(w, 120);
   assert(near(L.y, 11.5, 0.05), '左が下がった');
@@ -677,7 +677,7 @@ test('シーソー: 箱は重さ2（押すのに2人）。最後の1人は、左
   assert(a.y > 8, '箱がないと、ひとりでは段に上がれない y=' + a.y);
   place(a, L.x - 3, GROUND);
   run(w, 120);
-  box.x = L.x + 1.6; box.y = L.y - 1; box.vy = 0;
+  box.x = L.x + L.w - 1; box.y = L.y - 1; box.vy = 0;
   run(w, 120);
   assert(near(R.y, 10 - 1.5, 0.05), '箱1つで右が上がった y=' + R.y);
   place(a, R.x + 1.8, R.y - E.PH);
@@ -685,6 +685,54 @@ test('シーソー: 箱は重さ2（押すのに2人）。最後の1人は、左
   assert(near(R.y, 10 - 1.5, 0.05), '最後の1人が乗っても、右は上がったまま y=' + R.y);
   run(w, 60, (f) => [{ r: true, jump: f < 30 }, {}]);
   assert(near(a.y, 7 - E.PH, 0.05), '段に上がれた y=' + a.y);
+});
+// 2026-11-19: 前は、上がった右のシーソーが左の床から遠く、箱を押した人のうち最後の1人が進めなかった
+const SEESAW_STAGES = E.STAGES.map((st, i) => (st.parts.some(([name]) => name === 'seesaw') ? i : -1)).filter((i) => i >= 0);
+test('シーソー: 2人で押すと、箱は左のシーソーに乗って右が上がる', () => {
+  for (const stage of SEESAW_STAGES) {
+    const w = E.createWorld(stage, 2);
+    const ss = w.seesaws[0];
+    const [L, R] = [w.plats[ss.left], w.plats[ss.right]];
+    const box = w.boxes.find((b) => near(b.x, L.x - 2, 0.01)); // シーソーのすぐ左の重い箱
+    const [a, b] = w.players;
+    place(a, box.x - E.PW - 0.1, GROUND);
+    place(b, box.x - E.PW - 0.15, GROUND);
+    run(w, 10);
+    // 箱が左のシーソーに乗ったら、押すのをやめる
+    let f = 0;
+    while (f < 300 && !(box.ground === 'p' + ss.left && box.x >= L.x - 0.01)) { run(w, 1, () => [{ r: true }, { r: true }]); f++; }
+    assert.strictEqual(box.ground, 'p' + ss.left, 'stage ' + stage + ' 箱が左のシーソーに乗った');
+    run(w, 1);
+    // 押した2人は、左の床に戻る（板の上に落ちていたら跳んで出る）
+    for (const p of [a, b]) { place(p, L.x - E.PW - 2, GROUND); p.entered = true; p.away = true; }
+    run(w, 150);
+    assert(near(R.y, 10 - 1.5, 0.05), 'stage ' + stage + ' 右が上がった y=' + R.y);
+    assert(near(box.y, L.y - 1, 0.05), 'stage ' + stage + ' 箱は左のシーソーの上');
+  }
+});
+test('シーソー: 箱が左に乗っていれば、最後の1人は左の床から右のシーソーへ跳び移り、段に上がれる', () => {
+  for (const stage of SEESAW_STAGES) {
+    const w = E.createWorld(stage, 2);
+    const ss = w.seesaws[0];
+    const [L, R] = [w.plats[ss.left], w.plats[ss.right]];
+    const box = w.boxes.find((b) => near(b.x, L.x - 2, 0.01)); // シーソーのすぐ左の重い箱
+    const [a, b] = w.players;
+    place(b, R.x + 40, GROUND); b.entered = true; b.away = true;
+    box.x = L.x + L.w - 1; box.y = L.y - 1; box.vy = 0;
+    place(a, L.x - E.PW - 1.5, GROUND);
+    run(w, 150);
+    assert(near(R.y, 10 - 1.5, 0.05), 'stage ' + stage + ' 右が上がった');
+    // 走って、床のはしで跳ぶ（跳ぶのが少し早くても遅くても届く）
+    for (const delay of [16, 20, 24]) {
+      place(a, L.x - E.PW - 1.5, GROUND);
+      run(w, 10);
+      run(w, 120, (k) => [{ r: true, jump: k >= delay && k < delay + 30 }, {}]);
+      assert.strictEqual(a.ground, 'p' + ss.right, 'stage ' + stage + ' delay ' + delay + ' 右のシーソーに乗った x=' + a.x + ' y=' + a.y);
+      assert(near(R.y, 10 - 1.5, 0.05), '最後の1人が乗っても、右は上がったまま');
+    }
+    run(w, 60, (k) => [{ r: true, jump: k < 30 }, {}]);
+    assert(near(a.y, 7 - E.PH, 0.05), 'stage ' + stage + ' 段に上がれた y=' + a.y);
+  }
 });
 test('シーソー: 段の下に床はなく、右のシーソーのすぐとなり', () => {
   const w = E.createWorld(2, 2);
