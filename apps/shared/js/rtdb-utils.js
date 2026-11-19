@@ -51,6 +51,22 @@
       .replace(/'/g, '&#39;');
   }
 
+  // Safari・iPad では、Firebase Auth がログインの準備の途中で Google の部品（apis.google.com）を先に読み、
+  // 終わるまで匿名ログインを待たせる（ポップアップ・リダイレクトでのログインのため。Chrome などでは読まない）。
+  // 通信が遅い所や、フィルターで apis.google.com が遅らされる所では、参加・作成のボタンを押したまま
+  // 長く止まって見えた（2026-11-19、のりあいロードの「iPad で参加すると固まる」）。
+  // このサイトは匿名ログインだけでポップアップ・リダイレクトを使わないので、先読みをしない。
+  // SDK の内部の値（_popupRedirectResolver._shouldInitProactively）を使う。SDK の版を上げたら、
+  // iPad をまねた WebKit で apis.google.com を読まないことを確かめなおす（13.3.0〜13.4.0 で同じ作り）。
+  function skipPopupResolverPreload(auth) {
+    try {
+      const resolver = auth && auth._delegate && auth._delegate._popupRedirectResolver;
+      if (resolver) Object.defineProperty(resolver, '_shouldInitProactively', { value: false, configurable: true });
+    } catch (error) {
+      // 止められなくても、ログインはいままでどおり進む
+    }
+  }
+
   function initFirebase(firebaseNamespace) {
     if (!firebaseNamespace
       || typeof firebaseNamespace.initializeApp !== 'function'
@@ -60,7 +76,9 @@
     }
 
     firebaseNamespace.initializeApp(FIREBASE_CONFIG);
-    const authReady = firebaseNamespace.auth().signInAnonymously().catch((error) => {
+    const auth = firebaseNamespace.auth();
+    skipPopupResolverPreload(auth);
+    const authReady = auth.signInAnonymously().catch((error) => {
       console.error('[auth] anonymous sign-in failed', error);
       throw error;
     });
@@ -187,6 +205,7 @@
     generateRoomCode,
     esc,
     initFirebase,
+    skipPopupResolverPreload,
     cancelRoomOnDisconnect,
     copyRoomCode,
     copyText,
