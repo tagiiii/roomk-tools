@@ -299,8 +299,10 @@
     },
     {
       name: 'ぜんぶ',
-      hint: 'これまでのしかけが全部出てくる。カギはシーソーの先、ボールはかごの手前にあるよ。',
-      parts: [['start'], ['ledge'], ['boxSwitch', 2], ['colorGate', 3], ['lift', 'all'], ['seesaw', 'key'], ['bridge', 'all'], ['ballHoop', true], ['door', true]],
+      hint: 'これまでのしかけが全部出てくる。ボールはかごの手前、カギはシーソーの先にあるよ。',
+      // かごはシーソーの前（2026-11-19）。前はカギのあとにボールがあり、2人だと2人とも手がふさがって、
+      // カギをいったん投げないとボールを頭の上で受けとれなかった
+      parts: [['start'], ['ledge'], ['boxSwitch', 2], ['colorGate', 3], ['lift', 'all'], ['ballHoop', true], ['seesaw', 'key'], ['bridge', 'all'], ['door', true]],
     },
     {
       name: '高い台',

@@ -223,17 +223,10 @@ function play(stageIndex, n, opts = {}) {
         if (arg) { const F = freeSeat(w); bot.setAll({ go: o + 0.4, tol: 0.3 }); bot.set(F, { go: o + 1.2, tol: 0.1 }); bot.until(() => holderOf(w, 'ball'), T, 'ballHoop pick'); }
         const B = holderOf(w, 'ball');
         if (!B) throw new Stuck('ballHoop: ボールをだれも持っていない');
-        let Tn = freeSeat(w, [B]);
-        let droppedKey = false;
-        if (!Tn) {
-          // 手のあいている人がいない（2人で、1人がカギ・1人がボール）: カギを持っている人が、カギを左へ投げて手をあける
-          Tn = w.players.find((p) => p.seat !== B).seat;
-          bot.set(Tn, { dir: -1, hop: false }); bot.run(2); bot.set(Tn, {}); bot.run(2);
-          bot.set(Tn, { act: true }); bot.run(40);
-          if (E.holdingOf(w, Tn)) throw new Stuck('ballHoop: カギを置けない');
-          droppedKey = true;
-          log.push(['(2人: カギをいったん投げて手をあけた)']);
-        }
+        // ボールを頭の上で受けとる人は、手があいていること（2人で、1人がカギ・1人がボールだと進めない。
+        // ステージ5は 2026-11-19 にかごをシーソーの前へ移して、この形をなくした）
+        const Tn = freeSeat(w, [B]);
+        if (!Tn) throw new Stuck('ballHoop: ボールを受けとる人の手があいていない（カギを持っている）');
         const xB = opts.hoopX != null ? o + opts.hoopX : o + 2.2;
         bot.setAll({ go: o + 0.4, tol: 0.3 });
         bot.set(B, { go: xB, tol: 0.04, hop: false });
@@ -247,12 +240,6 @@ function play(stageIndex, n, opts = {}) {
         bot.set(Tn, { act: true });
         bot.until(() => hoop.done, 120, 'ballHoop score');
         bot.until(() => g.open, 60, 'ballHoop gate');
-        if (droppedKey) {
-          settle('ballHoop settle');
-          const key = w.items.find((x) => x.kind === 'key' && !x.gone);
-          bot.set(Tn, { go: key.x - 0.1, tol: 0.1 });
-          bot.until(() => holderOf(w, 'key') === Tn, T, 'ballHoop pick key again');
-        }
         goAll(end, all, 'ballHoop after');
         return;
       }
