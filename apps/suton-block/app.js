@@ -9,6 +9,9 @@ const E = window.SutonEngine;
 const MAX_GUESTS = 8;
 const SPEED = { slow: 1000, normal: 650, fast: 380 };
 const SPEED_LABEL = { slow: 'ゆっくり', normal: 'ふつう', fast: 'はやい' };
+// 対戦の「ここまで」で、のこった人が減ったときの落ちる間かくの倍率（0: そのまま・1: 半分いかに減った・2: のこり2人の1対1）
+const SPEED_UP_RATE = [1, 0.7, 0.5];
+const SPEED_UP_WORD = ['', 'のこりが半分！ 落ちるのが速くなったよ', '1対1！ もっと速くなったよ'];
 const ROOM_TIMES = [120, 180, 300];
 const NO_TIME_CAP_S = 30 * 60; // 対戦の「時間なし」も、ルームが残りつづけないよう30分で区切る（画面には時間を出さない）
 const BATTLE_END_MS = 800;     // 対戦で1人になってから、最後の盤が届くのを待って結果を出す
@@ -516,6 +519,16 @@ function battleOverAt(room, R) {
   const alive = R.players.filter((name) => !isOut(room, R, name)).length;
   if (alive > (R.players.length >= 2 ? 1 : 0)) return null;
   return Math.max(0, ...R.players.map((name) => Number(boardOf(room, R, name)?.outAt) || 0));
+}
+
+// 対戦の「ここまで」で、のこった人の数から落ちる速さの段階を決める（3人いじょうではじめた回だけ）。
+// のこりが2人なら2、はじめた人数の半分（はんぱは切り上げ）いかなら1、それ以外は0。盤の out から数えるので、どの端末も同じになる
+function speedUpStage(room, R) {
+  if (!isOutMode(R) || R.players.length < 3) return 0;
+  const alive = R.players.filter((name) => !isOut(room, R, name)).length;
+  if (alive === 2) return 2;
+  if (alive > 2 && alive <= Math.ceil(R.players.length / 2)) return 1;
+  return 0;
 }
 
 // ホストが切れたルームの期限。ふだんは切れてから2分。あそんでいる回は、時間で結果が出て2分たつまで、
@@ -1539,6 +1552,8 @@ function startRun(o) {
   const now = nowOf();
   state.run = {
     speedMs: SPEED[o.speed] || SPEED.slow,
+    baseMs: SPEED[o.speed] || SPEED.slow, // 設定した速さ（対戦で人数が減ったら speedMs だけ速くする）
+    speedStage: 0,
     lastFall: now, lockAt: null, resets: 0,
     startAt: o.startAt || 0, endAt: o.endAt || 0, showTimer: !!o.endAt && o.showTimer !== false,
     done: false, raf: 0, noteTimer: 0, paused: false,
@@ -1553,6 +1568,7 @@ function startRun(o) {
   $('playTimer').textContent = '';
   $('btnPlayEnd').textContent = state.role === 'host' ? '早めにおわる' : room ? '退出する' : 'おわる';
   $('btnPause').hidden = room;
+  $('screen-play').dataset.speedUp = '0';
   $('pauseCover').hidden = true;
   $('playLines').textContent = String(state.run.battle ? state.run.sent : state.game.lines);
   $('playNote').hidden = true;
@@ -1612,6 +1628,7 @@ function syncRun(room, R) {
     state.run.startAt = playStartOf(R);
     state.run.endAt = endOf(R);
   }
+  applySpeedUp(room, R);
   receiveJama(room, R);
   renderOthers();
   updateHostOverlay(room);
@@ -1732,6 +1749,20 @@ function attackNote(res, sent, cancel, people = 1, aimed = null) {
   if (sent > 0) parts.push(people > 1 ? people + '人に' + sent + '段ずつおくったよ' : sent + '段おくったよ');
   else if (cancel > 0) parts.push('来るじゃまを' + cancel + '段へらしたよ');
   if (parts.length) note(parts.join(' '), 1400);
+}
+
+// 対戦の「ここまで」で人数が減ったら、落ちるのを速くする（もどさない）。上がったときだけ、のこっている人に一言
+function applySpeedUp(room, R) {
+  const run = state.run;
+  if (!run) return;
+  const stage = speedUpStage(room, R);
+  const first = !run.speedSynced; // 回のはじめ・読み込み直した直後は一言を出さない
+  run.speedSynced = true;
+  if (stage <= run.speedStage) return;
+  run.speedStage = stage;
+  $('screen-play').dataset.speedUp = String(stage); // いまの段階（E2E で見る）
+  run.speedMs = Math.round(run.baseMs * SPEED_UP_RATE[stage]);
+  if (!first && !run.done && nowOf() >= run.startAt) note(SPEED_UP_WORD[stage], 1800);
 }
 
 function note(text, ms) {
