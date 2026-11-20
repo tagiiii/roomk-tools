@@ -81,6 +81,11 @@
         <div class="card" id="lobbyHost" hidden>
           <h2 class="kd-h2">ルール</h2>
           <fieldset class="kd-field">
+            <legend class="kd-h3">言葉</legend>
+            <div id="langOpts" class="kd-seg" role="radiogroup" aria-label="言葉"></div>
+            <p id="langNote" class="kd-note"></p>
+          </fieldset>
+          <fieldset class="kd-field">
             <legend class="kd-h3">はやさ</legend>
             <div id="speedOpts" class="kd-seg" role="radiogroup" aria-label="はやさ"></div>
             <p id="speedNote" class="kd-note"></p>
@@ -182,8 +187,8 @@
     </main>
   </div>
   <div class="kd-overlay" id="hostOffOverlay" hidden data-roomk-blocking role="dialog" aria-modal="true" aria-labelledby="hostOffOverlay-title"><div class="kd-overlay__panel"><h2 id="hostOffOverlay-title">ホストの戻りを待っています</h2><p>しばらく待っても戻らないときは退出してね。</p><button type="button" class="btn btn-secondary" id="btnOverlayLeave">退出する</button></div></div>
-  <script src="data.js?v=20261109"></script>
-  <script type="module" src="app.js?v=20261113"></script>
+  <script src="data.js?v=20261120"></script>
+  <script type="module" src="app.js?v=20261120"></script>
   <script src="../shared/js/overlay-a11y.js?v=1" defer></script>
   <script src="../shared/js/focus-keep.js?v=1" defer></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
@@ -196,12 +201,12 @@
         { heading: 'はじめかた', items: [
           'ホストが「ルームをつくる」で名前を入れる。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる。スマホやタブレットで入る人には「QRコードを出す」をカメラで読み取ってもらう',
           '参加する人は「ルームに参加する」で名前、ルームコード（6文字）の順に入れ、「参加する」を押す。リンクから開いたときは、ルームコードは入っているので名前だけ入れる',
-          'ホストは、はやさと問題の数を選んで「はじめる」を押す。「くわしい設定」で、問題の種類・こたえる時間・つぎの問題への進み方も変えられる。ホストも遊ぶかは「自分も遊ぶ」で選ぶ',
+          'ホストは、言葉（日本語・英語・まぜる）とはやさと問題の数を選んで「はじめる」を押す。「くわしい設定」で、問題の種類・こたえる時間・つぎの問題への進み方も変えられる。ホストも遊ぶかは「自分も遊ぶ」で選ぶ',
           'それぞれの端末の画面で遊ぶよ',
         ] },
         { heading: 'すすめかた', items: [
           '1問めは3・2・1、2問めからは「よーい」のあと、言葉がサッと走りぬける',
-          'なんて書いてあったか入力して「こたえる」。ひらがなでもカタカナでもいいよ',
+          'なんて書いてあったか入力して「こたえる」。ひらがなでもカタカナでもいいよ。英語は大文字でも小文字でもいいよ',
           'わからないときは「ヒントを見る」で、何文字か・最初の文字・最後の文字を見られる。「パス」もできる',
           'ときどき「どっちが先に流れた？」「★のついた言葉はどれ？」のような、選んでこたえる問題もまざる',
           'みんながこたえるか、こたえる時間になると、さっきの言葉がゆっくりもう一度流れて、こたえが出る',

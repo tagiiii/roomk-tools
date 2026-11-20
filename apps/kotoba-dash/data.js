@@ -21,6 +21,12 @@ window.KOTOBA_DASH_WORDS = {
     'スケート', 'サッカー', 'バスケット', 'バイオリン', 'タンバリン', 'オルゴール', 'クレヨン', 'パレット', 'スタンプ', 'リュック',
     'マフラー', 'セーター', 'パジャマ', 'スリッパ', 'キャラメル', 'マシュマロ', 'カメレオン', 'アルマジロ', 'ヤドカリ', 'キリギリス',
     'ハイキング', 'ボウリング', 'ゴーカート', 'モノレール', 'ダンボール', 'ペリカン', 'ペンギン', 'トランプ', 'ビスケット', 'プリズム',
+    // 2026-11-20 に足した言葉
+    'あじさい', 'すいれん', 'すずらん', 'ふきのとう', 'しまうま', 'うぐいす', 'せきれい', 'おえかき', 'たけうま', 'たこあげ',
+    'こままわし', 'ゆきあそび', 'おひさま', 'ながれぼし', 'ぎょうざ', 'てんぷら', 'からあげ', 'ぜんざい', 'あんみつ', 'みたらし',
+    'おしるこ', 'ところてん', 'せんぷうき', 'たけとんぼ', 'ひなまつり', 'かみしばい', 'ゆうえんち', 'まめまき', 'おはなみ', 'やまのぼり',
+    'ビーバー', 'トナカイ', 'カステラ', 'ヨーグルト', 'ハーモニカ', 'ヨーヨー', 'フリスビー', 'ランタン', 'ジャングル', 'オーロラ',
+    'サボテン', 'ポンチョ', 'エプロン', 'クッション', 'ソファー', 'クリスマス', 'ナポリタン', 'ゴンドラ', 'サーフィン', 'カブトガニ',
   ],
   // 6文字以上
   long: [
@@ -34,6 +40,10 @@ window.KOTOBA_DASH_WORDS = {
     'フライドポテト', 'ハンバーガー', 'チーズケーキ', 'ソフトクリーム', 'グレープフルーツ', 'ドラゴンフルーツ', 'オレンジジュース', 'クワガタムシ', 'オランウータン', 'ティラノサウルス',
     'トリケラトプス', 'プテラノドン', 'ジンベエザメ', 'タツノオトシゴ', 'イソギンチャク', 'スノーボード', 'ローラースケート', 'キャッチボール', 'プラネタリウム', 'スタンプラリー',
     'レインコート', 'マウンテンバイク', 'キックボード', 'ロープウェイ', 'キャンピングカー', 'ホットドッグ', 'パンナコッタ', 'ミルクセーキ', 'フルーツポンチ', 'バナナジュース',
+    // 2026-11-20 に足した言葉
+    'こんぺいとう', 'かみひこうき', 'だるまおとし', 'てるてるぼうず', 'すいぞくかん', 'どうぶつえん', 'つきみだんご', 'つみきあそび', 'かいすいよく', 'わたがしやさん',
+    'チューリップ', 'レッサーパンダ', 'シロナガスクジラ', 'ミーアキャット', 'ビーチボール', 'カップケーキ', 'ロールケーキ', 'バウムクーヘン', 'クロワッサン', 'ホットミルク',
+    'ジグソーパズル', 'ボードゲーム', 'テーマパーク', 'フクロモモンガ', 'ミックスジュース',
   ],
   // なかま分け（「どっちが先？」「どのなかま？」の問題で使う）。2つのなかまに入りそうな語は入れない
   cats: {
@@ -47,5 +57,36 @@ window.KOTOBA_DASH_WORDS = {
   similar: [
     'ねれわ', 'ぬめ', 'はほ', 'さちき', 'るろ', 'いり', 'こて', 'まも', 'あおめ', 'うら', 'くへ', 'たな', 'けは', 'しつ', 'そん',
     'シツ', 'ソン', 'クケタ', 'ウワ', 'コユ', 'ロコ', 'ラフ', 'ナメ', 'ルレ',
+    'bdpq', 'mnh', 'uvw', 'ilj', 'ceo', 'ft', 'ae',
   ],
+  // 英語の言葉（2026-11-20 に足した。ホストが待合室の「言葉」で「英語」「まぜる」を選んだときに出る）。
+  //   小文字だけ。入力は大文字・小文字・全角半角のちがいを同じとみなす。middle は4〜5文字、long は6文字以上
+  en: {
+    middle: [
+      'apple', 'lemon', 'melon', 'mango', 'peach', 'grape', 'juice', 'candy', 'donut', 'pizza',
+      'bread', 'toast', 'salad', 'honey', 'cake', 'panda', 'koala', 'tiger', 'zebra', 'horse',
+      'sheep', 'mouse', 'whale', 'shark', 'otter', 'camel', 'llama', 'eagle', 'duck', 'frog',
+      'bear', 'lion', 'puppy', 'star', 'moon', 'cloud', 'rain', 'snow', 'wind', 'river',
+      'ocean', 'beach', 'tulip', 'rose', 'leaf', 'tree', 'ball', 'kite', 'park', 'music',
+      'piano', 'drum', 'happy', 'smile', 'dance', 'jump', 'swim', 'train', 'plane', 'boat',
+      'bike', 'truck', 'house', 'chair', 'clock', 'lamp', 'robot', 'yoyo', 'tent', 'sushi',
+    ],
+    long: [
+      'banana', 'orange', 'cherry', 'strawberry', 'pineapple', 'watermelon', 'chocolate', 'pancake', 'popcorn', 'sandwich',
+      'hamburger', 'spaghetti', 'pudding', 'muffin', 'cookie', 'giraffe', 'elephant', 'penguin', 'dolphin', 'octopus',
+      'turtle', 'monkey', 'kitten', 'rabbit', 'hamster', 'squirrel', 'dinosaur', 'butterfly', 'ladybug', 'dragonfly',
+      'rainbow', 'sunshine', 'sunflower', 'snowman', 'mountain', 'island', 'forest', 'flower', 'garden', 'picnic',
+      'camping', 'bicycle', 'airplane', 'balloon', 'birthday', 'present', 'holiday', 'festival', 'fireworks', 'treasure',
+      'puzzle', 'skateboard', 'basketball', 'tennis', 'soccer', 'castle', 'guitar', 'violin', 'trumpet', 'rocket',
+      'jellyfish', 'starfish', 'umbrella', 'pajamas', 'sweater', 'blanket', 'pillow', 'backpack', 'camera', 'marshmallow',
+    ],
+    // なかまの名前は日本語のまま、言葉だけ英語
+    cats: {
+      'くだもの': ['apple', 'lemon', 'melon', 'mango', 'peach', 'grape', 'banana', 'orange', 'cherry', 'kiwi'],
+      'どうぶつ': ['cat', 'dog', 'bear', 'lion', 'panda', 'koala', 'tiger', 'zebra', 'monkey', 'rabbit'],
+      'のりもの': ['bus', 'car', 'train', 'plane', 'boat', 'bike', 'truck', 'taxi', 'rocket', 'ship'],
+      'あそび': ['kite', 'puzzle', 'ball', 'yoyo', 'blocks', 'swing', 'slide', 'seesaw', 'domino', 'cards'],
+      'しぜん': ['sea', 'sky', 'star', 'moon', 'sun', 'rain', 'snow', 'wind', 'cloud', 'river'],
+    },
+  },
 };

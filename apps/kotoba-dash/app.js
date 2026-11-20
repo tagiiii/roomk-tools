@@ -37,9 +37,15 @@ const KIND_INFO = {
 };
 const KINDS = Object.keys(KIND_INFO);
 const AUTOS = { on: '自動で進む', off: 'ホストが押す' };
+// 言葉（2026-11-20 に英語を足した）。はじめは日本語だけ
+const LANGS = {
+  ja: { label: '日本語', note: 'ひらがな・カタカナの言葉が流れるよ' },
+  en: { label: '英語', note: '英語の言葉（小文字）が流れるよ。大文字で入れても正解だよ' },
+  mix: { label: 'まぜる', note: '日本語と英語の言葉がまざって流れるよ' },
+};
 const LIMITS = [0, 10, 20, 30];  // こたえる時間（秒）。0 は決めない
 const LANES = [0.22, 0.5, 0.78];
-const DEFAULT_SETTINGS = { hostPlays: true, speed: 'normal', count: 5, kinds: KINDS.slice(), limit: 20, auto: 'on' };
+const DEFAULT_SETTINGS = { hostPlays: true, speed: 'normal', count: 5, kinds: KINDS.slice(), limit: 20, auto: 'on', lang: 'ja' };
 
 const $ = (id) => document.getElementById(id);
 const clean = (s, max) => String(s == null ? '' : s).replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
@@ -59,7 +65,7 @@ const norm = (s) => String(s || '').normalize('NFKC').replace(/\s+/g, '')
 // ══════════════════════════════════════════════
 // 形の似た本当にある言葉を選ぶ（選択肢が「言葉になっているかどうか」で見分けられないように）。
 //   同じ文字の種類（ひらがな／カタカナ）で長さの近いものから、同じ位置に同じ文字・形の似た文字があるほど似ているとみなす
-const scriptOf = (w) => (/[ァ-ヶ]/.test(w) && !/[ぁ-ゖ]/.test(w) ? 'kata' : (/^[ぁ-ゖー]+$/.test(w) ? 'hira' : 'other'));
+const scriptOf = (w) => (/^[a-z]+$/i.test(w) ? 'en' : (/[ァ-ヶ]/.test(w) && !/[ぁ-ゖ]/.test(w) ? 'kata' : (/^[ぁ-ゖー]+$/.test(w) ? 'hira' : 'other')));
 const lookAlike = (a, b) => a === b || WORDS.similar.some((g) => g.includes(a) && g.includes(b));
 function likeness(word, other) {
   const a = Array.from(word);
@@ -102,19 +108,21 @@ const BUILD = {
     const path = pick(['ltr', 'up', 'diag']);
     return { kind: 'dir', input: true, answer: word, reveal: word, hint: 'どこから来るかな？', prompt: 'なんて書いてあった？', sprites: [one(word, path, path === 'up' ? pick(LANES) : 0.5)] };
   },
-  order() {
-    const cat = pick(Object.keys(WORDS.cats));
-    const [a, b] = shuffle(WORDS.cats[cat]);
+  order(word, ctx) {
+    const cats = ctx.cats();
+    const cat = pick(Object.keys(cats));
+    const [a, b] = shuffle(cats[cat]);
     return {
       kind: 'order', input: false, answer: a, reveal: `先に流れたのは「${a}」`, options: shuffle([a, b]),
       hint: '言葉が2つ流れるよ。順番をよく見てね', prompt: 'どっちが先に流れた？',
       sprites: [one(a, 'rtl', 0.5, 0), one(b, 'rtl', 0.5, 0.8)],
     };
   },
-  cat() {
-    const cats = Object.keys(WORDS.cats);
+  cat(_, ctx) {
+    const set = ctx.cats();
+    const cats = Object.keys(set);
     const c = pick(cats);
-    const word = pick(WORDS.cats[c]);
+    const word = pick(set[c]);
     const others = shuffle(cats.filter((x) => x !== c)).slice(0, 2);
     return {
       kind: 'cat', input: false, answer: c, reveal: `「${word}」は ${c} のなかま`, options: shuffle([c, ...others]),
@@ -150,19 +158,24 @@ const kindsOf = (settings) => {
   return k.length ? k : ['plain'];
 };
 const settingsOf = (room) => ({ ...DEFAULT_SETTINGS, ...(room?.settings || {}) });
+const langOf = (settings) => (LANGS[settings?.lang] ? settings.lang : 'ja');
+// 言葉のたな: 日本語は WORDS.middle など、英語は WORDS.en.middle など
+const shelvesOf = (lang) => (lang === 'en' ? [WORDS.en] : (lang === 'mix' ? [WORDS, WORDS.en] : [WORDS]));
+const wordsOf = (lang, pools) => shelvesOf(lang).flatMap((shelf) => pools.flatMap((k) => (shelf && shelf[k]) || []));
 
 function buildQuestions(settings) {
   const kinds = kindsOf(settings);
   // たくさんの言葉の中からランダムに選ぶ
-  const pool = shuffle(SPEEDS[settings.speed].pools.flatMap((k) => WORDS[k] || []));
-  const ctx = { pool: WORDS.middle.concat(WORDS.long) };
+  const lang = langOf(settings);
+  const pool = shuffle(wordsOf(lang, SPEEDS[settings.speed].pools));
+  const ctx = { pool: wordsOf(lang, ['middle', 'long']), cats: () => pick(shelvesOf(lang)).cats };
   const qs = [];
   let prev = null;
   while (qs.length < settings.count) {
     let kind;
     if (qs.length === 0 && kinds.includes('plain')) kind = 'plain';
     else kind = pick(kinds.length > 1 ? kinds.filter((k) => k !== prev) : kinds);
-    const word = pool.length ? pool.pop() : pick(WORDS.middle);
+    const word = pool.length ? pool.pop() : pick(ctx.pool);
     // 作れない組み合わせ（短すぎる・にせものが作れない）は、ほかの種類に替える
     let q = BUILD[kind](word, ctx);
     if (!q) {
@@ -881,7 +894,7 @@ function ruleText(room) {
   const s = settingsOf(room);
   const kinds = kindsOf(s).map((k) => KIND_INFO[k].label).join('・');
   const limit = s.limit ? `こたえる時間: ${s.limit}秒` : 'こたえる時間: 決めない';
-  return `はやさ: ${SPEEDS[s.speed].label}／${s.count}問／${limit}／問題の種類: ${kinds}`;
+  return `言葉: ${LANGS[langOf(s)].label}／はやさ: ${SPEEDS[s.speed].label}／${s.count}問／${limit}／問題の種類: ${kinds}`;
 }
 
 function render() {
@@ -915,6 +928,8 @@ function renderLobby(room) {
   $('lobbyRule').textContent = ruleText(room);
   if (!host) return;
   $('setHostPlays').checked = plays;
+  segButtons($('langOpts'), Object.entries(LANGS).map(([k, v]) => [k, v.label]), langOf(s), (v) => setSetting('lang', v));
+  $('langNote').textContent = LANGS[langOf(s)].note;
   segButtons($('speedOpts'), Object.entries(SPEEDS).map(([k, v]) => [k, v.label]), s.speed, (v) => setSetting('speed', v));
   $('speedNote').textContent = SPEEDS[s.speed].note;
   segButtons($('countOpts'), COUNTS.map((n) => [n, `${n}問`]), s.count, (v) => setSetting('count', v));
