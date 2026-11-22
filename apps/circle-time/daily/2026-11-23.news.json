@@ -1,0 +1,32 @@
+{
+  "date": "2026-11-23",
+  "items": [
+    {
+      "title": "日本の探査機「みお」、水星に着いた",
+      "text": "JAXAなどが作った探査機「みお」が22日、ヨーロッパの探査機とつながったまま水星を回る道に入りました。2018年に出発し、8年で100億キロ以上を飛んできました。日本の探査機が水星に着くのは初めてで、来年4月から本格的に調べます。",
+      "ask": "行ってみたい星はある？",
+      "source": "産経新聞",
+      "url": "https://news.yahoo.co.jp/articles/cd3bb1e6a9fa3d68f6af2650831bbbabd1163737",
+      "on": "11月22日",
+      "img": { "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/BepiColombo_spacecraft_model.png/960px-BepiColombo_spacecraft_model.png", "credit": "National Aeronautics and Space Admini ほか", "license": "Public domain" }
+    },
+    {
+      "title": "沖縄の首里城、正殿が完成",
+      "text": "沖縄県那覇市の首里城で、建て直していた正殿が完成し、22日に式典が開かれました。朱色の大きな建物の前でテープカットが行われ、琉球の踊りも披露されました。23日のお昼から、だれでも中を見学できるようになります。",
+      "ask": "行ってみたいお城や建物はある？",
+      "source": "琉球新報",
+      "url": "https://news.yahoo.co.jp/articles/72479c4f7d887c9d0b3efbd929218f28f75deafb",
+      "on": "11月22日",
+      "img": { "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/Shurijo_Seiden_in_2013%2C_Naha%2C_Okinawa%2C_Japan.jpg/960px-Shurijo_Seiden_in_2013%2C_Naha%2C_Okinawa%2C_Japan.jpg", "credit": "Alexander Synaptic", "license": "CC BY-SA 4.0" }
+    },
+    {
+      "title": "小田原のかまぼこ店、ヒツジの飾り切り",
+      "text": "神奈川県小田原市の鈴廣かまぼこが、来年の干支のヒツジの形にかまぼこを切る方法を紹介しました。ピンクの表面を薄く切ってねじり、くるんとした角を作ります。ストローで目をつけるなど、家でもまねしやすい作り方です。",
+      "ask": "お弁当に入っているとうれしいものは？",
+      "source": "ハフポスト日本版",
+      "url": "https://news.yahoo.co.jp/articles/4b5004f43eef75d30f5b41b0cabb13b9c38b8141",
+      "on": "11月21日",
+      "img": { "src": "https://upload.wikimedia.org/wikipedia/commons/3/32/Kamaboko.jpg", "credit": "作者不明", "license": "Public domain" }
+    }
+  ]
+}
