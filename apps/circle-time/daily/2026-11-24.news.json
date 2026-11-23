@@ -1,0 +1,32 @@
+{
+  "date": "2026-11-24",
+  "items": [
+    {
+      "title": "和歌山・すさみ町に「ペンギン駅長」",
+      "text": "和歌山県すさみ町のエビとカニの水族館で21日、ケープペンギンの「なえ」が道の駅すさみのペンギン駅長になりました。なえは27歳のメスで、就任式ではお祝いのアジを1匹ぱくっと食べました。道の駅のペンギン駅長は国内で初めてだそうです。",
+      "ask": "動物が駅長だったら、どの動物がいい？",
+      "source": "エビとカニの水族館",
+      "url": "https://ebikani-aquarium.com/notice/%e3%83%9a%e3%83%b3%e3%82%ae%e3%83%b3%e9%a7%85%e9%95%b7%e3%80%80%e8%aa%95%e7%94%9f%e3%81%97%e3%81%be%e3%81%97%e3%81%9f%ef%bc%81/",
+      "on": "11月22日",
+      "img": { "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/African_penguin_at_Boulders_Beach_01.jpg/960px-African_penguin_at_Boulders_Beach_01.jpg", "credit": "Bernard Gagnon", "license": "CC BY-SA 4.0" }
+    },
+    {
+      "title": "のとじま水族館のジンベエザメは「フクベエ」",
+      "text": "石川県七尾市ののとじま水族館で9月から展示しているジンベエザメの名前が「フクベエ」に決まりました。オスで体長は約4.5mです。5つの候補から投票で選ばれ、9,502票が集まりました。",
+      "ask": "自分なら、どんな名前をつける？",
+      "source": "のとじま水族館",
+      "url": "https://www.notoaqua.jp/news/1150",
+      "on": "11月22日",
+      "img": { "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Whale_Shark_at_Osaka_Aquarium.jpg/960px-Whale_Shark_at_Osaka_Aquarium.jpg", "credit": "Bobak Ha'Eri", "license": "CC BY-SA 2.5" }
+    },
+    {
+      "title": "伊豆のカピバラ、今年も露天風呂が始まる",
+      "text": "静岡県伊東市の伊豆シャボテン動物公園で21日、カピバラの露天風呂が今シーズンも始まりました。カピバラたちがお湯にのんびりつかる姿が見られます。露天風呂は来年4月4日まで続きます。",
+      "ask": "寒い日にしたいことは何？",
+      "source": "伊豆シャボテン動物公園",
+      "url": "https://izushaboten.com/bloganimal/%e3%82%ab%e3%83%94%e3%83%90%e3%83%a9%e3%81%ae%e9%9c%b2%e5%a4%a9%e9%a2%a8%e5%91%82%e3%81%8c%e5%a7%8b%e3%81%be%e3%82%8a%e3%81%be%e3%81%97%e3%81%9f%ef%bc%81%e2%99%a8%ef%b8%8f/",
+      "on": "11月22日",
+      "img": { "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Capybara_Garden_near_Mountain_Hell_Hot_Spring.JPG/960px-Capybara_Garden_near_Mountain_Hell_Hot_Spring.JPG", "credit": "そらみみ (Soramimi)", "license": "CC BY-SA 4.0" }
+    }
+  ]
+}
