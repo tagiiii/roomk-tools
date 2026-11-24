@@ -94,6 +94,16 @@ const at = (s) => E.COLS.indexOf(s[0]) + (Number(s.slice(1)) - 1) * E.SIZE;
     check('L22 勝ち', await waitFor(async () => (await L.status(P)).includes('黒（メンター）の勝ち')), await L.status(P));
     check('L23 5つのならび', (await L.lineCells(P)).length === 5);
     check('L24 local-finish', await L.waitStats(P, 'local-finish', 1));
+    // 棋譜をコピー（2026-11-24）。「1 黒 H8」と1手1行・名前と結果つき
+    await P.page.evaluate(() => { window.__copied = null; navigator.clipboard.writeText = async (t) => { window.__copied = t; }; });
+    await P.page.click('#btnCopyKifu');
+    await waitFor(async () => P.page.evaluate(() => window.__copied));
+    const kifu = String(await P.page.evaluate(() => window.__copied)).split('\n');
+    const stones = [...(await L.readBoard(P))].filter((x) => x !== '.').length;
+    const moveLines = kifu.filter((x) => /^\d+ [黒白] [A-O]\d+$/.test(x));
+    check('L24b 棋譜をコピー（名前・1手1行・結果）', kifu[0] === '五目並べ' && kifu[1].startsWith('黒: メンター') && moveLines.length === stones
+      && moveLines[0].startsWith('1 黒 ') && moveLines[moveLines.length - 1] === stones + ' 黒 L8' && kifu[kifu.length - 1] === '黒（メンター）の勝ち（5つならんだ）', kifu);
+    check('L24c コピーの知らせ', await waitFor(async () => (await P.page.textContent('body')).includes('棋譜をコピーしました')));
     check('L25 結果のボタン', (await L.text(P, '#btnAgain')) === 'もう一回（黒と白を入れかえる）' && (await L.text(P, '#btnRelobby')) === '名前と補助を変える');
     await L.shot(P, 'local-result');
     await P.page.click('#btnUndo');

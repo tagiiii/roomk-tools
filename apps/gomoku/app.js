@@ -1572,6 +1572,19 @@ function viewModel() {
 }
 const seatLabel = (V, c) => (V.name(c) ? COLOR[c] + '（' + V.name(c) + '）' : COLOR[c]);
 
+// コピー用の棋譜（結果のあと）。画面の場所の言い方（H8 など）で「1 黒 H8」と1手1行。保存やファイルの書き出しはしない
+function kifuText(V) {
+  const g = V.game;
+  const lines = ['五目並べ'];
+  for (const c of COLORS) if (V.name(c)) lines.push(COLOR[c] + ': ' + V.name(c));
+  lines.push('');
+  // hist は黒・白が交互（読み込むときに確かめている）。盤と食いちがって空のときは手を出さない
+  g.hist.forEach((at, k) => lines.push((k + 1) + ' ' + COLOR[g.board[at]] + ' ' + E.coord(at)));
+  if (g.hist.length) lines.push('');
+  lines.push(g.win === 'draw' ? '盤がうまったので、引き分け' : seatLabel(V, g.win) + 'の勝ち（5つならんだ）');
+  return lines.join('\n');
+}
+
 function renderGame() {
   const V = viewModel();
   if (!V) return;
@@ -1960,6 +1973,11 @@ $('btnReset').addEventListener('click', () => {
   }
 });
 $('btnQuit').addEventListener('click', quitLocal);
+$('btnCopyKifu').addEventListener('click', (event) => {
+  const V = viewModel();
+  if (!V || !V.game.over) return;
+  RoomkRTDB.copyText(kifuText(V), event.currentTarget, '棋譜をコピーしました', 'コピーできませんでした。もう一度ためしてね');
+});
 $('btnAgain').addEventListener('click', () => {
   if (state.role === 'local') {
     const L = state.local;

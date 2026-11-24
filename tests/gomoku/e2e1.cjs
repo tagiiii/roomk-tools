@@ -107,6 +107,12 @@ const at = (s) => E.COLS.indexOf(s[0]) + (Number(s.slice(1)) - 1) * E.SIZE;
     check('host result buttons', await visible(H, '#btnAgain') && await visible(H, '#btnRelobby'));
     check('guest waits', await visible(A, '#resultWait'));
     check('watch no result box', !(await visible(W, '#resultBox')));
+    check('kifu button: host and player, not watch', await visible(H, '#btnCopyKifu') && await visible(A, '#btnCopyKifu') && !(await visible(W, '#btnCopyKifu')));
+    await B.page.evaluate(() => { window.__copied = null; navigator.clipboard.writeText = async (t) => { window.__copied = t; }; });
+    await B.page.click('#btnCopyKifu');
+    await waitFor(async () => B.page.evaluate(() => window.__copied));
+    const kifu = String(await B.page.evaluate(() => window.__copied)).split('\n');
+    check('kifu text', kifu[0] === '五目並べ' && kifu.includes('9 黒 L8') && kifu.includes('1 黒 H8') && kifu[kifu.length - 1] === '黒（あお）の勝ち（5つならんだ）', kifu);
     check('no marks after over', (await marked(B, 'is-hint')).length === 0 && (await marked(B, 'is-block')).length === 0);
     await shot(W, 'room-watch-result');
 
