@@ -88,5 +88,25 @@ window.KOTOBA_DASH_WORDS = {
       'あそび': ['kite', 'puzzle', 'ball', 'yoyo', 'blocks', 'swing', 'slide', 'seesaw', 'domino', 'cards'],
       'しぜん': ['sea', 'sky', 'star', 'moon', 'sun', 'rain', 'snow', 'wind', 'cloud', 'river'],
     },
+    // 日本語の意味（2026-11-24 に足した。こたえが出たときと結果の一覧に、英語の言葉といっしょに出す）。
+    //   上の middle・long・cats の言葉は、ここに全部ある（E2E その3 で確かめる）
+    ja: {
+      apple: 'りんご', lemon: 'レモン', melon: 'メロン', mango: 'マンゴー', peach: 'もも', grape: 'ぶどう', juice: 'ジュース', candy: 'あめ', donut: 'ドーナツ', pizza: 'ピザ',
+      bread: 'パン', toast: 'トースト', salad: 'サラダ', honey: 'はちみつ', cake: 'ケーキ', panda: 'パンダ', koala: 'コアラ', tiger: 'トラ', zebra: 'シマウマ', horse: '馬',
+      sheep: '羊', mouse: 'ネズミ', whale: 'クジラ', shark: 'サメ', otter: 'カワウソ', camel: 'ラクダ', llama: 'ラマ', eagle: 'ワシ', duck: 'アヒル', frog: 'カエル',
+      bear: 'クマ', lion: 'ライオン', puppy: '子犬', star: '星', moon: '月', cloud: '雲', rain: '雨', snow: '雪', wind: '風', river: '川',
+      ocean: '海', beach: '浜辺', tulip: 'チューリップ', rose: 'バラ', leaf: '葉っぱ', tree: '木', ball: 'ボール', kite: 'たこあげのたこ', park: '公園', music: '音楽',
+      piano: 'ピアノ', drum: 'たいこ', happy: 'うれしい', smile: '笑顔', dance: 'おどる', jump: 'とぶ', swim: '泳ぐ', train: '電車', plane: '飛行機', boat: 'ボート',
+      bike: '自転車', truck: 'トラック', house: '家', chair: 'いす', clock: '時計', lamp: 'ランプ', robot: 'ロボット', yoyo: 'ヨーヨー', tent: 'テント', sushi: 'すし',
+      banana: 'バナナ', orange: 'オレンジ', cherry: 'さくらんぼ', strawberry: 'いちご', pineapple: 'パイナップル', watermelon: 'スイカ', chocolate: 'チョコレート', pancake: 'ホットケーキ', popcorn: 'ポップコーン', sandwich: 'サンドイッチ',
+      hamburger: 'ハンバーガー', spaghetti: 'スパゲッティ', pudding: 'プリン', muffin: 'マフィン', cookie: 'クッキー', giraffe: 'キリン', elephant: 'ゾウ', penguin: 'ペンギン', dolphin: 'イルカ', octopus: 'タコ',
+      turtle: 'カメ', monkey: 'サル', kitten: '子ねこ', rabbit: 'ウサギ', hamster: 'ハムスター', squirrel: 'リス', dinosaur: '恐竜', butterfly: 'チョウ', ladybug: 'テントウムシ', dragonfly: 'トンボ',
+      rainbow: 'にじ', sunshine: '日の光', sunflower: 'ひまわり', snowman: '雪だるま', mountain: '山', island: '島', forest: '森', flower: '花', garden: '庭', picnic: 'ピクニック',
+      camping: 'キャンプ', bicycle: '自転車', airplane: '飛行機', balloon: '風船', birthday: '誕生日', present: 'プレゼント', holiday: '休みの日', festival: 'お祭り', fireworks: '花火', treasure: '宝物',
+      puzzle: 'パズル', skateboard: 'スケートボード', basketball: 'バスケットボール', tennis: 'テニス', soccer: 'サッカー', castle: 'お城', guitar: 'ギター', violin: 'バイオリン', trumpet: 'トランペット', rocket: 'ロケット',
+      jellyfish: 'クラゲ', starfish: 'ヒトデ', umbrella: 'かさ', pajamas: 'パジャマ', sweater: 'セーター', blanket: '毛布', pillow: 'まくら', backpack: 'リュック', camera: 'カメラ', marshmallow: 'マシュマロ',
+      kiwi: 'キウイ', cat: 'ねこ', dog: '犬', bus: 'バス', car: '車', taxi: 'タクシー', ship: '船', blocks: 'つみき', swing: 'ブランコ', slide: 'すべり台',
+      seesaw: 'シーソー', domino: 'ドミノ', cards: 'トランプ', sea: '海', sky: '空', sun: '太陽',
+    },
   },
 };

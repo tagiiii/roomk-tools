@@ -161,6 +161,11 @@ const settingsOf = (room) => ({ ...DEFAULT_SETTINGS, ...(room?.settings || {}) }
 const langOf = (settings) => (LANGS[settings?.lang] ? settings.lang : 'ja');
 // 言葉のたな: 日本語は WORDS.middle など、英語は WORDS.en.middle など
 const shelvesOf = (lang) => (lang === 'en' ? [WORDS.en] : (lang === 'mix' ? [WORDS, WORDS.en] : [WORDS]));
+// 英語の言葉の日本語の意味（こたえが出たときと結果の一覧に出す。ルームには書かず、それぞれの画面で引く）
+const jaOf = (w) => (WORDS.en && WORDS.en.ja && Object.prototype.hasOwnProperty.call(WORDS.en.ja, w) ? WORDS.en.ja[w] : '');
+// その問題で意味を出す言葉: どっちが先？は2つとも、どのなかま？は流れた言葉、ほかはこたえの言葉
+const glossWords = (q) => (q.kind === 'order' ? q.sprites.map((s) => s.text) : (q.kind === 'cat' ? [q.sprites[0].text] : [q.answer]));
+const glossOf = (q) => glossWords(q).filter((w) => jaOf(w)).map((w) => `${w} ＝ ${jaOf(w)}`).join('　');
 const wordsOf = (lang, pools) => shelvesOf(lang).flatMap((shelf) => pools.flatMap((k) => (shelf && shelf[k]) || []));
 
 function buildQuestions(settings) {
@@ -972,6 +977,9 @@ function renderQuestion(room) {
   ans.hidden = !(Q.revealed && E.done);
   ans.textContent = q.reveal;
   ans.classList.toggle('is-long', len(q.reveal) > 8);
+  const gloss = $('qGloss');
+  gloss.textContent = glossOf(q);
+  gloss.hidden = ans.hidden || !gloss.textContent;
   // こたえるあいだは流れる場所をたたんで、入力欄とヒントを上に寄せる
   $('qField').classList.toggle('is-folded', !Q.revealed && !flowing);
 
@@ -1054,7 +1062,8 @@ function renderResult(room) {
   const ul = $('resWords');
   ul.textContent = '';
   (room.qs || []).forEach((q, i) => {
-    const shown = q.kind === 'cat' || q.kind === 'order' ? q.sprites.map((s) => s.text).join('・') : q.answer;
+    const words = q.kind === 'cat' || q.kind === 'order' ? q.sprites.map((s) => s.text) : [q.answer];
+    const shown = words.map((w) => (jaOf(w) ? `${w}（${jaOf(w)}）` : w)).join('・');
     ul.appendChild(el('li', answersOf(room, i)[me]?.ok ? 'is-hit' : null, shown));
   });
   // 個人戦（2026-11-09 オーナー）。当てた数の多い順に並べる（順位の数字はつけない）。1こも当たらなかった人は並べない
