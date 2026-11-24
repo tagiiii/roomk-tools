@@ -87,6 +87,8 @@
 .kd-stage.is-folded .kd-stage__mark .material-symbols-rounded { font-size: 3rem; }
 .kd-stage__answer { padding: 0 16px; text-align: center; font-family: 'Zen Maru Gothic', var(--font-base); font-size: 4rem; font-weight: 700; color: var(--color-accent); animation: kd-pop .35s ease-out both; }
 .kd-stage__answer.is-long { font-size: 2.8rem; }
+/* 英語の言葉の日本語の意味（こたえの下） */
+.kd-stage__gloss { position: absolute; left: 0; right: 0; bottom: 24px; margin: 0; padding: 0 16px; text-align: center; font-size: 1.6rem; font-weight: 700; color: var(--color-text); animation: kd-pop .35s ease-out both; }
 .kd-stage__tag { position: absolute; top: 10px; left: 12px; margin: 0; display: flex; align-items: center; gap: 4px; font-size: 1.05rem; font-weight: 700; color: var(--g-ink); background: var(--g-pale); border-radius: 999px; padding: 6px 14px 6px 10px; z-index: 1; }
 .kd-stage__tag .material-symbols-rounded { font-size: 1.1rem; }
 @keyframes kd-pop { from { transform: scale(.85); opacity: 0; } to { transform: none; opacity: 1; } }
@@ -174,6 +176,7 @@
   .kd-count.is-ready { font-size: 3rem; }
   .kd-stage__answer { font-size: 2.8rem; }
   .kd-stage__answer.is-long { font-size: 2rem; }
+  .kd-stage__gloss { bottom: 16px; font-size: 1.2rem; }
   .kd-input__box { font-size: 1.6rem; }
   .kd-choices { grid-template-columns: 1fr 1fr; }
   .kd-choice { font-size: 1.4rem; min-height: 64px; }

@@ -12,6 +12,8 @@ const W = ctx.window.KOTOBA_DASH_WORDS;
 const jaWords = new Set(W.middle.concat(W.long));
 const enWords = new Set(W.en.middle.concat(W.en.long));
 const enCatWords = new Set(Object.values(W.en.cats).flat());
+// 日本語の意味（2026-11-24）: 英語の言葉は全部 W.en.ja にある
+const noJa = [...enWords, ...enCatWords].filter((w) => !W.en.ja[w]);
 const isEn = (s) => /^[a-z]+$/.test(s);
 const texts = (q) => q.sprites.map((s) => s.text);
 
@@ -61,11 +63,15 @@ const texts = (q) => q.sprites.map((s) => s.text);
     await L.waitText(sora, '#qMine', 'あたり！', 5000);
     await host.page.click('#qPass');
     await L.waitVisible(host, '#btnNext', 8000);
+    await L.waitVisible(sora, '#qGloss', 8000);
+    check(`en gloss q${i + 1}`, (await L.text(sora, '#qGloss')) === `${q.answer} ＝ ${W.en.ja[q.answer]}`, await L.text(sora, '#qGloss'));
     if (i === 0) await L.shot(sora, '32-reveal-en-375');
     await host.page.click('#btnNext');
   }
   await L.waitVisible(sora, '#screen-result', 10000);
   check('en: hits', (await roomOf(code)).hits?.['そら'] === 5);
+  check('en: every word has ja', noJa.length === 0, noJa);
+  check('en: result list shows ja', (await L.text(sora, '#resWords')).includes(`${room.qs[0].answer}（${W.en.ja[room.qs[0].answer]}）`), await L.text(sora, '#resWords'));
 
   // もう一回 → 英語の選ぶ問題（どっちが先？・どのなかま？・にせもの入り）
   await host.page.click('#btnAgain');
