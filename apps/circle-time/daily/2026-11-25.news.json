@@ -1,0 +1,32 @@
+{
+  "date": "2026-11-25",
+  "items": [
+    {
+      "title": "円山動物園でヒメトガリネズミの子が育つ",
+      "text": "札幌市円山動物園で10月7日に生まれたヒメトガリネズミの子6頭が、自分でえさを食べるようになりました。動物園で生まれた子が親から離れて育つのが確かめられたのは、世界で初めてです。大人でも体重4.5gほどの小さな動物です。",
+      "ask": "手のひらにのる生きもので好きなのは？",
+      "source": "札幌市円山動物園",
+      "url": "https://www.city.sapporo.jp/zoo/s077/241012.html",
+      "on": "11月24日",
+      "img": { "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Sorex_cinereus%2C_Harwich%2C_Chatham%2C_Ontario%2C_Canada_1.jpg/960px-Sorex_cinereus%2C_Harwich%2C_Chatham%2C_Ontario%2C_Canada_1.jpg", "credit": "rpoort", "license": "CC BY 4.0" }
+    },
+    {
+      "title": "城山動物園のハイラックス「どんべえ」「おつゆ」",
+      "text": "長野市城山動物園で9月28日に生まれたケープハイラックスの赤ちゃん2頭の名前が決まりました。オスは父親の名前から「どんべえ」、メスはそこからうどんを思い浮かべて「おつゆ」です。この園で初めて生まれた赤ちゃんです。",
+      "ask": "食べものの名前をつけるなら何にする？",
+      "source": "長野市城山動物園",
+      "url": "https://johyama.com/news/2022",
+      "on": "11月23日",
+      "img": { "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Procavia_capensis.jpg/960px-Procavia_capensis.jpg", "credit": "Hans Hillewaert", "license": "CC BY-SA 3.0" }
+    },
+    {
+      "title": "大洗水族館に新しい海のゾーンができる",
+      "text": "茨城県大洗町のアクアワールド茨城県大洗水族館が、いちばん大きな水槽やクラゲの水槽のあるゾーンを作り直すと発表しました。新しいゾーンは「OCEAN FLOW」という名前で、2027年3月8日にオープンします。",
+      "ask": "水族館で一番見たい生きものは？",
+      "source": "アクアワールド大洗",
+      "url": "https://www.aquaworld-oarai.com/2026/11/24/oceanflow/",
+      "on": "11月24日",
+      "img": { "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Mola_mola_at_Aaua_world_Oarai.jpg/960px-Mola_mola_at_Aaua_world_Oarai.jpg", "credit": "Miyuki Meinaka", "license": "CC BY-SA 4.0" }
+    }
+  ]
+}
