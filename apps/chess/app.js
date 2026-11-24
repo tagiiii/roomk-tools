@@ -1890,6 +1890,26 @@ function overParts(V, o) {
   return ['チェックメイト。', L(o.winner), 'の勝ち！'];
 }
 
+// コピー用の棋譜（結果のあと）。画面の国際式の表記で「1. e4 e5」と1手ずつ（白と黒で1行）。保存やファイルの書き出しはしない
+function kifuText(V) {
+  const rec = V.rec;
+  let S = E.create();
+  const lines = ['チェス'];
+  for (const side of [0, 1]) if (V.name(side)) lines.push(SIDE[side] + ': ' + V.name(side));
+  lines.push('');
+  // 読めた手まで（壊れた記録は、盤に出ている局面までにする）
+  let row = '';
+  for (let i = 0; i < V.G.ply; i += 1) {
+    S = E.apply(S, rec.moves[i]);
+    if (i % 2 === 0) row = (i / 2 + 1) + '. ' + S.last.san;
+    else { lines.push(row + ' ' + S.last.san); row = ''; }
+  }
+  if (row) lines.push(row);
+  if (V.G.ply) lines.push('');
+  lines.push(overParts(V, V.over).map((p) => (typeof p === 'string' ? p : p.label)).join(''));
+  return lines.join('\n');
+}
+
 // 補助の「駒の名前」を盤に出すか（だれか1人でも使うなら、全部の駒に出す）
 function namesShown(aid) {
   const a = normAid(aid);
@@ -2595,6 +2615,11 @@ $('btnReset').addEventListener('click', () => {
   }
 });
 $('btnQuit').addEventListener('click', quitLocal);
+$('btnCopyKifu').addEventListener('click', (event) => {
+  const V = viewModel();
+  if (!V || !V.over) return;
+  RoomkRTDB.copyText(kifuText(V), event.currentTarget, '棋譜をコピーしました', 'コピーできませんでした。もう一度ためしてね');
+});
 $('btnAgain').addEventListener('click', () => {
   if (state.role === 'local') {
     const L = state.local;

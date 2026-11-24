@@ -243,6 +243,7 @@ body { background: var(--color-bg); }
 .ch-result { width: 100%; max-width: 400px; }
 .ch-result__actions { display: grid; gap: 10px; }
 .ch-result__actions .btn { min-height: 48px; }
+.ch-result__copy { margin-top: 10px; min-height: 44px; }
 .ch-tools { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 8px; }
 
 /* 補助の設定・ポーンが何になるか */
