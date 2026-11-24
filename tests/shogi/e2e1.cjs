@@ -118,6 +118,7 @@ const pack = (m) => (m.from < 0 ? { f: -1, t: m.to, d: m.drop, p: false } : { f:
   check('C3 投了が入る', room.game.resign === 'g' && room.game.ended === true);
   check('C4 結果「後手が投了。先手の勝ち」', await waitFor(async () => (await L.status(W)).includes('△後手（そら）が投了。▲先手（あおい）の勝ち！')), await L.status(W));
   check('C5 ホストに次のボタン・ゲストは待つ', (await L.visible(H, '#btnAgain')) && (await L.visible(A, '#resultWait')) && !(await L.visible(W, '#resultBox')));
+  check('C5b 「棋譜をコピー」はホストと参加者に出て、対局中とみんなにみせる画面には出ない', (await L.visible(H, '#btnCopyKifu')) && (await L.visible(A, '#btnCopyKifu')) && !(await L.visible(W, '#btnCopyKifu')));
   check('C6 finish は投了した端末で1回', await L.waitStats(B, 'finish', 1));
   await H.page.click('#btnUndo');
   room = await L.roomWhen(code, (r) => r.game.rev === 5);

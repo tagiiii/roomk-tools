@@ -1962,6 +1962,24 @@ function overParts(V, o) {
   return ['詰み。', L(o.winner), 'の勝ち！'];
 }
 
+// コピー用の棋譜（結果のあと）。画面の「直前の手」と同じ表記で1手1行。保存やファイルの書き出しはしない
+function kifuText(V) {
+  const rec = V.rec;
+  const kind = variantOf(rec.v);
+  let S = E.create(kind);
+  const lines = ['将棋（' + E.VARIANTS[kind].name + '）'];
+  for (const side of [0, 1]) if (V.name(side)) lines.push(MARK[side] + SIDE[side] + ': ' + V.name(side));
+  lines.push('');
+  // 読めた手まで（壊れた記録は、盤に出ている局面までにする）
+  for (let i = 0; i < V.G.ply; i += 1) {
+    S = E.apply(S, rec.moves[i]);
+    lines.push((i + 1) + ' ' + S.last.text);
+  }
+  if (V.G.ply) lines.push('');
+  lines.push(overParts(V, V.over).map((p) => (typeof p === 'string' ? p : p.label)).join(''));
+  return lines.join('\n');
+}
+
 function renderGame() {
   const V = viewModel();
   if (!V) return;
@@ -2671,6 +2689,11 @@ $('btnReset').addEventListener('click', () => {
   }
 });
 $('btnQuit').addEventListener('click', quitLocal);
+$('btnCopyKifu').addEventListener('click', (event) => {
+  const V = viewModel();
+  if (!V || !V.over) return;
+  RoomkRTDB.copyText(kifuText(V), event.currentTarget, '棋譜をコピーしました', 'コピーできませんでした。もう一度ためしてね');
+});
 $('btnAgain').addEventListener('click', () => {
   if (state.role === 'local') {
     const L = state.local;

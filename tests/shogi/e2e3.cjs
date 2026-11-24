@@ -72,6 +72,14 @@ const { E, check, cell, waitFor } = L;
   check('L16 local-finish を数える', await L.waitStats(M, 'local-finish', 1));
   check('L17 結果のボタン', (await L.visible(M, '#btnAgain')) && (await L.text(M, '#btnRelobby')) === '盤と補助を変える');
   check('L18 投了のボタンは消える', !(await L.visible(M, '#btnResign')));
+  // 棋譜をコピー（2026-11-24）。画面の表記のまま1手1行・名前と結果つき
+  await M.page.evaluate(() => { window.__copied = null; navigator.clipboard.writeText = async (t) => { window.__copied = t; }; });
+  await M.page.click('#btnCopyKifu');
+  await waitFor(async () => M.page.evaluate(() => window.__copied));
+  const kifu = await M.page.evaluate(() => window.__copied);
+  const wantKifu = ['将棋（本将棋）', '▲先手: あおい', '△後手: そら', '', '1 ▲７六歩', '2 △３四歩', '3 ▲２二角成', '4 △同銀', '', '▲先手（あおい）が投了。△後手（そら）の勝ち！'].join('\n');
+  check('L18b 棋譜をコピー（名前・1手1行・結果）', kifu === wantKifu, kifu);
+  check('L18c コピーの知らせ', await waitFor(async () => (await M.page.textContent('body')).includes('棋譜をコピーしました')));
   await M.page.click('#btnUndo');
   check('L19 1手もどすで投了を取り消す', (await L.status(M)) === '▲先手（あおい）の番', await L.status(M));
 
@@ -126,6 +134,11 @@ const { E, check, cell, waitFor } = L;
   check('L24 詰み', (await L.status(M)) === '詰み。' + winner, await L.status(M));
   await M.page.reload();
   check('L24b 終わった対局も読み込み直すと結果が出る', await waitFor(async () => (await L.status(M)) === '詰み。' + winner && (await L.visible(M, '#btnAgain'))), await L.status(M));
+  await M.page.evaluate(() => { window.__copied = null; navigator.clipboard.writeText = async (t) => { window.__copied = t; }; });
+  await M.page.click('#btnCopyKifu');
+  await waitFor(async () => M.page.evaluate(() => window.__copied));
+  const kifu2 = String(await M.page.evaluate(() => window.__copied)).split('\n');
+  check('L24c 詰みの棋譜（5五将棋・手の数・結果の行）', kifu2[0] === '将棋（5五将棋）' && kifu2.filter((x) => /^\d+ [▲△]/.test(x)).length === moves.length && kifu2[kifu2.length - 1] === '詰み。' + winner, kifu2);
   await M.page.click('#btnAgain');
   check('L25 もう一回で名前が入れかわる', (await L.status(M)) === '▲先手（そら）の番', await L.status(M));
 
