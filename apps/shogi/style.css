@@ -248,6 +248,7 @@ body { background: var(--color-bg); }
 .sh-result { width: 100%; max-width: 400px; }
 .sh-result__actions { display: grid; gap: 10px; }
 .sh-result__actions .btn { min-height: 48px; }
+.sh-result__copy { margin-top: 10px; min-height: 44px; }
 .sh-tools { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 8px; }
 .sh-declare { width: 100%; max-width: 400px; }
 .sh-declare .btn { width: 100%; }
