@@ -2,6 +2,28 @@
 const L = require('./lib.cjs');
 const { E, check, sleep, waitFor, cell } = L;
 
+// 棋譜（コピーした文字）を盤のルールで打ちなおして、手の色・パス・最後の盤が合うかを見る（2026-11-24）
+function replayKifu(text, E) {
+  const lines = String(text).split('\n');
+  let g = E.newGame();
+  let i = lines.indexOf('') + 1;
+  for (; i < lines.length && lines[i] !== ''; i += 1) {
+    const m = /^(\d+) ([黒白]) ([A-H][1-8])$/.exec(lines[i]);
+    if (!m) return { ok: false, why: 'line ' + lines[i] };
+    const color = m[2] === '黒' ? 'b' : 'w';
+    if (color !== g.turn) return { ok: false, why: 'color ' + lines[i] };
+    const at = E.COLS.indexOf(m[3][0]) + (Number(m[3].slice(1)) - 1) * E.SIZE;
+    const ng = E.play(g, at);
+    if (!ng) return { ok: false, why: 'illegal ' + lines[i] };
+    if (ng.passed) {
+      i += 1;
+      if (lines[i] !== '（' + (ng.passed === 'b' ? '黒' : '白') + 'はパス）') return { ok: false, why: 'pass ' + lines[i] };
+    }
+    g = ng;
+  }
+  return { ok: g.over, board: g.board, head: lines.slice(0, 3), last: lines[lines.length - 1] };
+}
+
 (async () => {
   const server = await L.startServer();
   await L.launch();
@@ -134,6 +156,12 @@ const { E, check, sleep, waitFor, cell } = L;
   check('B21 結果がみんなに出る', await waitFor(async () => (await L.status(W)).startsWith(want) && (await L.status(C)).startsWith(want) && (await L.status(H)).startsWith(want)), await L.status(W));
   check('B22 石の数', (await L.status(W)).endsWith('黒 ' + n.b + ' ー 白 ' + n.w));
   check('B23 次を決めるのはホスト', await L.visible(H, '#resultHost') && !(await L.visible(A, '#resultHost')) && await L.visible(A, '#resultWait') && !(await L.visible(W, '#resultBox')));
+  check('B23b 「棋譜をコピー」はホストと参加者に出て、みんなにみせる画面には出ない', await L.visible(H, '#btnCopyKifu') && await L.visible(A, '#btnCopyKifu') && !(await L.visible(W, '#btnCopyKifu')));
+  await B.page.evaluate(() => { window.__copied = null; navigator.clipboard.writeText = async (t) => { window.__copied = t; }; });
+  await B.page.click('#btnCopyKifu');
+  await waitFor(async () => B.page.evaluate(() => window.__copied));
+  const kr = replayKifu(await B.page.evaluate(() => window.__copied), E);
+  check('B23c 棋譜をコピー（打ちなおすとルームの盤と同じ・結果と石の数）', kr.ok && kr.board === room.game.board && kr.head[0] === 'リバーシ' && kr.last === want.replace('！', '') + '　黒 ' + n.b + ' ー 白 ' + n.w, kr);
   const finishSum = async () => (await L.stats(A, 'finish')) + (await L.stats(B, 'finish')) + (await L.stats(H, 'finish'));
   await waitFor(async () => (await finishSum()) >= 1, 3000);
   await sleep(500);
