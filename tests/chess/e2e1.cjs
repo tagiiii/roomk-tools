@@ -85,6 +85,12 @@ const disabled = (c, i) => c.page.evaluate((s) => document.querySelector(s).disa
   check('mate san', (await L.lastLine(H)).includes('Qxf7#'), await L.lastLine(H));
   check('captured shown', (await A.page.$$('#sideBottom .ch-caps .ch-piece')).length === 1);
   check('result host buttons', (await L.visible(H, '#btnAgain')) && !(await L.visible(A, '#btnAgain')) && (await L.visible(A, '#resultWait')));
+  check('kifu button: host and player, not watch', (await L.visible(H, '#btnCopyKifu')) && (await L.visible(A, '#btnCopyKifu')) && !(await L.visible(W, '#btnCopyKifu')));
+  await A.page.evaluate(() => { window.__copied = null; navigator.clipboard.writeText = async (t) => { window.__copied = t; }; });
+  await A.page.click('#btnCopyKifu');
+  await L.waitFor(async () => A.page.evaluate(() => window.__copied));
+  const kifuLines = String(await A.page.evaluate(() => window.__copied)).split('\n');
+  check('kifu mate', kifuLines[0] === 'チェス' && kifuLines.some((x) => /^4\. Qxf7#$/.test(x)) && kifuLines[kifuLines.length - 1] === 'チェックメイト。白（アリス）の勝ち！', kifuLines);
   check('finish counted once', await L.waitStats(A, 'finish', 1));
   await L.shot(W, 'e1-mate-watch');
   await L.shot(B, 'e1-mate-black');

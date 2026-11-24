@@ -51,6 +51,14 @@ const movesOf = (r) => (r && r.game && r.game.moves ? Object.keys(r.game.moves).
   await M.page.click('#btnResign');
   check('L14 投了', await waitFor(async () => (await L.status(M)).includes('黒（そら）が投了。白（あおい）の勝ち！')), await L.status(M));
   check('L15 local-finish', await L.waitStats(M, 'local-finish', 1));
+  // 棋譜をコピー（2026-11-24）。国際式で「1. e4 d6」と白と黒を1行に・名前と結果つき
+  await M.page.evaluate(() => { window.__copied = null; navigator.clipboard.writeText = async (t) => { window.__copied = t; }; });
+  await M.page.click('#btnCopyKifu');
+  await waitFor(async () => M.page.evaluate(() => window.__copied));
+  const kifu = await M.page.evaluate(() => window.__copied);
+  const wantKifu = ['チェス', '白: あおい', '黒: そら', '', '1. e4 d6', '2. Bb5+', '', '黒（そら）が投了。白（あおい）の勝ち！'].join('\n');
+  check('L15b 棋譜をコピー（名前・国際式・結果）', kifu === wantKifu, kifu);
+  check('L15c コピーの知らせ', await waitFor(async () => (await M.page.textContent('body')).includes('棋譜をコピーしました')));
   // もう一回（白と黒を入れかえる）
   await M.page.click('#btnAgain');
   check('L16 もう一回で名前が入れかわる', await waitFor(async () => (await L.status(M)) === '白（そら）の番'), await L.status(M));
