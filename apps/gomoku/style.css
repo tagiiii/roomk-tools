@@ -253,6 +253,7 @@ body { background: var(--color-bg); }
 .gm-result { width: 100%; max-width: 400px; }
 .gm-result__actions { display: grid; gap: 10px; }
 .gm-result__actions .btn { min-height: 48px; }
+.gm-result__copy { margin-top: 10px; min-height: 44px; }
 
 .gm-tools { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 8px; }
 
