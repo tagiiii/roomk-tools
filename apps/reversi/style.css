@@ -242,6 +242,7 @@ body { background: var(--color-bg); }
 .rv-result { width: 100%; max-width: 400px; }
 .rv-result__actions { display: grid; gap: 10px; }
 .rv-result__actions .btn { min-height: 48px; }
+.rv-result__copy { margin-top: 10px; min-height: 44px; }
 
 .rv-tools { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 8px; }
 

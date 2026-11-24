@@ -1556,6 +1556,30 @@ function viewModel() {
 }
 const seatLabel = (V, c) => (V.name(c) ? COLOR[c] + '（' + V.name(c) + '）' : COLOR[c]);
 
+// コピー用の棋譜（結果のあと）。画面の場所の言い方（D3 など）で「1 黒 D3」と1手1行。パスは「（白はパス）」の行。
+// 保存やファイルの書き出しはしない
+function kifuText(V) {
+  const g = V.game;
+  const lines = ['リバーシ'];
+  for (const c of COLORS) if (V.name(c)) lines.push(COLOR[c] + ': ' + V.name(c));
+  lines.push('');
+  // hist は置く前の局面の列。k 手目に置いたのは hist[k] の番の色で、場所はその次の局面の last
+  const states = [...g.hist, g];
+  let k = 0;
+  for (let i = 0; i + 1 < states.length; i += 1) {
+    const at = states[i + 1].last;
+    if (!Number.isInteger(at) || at < 0 || at >= E.SIZE * E.SIZE) continue;
+    k += 1;
+    lines.push(k + ' ' + COLOR[states[i].turn] + ' ' + E.coord(at));
+    if (states[i + 1].passed) lines.push('（' + COLOR[states[i + 1].passed] + 'はパス）');
+  }
+  if (k) lines.push('');
+  const n = E.count(g.board);
+  const w = E.winner(g.board);
+  lines.push((w === 'draw' ? '引き分け' : seatLabel(V, w) + 'の勝ち') + '　黒 ' + n.b + ' ー 白 ' + n.w);
+  return lines.join('\n');
+}
+
 function renderGame() {
   const V = viewModel();
   if (!V) return;
@@ -1906,6 +1930,11 @@ $('btnReset').addEventListener('click', () => {
   }
 });
 $('btnQuit').addEventListener('click', quitLocal);
+$('btnCopyKifu').addEventListener('click', (event) => {
+  const V = viewModel();
+  if (!V || !V.game.over) return;
+  RoomkRTDB.copyText(kifuText(V), event.currentTarget, '棋譜をコピーしました', 'コピーできませんでした。もう一度ためしてね');
+});
 $('btnAgain').addEventListener('click', () => {
   if (state.role === 'local') {
     const L = state.local;

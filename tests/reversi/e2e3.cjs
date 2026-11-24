@@ -3,6 +3,28 @@
 const L = require('./lib.cjs');
 const { E, check, sleep, waitFor, cell } = L;
 
+// 棋譜（コピーした文字）を盤のルールで打ちなおして、手の色・パス・最後の盤が合うかを見る（2026-11-24）
+function replayKifu(text, E) {
+  const lines = String(text).split('\n');
+  let g = E.newGame();
+  let i = lines.indexOf('') + 1;
+  for (; i < lines.length && lines[i] !== ''; i += 1) {
+    const m = /^(\d+) ([黒白]) ([A-H][1-8])$/.exec(lines[i]);
+    if (!m) return { ok: false, why: 'line ' + lines[i] };
+    const color = m[2] === '黒' ? 'b' : 'w';
+    if (color !== g.turn) return { ok: false, why: 'color ' + lines[i] };
+    const at = E.COLS.indexOf(m[3][0]) + (Number(m[3].slice(1)) - 1) * E.SIZE;
+    const ng = E.play(g, at);
+    if (!ng) return { ok: false, why: 'illegal ' + lines[i] };
+    if (ng.passed) {
+      i += 1;
+      if (lines[i] !== '（' + (ng.passed === 'b' ? '黒' : '白') + 'はパス）') return { ok: false, why: 'pass ' + lines[i] };
+    }
+    g = ng;
+  }
+  return { ok: g.over, board: g.board, head: lines.slice(0, 3), last: lines[lines.length - 1] };
+}
+
 (async () => {
   const server = await L.startServer();
   await L.launch();
@@ -88,6 +110,14 @@ const { E, check, sleep, waitFor, cell } = L;
   const st = await L.status(P);
   check('L22 勝ちの表示', st.startsWith(nb === nw ? '引き分け！' : nb > nw ? '黒（メンター）の勝ち！' : '白（あおい）の勝ち！') && st.endsWith('黒 ' + nb + ' ー 白 ' + nw), st);
   check('L23 local-finish を数える', await L.waitStats(P, 'local-finish', 1));
+  // 棋譜をコピー（2026-11-24）。打ちなおすと同じ盤になる・名前・結果と石の数
+  await P.page.evaluate(() => { window.__copied = null; navigator.clipboard.writeText = async (t) => { window.__copied = t; }; });
+  await P.page.click('#btnCopyKifu');
+  await waitFor(async () => P.page.evaluate(() => window.__copied));
+  const kr = replayKifu(await P.page.evaluate(() => window.__copied), E);
+  const wantLast = (nb === nw ? '引き分け' : nb > nw ? '黒（メンター）の勝ち' : '白（あおい）の勝ち') + '　黒 ' + nb + ' ー 白 ' + nw;
+  check('L23b 棋譜をコピー（打ちなおすと同じ盤・パス・名前・結果）', kr.ok && kr.board === (await L.readBoard(P)) && kr.head[0] === 'リバーシ' && kr.head[1] === '黒: メンター' && kr.last === wantLast, kr);
+  check('L23c コピーの知らせ', await waitFor(async () => (await P.page.textContent('body')).includes('棋譜をコピーしました')));
   await sleep(600);
   await L.shot(P, 'local-result');
   await P.page.click('#btnAgain');
@@ -116,6 +146,39 @@ const { E, check, sleep, waitFor, cell } = L;
   const pc = found.ng.passed;
   const pst = await L.status(P);
   check('P1 パスのお知らせと、つづけて置く', pst.startsWith((pc === 'b' ? '黒（くろ）' : '白（しろ）') + 'は置ける場所がないので、パス') && (await L.turnOf(P)) === E.other(pc), pst);
+  await P.page.click('#btnQuit');
+  // パスのある終わった対局の棋譜（2026-11-24）。置く前の局面を hist に残しながら最後まで打ち、パスが1回以上ある対局を使う。
+  // 終わった対局は読み込み直しでは戻らないので、最後の1手の前の局面を入れて、最後の1手を画面で置く
+  let done = null;
+  for (let t = 0; t < 3000 && !done; t += 1) {
+    let g = E.newGame();
+    let prev = null;
+    let prevHist = null;
+    const hist = [];
+    let passes = 0;
+    while (!g.over) {
+      const mv = Object.keys(E.legalMoves(g.board, g.turn)).map(Number);
+      prev = g;
+      prevHist = hist.slice();
+      hist.push({ board: g.board, turn: g.turn, last: g.last, passed: g.passed, ply: g.ply });
+      g = E.play(g, mv[Math.floor(Math.random() * mv.length)]);
+      if (g.passed) passes += 1;
+    }
+    if (passes) done = { pre: { ...prev, hist: prevHist, moveTime: 0 }, final: g, passes };
+  }
+  await P.page.evaluate((s) => sessionStorage.setItem('reversi_local', JSON.stringify(s)), {
+    names: { b: 'くろ', w: 'しろ' }, aid: { who: 'both', spots: true, count: false, confirm: false }, game: done.pre,
+  });
+  await P.page.reload();
+  await L.waitScreen(P, 'game');
+  await P.page.click(cell(done.final.last));
+  await L.waitVisible(P, '#btnCopyKifu');
+  await P.page.evaluate(() => { window.__copied = null; navigator.clipboard.writeText = async (t) => { window.__copied = t; }; });
+  await P.page.click('#btnCopyKifu');
+  await waitFor(async () => P.page.evaluate(() => window.__copied));
+  const passText = String(await P.page.evaluate(() => window.__copied));
+  const pk = replayKifu(passText, E);
+  check('P2 パスのある対局の棋譜（パスの行・打ちなおすと同じ盤）', pk.ok && pk.board === done.final.board && (passText.match(/^（[黒白]はパス）$/gm) || []).length === done.passes, { pk, passes: done.passes });
   await P.page.click('#btnQuit');
 
   // 制限時間（15秒）と CPU
