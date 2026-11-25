@@ -1,16 +1,22 @@
 /* リバーシ
    ・1台の画面: このタブだけで遊ぶ（石を置くのは画面を動かす人。通信しない）
-   ・ルーム: Realtime Database。対戦する2人がそれぞれの端末で置き、ほかの参加者は観戦する
+   ・ルーム: Realtime Database。対戦する2〜4人がそれぞれの端末で置き、ほかの参加者は観戦する
+   ・3〜4人（黒・白・黄・青）は 2026-11-25 に足した形（ルールは engine.js の先頭）
    ・みんなにみせる画面（?watch=）: 見るだけ。ルームに書き込まない */
 const E = window.ReversiEngine;
 
 const MAX_GUESTS = 20;
 const MAX_PROXIES = 4;     // 端末なしの参加者（ホストが代わりに置く）
-const COLOR = { b: '黒', w: '白' };
-const COLORS = ['b', 'w'];
-// 補助: who＝使う人（both | b | w | none）、spots＝置ける場所、count＝ひっくり返る数、confirm＝置く前にたしかめる
+const COLOR = { b: '黒', w: '白', y: '黄', u: '青' };
+const COLORS = E.ORDER;               // 席のある色（4つ）。その対局で使うのは colorsOf(人数)
+const colorsOf = (n) => E.colorsOf(n);
+const nOf = (v) => E.nOf(Number(v));  // 対戦する人数（2〜4。はじめは2）
+// 補助: who＝使う人（both | b | w | y | u | none）、spots＝置ける場所、count＝ひっくり返る数、confirm＝置く前にたしかめる
 const DEFAULT_AID = { who: 'both', spots: true, count: false, confirm: false };
-const WHO_OPTS = [['both', 'ふたりとも'], ['b', '黒の人だけ'], ['w', '白の人だけ'], ['none', '使わない']];
+const WHO_VALUES = ['both', ...COLORS, 'none'];
+function whoOpts(n) {
+  return [['both', nOf(n) === 2 ? 'ふたりとも' : 'みんな'], ...colorsOf(n).map((c) => [c, COLOR[c] + 'の人だけ']), ['none', '使わない']];
+}
 // 1手の制限時間（秒）。0 は時間制限なし（はじめの設定）。過ぎたら CPU が代わりに置く
 const MOVE_TIMES = [0, 15, 30, 60];
 const moveTimeOf = (value) => (MOVE_TIMES.includes(Number(value)) ? Number(value) : 0);
@@ -122,7 +128,7 @@ function asList(value) {
 function normAid(aid) {
   const a = aid && typeof aid === 'object' ? aid : {};
   return {
-    who: WHO_OPTS.some(([v]) => v === a.who) ? a.who : DEFAULT_AID.who,
+    who: WHO_VALUES.includes(a.who) ? a.who : DEFAULT_AID.who,
     spots: typeof a.spots === 'boolean' ? a.spots : DEFAULT_AID.spots,
     count: typeof a.count === 'boolean' ? a.count : DEFAULT_AID.count,
     confirm: typeof a.confirm === 'boolean' ? a.confirm : DEFAULT_AID.confirm,
@@ -136,24 +142,32 @@ function aidFor(aid, color) {
   return { spots: on && a.spots, count: on && a.spots && a.count, confirm: on && a.confirm };
 }
 
-function aidSummary(aid) {
+function aidSummary(aid, n) {
   const a = normAid(aid);
   const parts = [];
   if (a.spots) parts.push(a.count ? '置ける場所とひっくり返る数' : '置ける場所');
   if (a.confirm) parts.push('置く前にたしかめる');
-  if (a.who === 'none' || !parts.length) return '使わない';
-  return WHO_OPTS.find(([v]) => v === a.who)[1] + '：' + parts.join('・');
+  const who = whoOpts(n).find(([v]) => v === a.who);
+  if (a.who === 'none' || !parts.length || !who) return '使わない';
+  return who[1] + '：' + parts.join('・');
+}
+
+// 使う人に、その人数にない色が選ばれていたら「みんな」にもどす（人数を減らしたとき）
+function aidForN(aid, n) {
+  const a = normAid(aid);
+  return COLORS.includes(a.who) && !colorsOf(n).includes(a.who) ? { ...a, who: 'both' } : a;
 }
 
 // 補助の設定欄。変えるたびに onChange(新しい設定)
-function aidEditor(root, aid, onChange) {
-  const a = normAid(aid);
+function aidEditor(root, aid, onChange, n = 2) {
+  const a = aidForN(aid, n);
   const uid = root.id;
   root.replaceChildren();
   const fs = makeElement('fieldset', 'rv-fieldset');
   fs.append(makeElement('legend', 'rv-legend', '補助を使う人'));
-  const seg = makeElement('div', 'rv-seg');
-  WHO_OPTS.forEach(([v, label]) => {
+  const opts = whoOpts(n);
+  const seg = makeElement('div', 'rv-seg' + (opts.length > 4 ? ' rv-seg--many' : ''));
+  opts.forEach(([v, label]) => {
     const lb = makeElement('label', 'rv-seg__opt');
     const r = makeElement('input');
     r.type = 'radio';
@@ -221,36 +235,59 @@ function seatable(room, name) {
 }
 
 function seatsOf(room) {
-  const s = room?.seats || {};
-  return { b: typeof s.b === 'string' ? s.b : null, w: typeof s.w === 'string' ? s.w : null };
+  return pickSeats(room?.seats);
+}
+function pickSeats(s) {
+  const src = s && typeof s === 'object' ? s : {};
+  const out = {};
+  COLORS.forEach((c) => { out[c] = typeof src[c] === 'string' ? src[c] : null; });
+  return out;
+}
+
+// 待合室の席がそろっているか（その人数の色すべてに、ちがう人が、いま座れる）
+function seatsReady(room, seats, n) {
+  const names = colorsOf(n).map((c) => seats[c]);
+  return names.every((name) => !!name && seatable(room, name)) && new Set(names).size === names.length;
 }
 
 function snapOf(g) {
-  return { board: g.board, turn: g.turn, last: g.last, passed: g.passed, ply: g.ply };
+  return { board: g.board, turn: g.turn, last: g.last, passed: g.passed, ply: g.ply, n: nOf(g.n) };
 }
+
+const BOARD_RE = /^[.bwyu]{64}$/;
+const colorOr = (v, list, fallback) => (list.includes(v) ? v : fallback);
 
 // 対局を読む。壊れた値は読み飛ばす
 function gameOf(room) {
   const g = room?.game;
   if (!g || typeof g !== 'object') return null;
-  if (typeof g.board !== 'string' || !/^[.bw]{64}$/.test(g.board)) return null;
-  const seats = g.seats || {};
+  if (typeof g.board !== 'string' || !BOARD_RE.test(g.board)) return null;
+  const n = nOf(g.n);
+  const cs = colorsOf(n);
+  // その人数にない色の石がある盤は壊れた値として読み飛ばす（n のない古いデータは2人）
+  const okBoard = (b) => [...b].every((ch) => ch === '.' || cs.includes(ch));
+  if (!okBoard(g.board)) return null;
   const uids = g.uids || {};
   const proxy = g.proxy || {};
-  const hist = asList(g.hist).filter((h) => h && typeof h.board === 'string' && /^[.bw]{64}$/.test(h.board)).map((h) => ({
+  const hist = asList(g.hist).filter((h) => h && typeof h.board === 'string' && BOARD_RE.test(h.board) && okBoard(h.board)).map((h) => ({
     board: h.board,
-    turn: h.turn === 'w' ? 'w' : 'b',
+    turn: colorOr(h.turn, cs, 'b'),
     last: Number.isInteger(h.last) ? h.last : -1,
     passed: h.passed === 'b' || h.passed === 'w' ? h.passed : null,
     ply: Number(h.ply) || 0,
+    n,
   }));
+  const uidMap = {};
+  const proxyMap = {};
+  COLORS.forEach((c) => { uidMap[c] = uids[c] || null; proxyMap[c] = proxy[c] === true; });
   return {
     id: Number(g.id) || 0,
-    seats: { b: typeof seats.b === 'string' ? seats.b : null, w: typeof seats.w === 'string' ? seats.w : null },
-    uids: { b: uids.b || null, w: uids.w || null },
-    proxy: { b: proxy.b === true, w: proxy.w === true },
+    n,
+    seats: pickSeats(g.seats),
+    uids: uidMap,
+    proxy: proxyMap,
     board: g.board,
-    turn: g.turn === 'w' ? 'w' : 'b',
+    turn: colorOr(g.turn, cs, 'b'),
     last: Number.isInteger(g.last) ? g.last : -1,
     flipped: asList(g.flipped).filter((i) => Number.isInteger(i)),
     passed: g.passed === 'b' || g.passed === 'w' ? g.passed : null,
@@ -260,7 +297,7 @@ function gameOf(room) {
     moveTime: moveTimeOf(g.moveTime),
     // いまの番が始まった時刻（サーバーの時刻）。書きこみが届く前は数でないので null
     turnAt: typeof g.turnAt === 'number' ? g.turnAt : null,
-    auto: g.auto === 'b' || g.auto === 'w' ? g.auto : null,
+    auto: cs.includes(g.auto) ? g.auto : null,
     // 局面が変わるたびに増える番号（置く・時間切れの手・1手もどす）。手数はもどすと減るので、古い操作の照合はこちらで行う
     rev: Number(g.rev) || 0,
     // 一度でもおわったか（もどしても消さない。finish を1対局に1回だけ数えるため）
@@ -591,6 +628,7 @@ async function createRoom() {
           lastGameId: 0,
           aid: { ...DEFAULT_AID },
           moveTime: 0,
+          n: 2,
           players: {
             [nickname]: { isHost: true, uid, joinedAt },
           },
@@ -691,7 +729,7 @@ async function joinRoom() {
       // 待合室では、空いている席に入った順で入る（ホストは自分で選んだときだけ席に入る）
       if (room.status === STATUS.WAITING && !mine) {
         const seats = seatsOf(room);
-        const color = COLORS.find((c) => !seats[c]);
+        const color = colorsOf(room.n).find((c) => !seats[c]);
         if (color && !COLORS.some((c) => seats[c] === nickname)) next.seats = { ...seats, [color]: nickname };
       }
       return next;
@@ -952,8 +990,9 @@ async function setSeat(color, name) {
     if (room.status !== STATUS.WAITING) return;
     if (name && !seatable(room, name)) return;
     const seats = seatsOf(room);
-    const other = E.other(color);
-    if (name && seats[other] === name) seats[other] = seats[color]; // 反対の席にいた人なら入れかえる
+    // ほかの色の席にいた人なら入れかえる
+    const other = COLORS.find((c) => c !== color && name && seats[c] === name);
+    if (other) seats[other] = seats[color];
     seats[color] = name || null;
     return { ...room, seats };
   }, '席を変えられませんでした。もう一度ためしてね', false);
@@ -964,8 +1003,24 @@ async function swapSeats() {
   await hostTransaction((room) => {
     if (room.status !== STATUS.WAITING) return;
     const s = seatsOf(room);
-    return { ...room, seats: { b: s.w, w: s.b } };
+    return { ...room, seats: { ...s, b: s.w, w: s.b } };
   }, '入れかえられませんでした。もう一度ためしてね', false);
+}
+
+// 対戦する人数（待合室だけ）。減らしたら、使わない色の席を空ける
+async function setPlayers(value) {
+  const n = nOf(value);
+  const ok = await hostTransaction((room) => {
+    if (room.status !== STATUS.WAITING) return;
+    const seats = seatsOf(room);
+    COLORS.forEach((c) => { if (!colorsOf(n).includes(c)) seats[c] = null; });
+    // 増やしたら、席にいない参加者を、空いた席に入った順で入れる（ホストは入れない）
+    const seated = new Set(Object.values(seats).filter(Boolean));
+    const waiting = guestNames(room).concat(proxyNames(room)).filter((name) => !seated.has(name));
+    colorsOf(n).forEach((c) => { if (!seats[c] && waiting.length) seats[c] = waiting.shift(); });
+    return { ...room, n, seats, aid: aidForN(room.aid, n) };
+  }, '人数を変えられませんでした。もう一度ためしてね', false);
+  if (!ok && state.room) renderRoom(state.room);
 }
 
 async function setMoveTime(value) {
@@ -1001,10 +1056,10 @@ async function addProxy() {
     if (room.status !== STATUS.WAITING) { reason = 'はじめる前だけ足せるよ'; return; }
     // 席に名前が残っている人（一時的に切れている人）と同じ名前も断る
     const seats = seatsOf(room);
-    if (room.players?.[name] || room.proxies?.[name] || name === room.host || seats.b === name || seats.w === name) { reason = '「' + name + '」はもういるよ'; return; }
+    if (room.players?.[name] || room.proxies?.[name] || name === room.host || COLORS.some((c) => seats[c] === name)) { reason = '「' + name + '」はもういるよ'; return; }
     if (proxyNames(room).length >= MAX_PROXIES) { reason = '端末なしの参加者は' + MAX_PROXIES + '人までだよ'; return; }
     const next = { ...room, proxies: { ...(room.proxies || {}), [name]: { joinedAt: RoomkRTDB.now() } } };
-    const color = COLORS.find((c) => !seats[c]);
+    const color = colorsOf(room.n).find((c) => !seats[c]);
     if (color) next.seats = { ...seats, [color]: name };
     return next;
   }, '足せませんでした。もう一度ためしてね');
@@ -1023,34 +1078,35 @@ async function removeProxy(name) {
   }, '外せませんでした。もう一度ためしてね');
 }
 
-// 席の2人で新しい対局を作る（そろっていなければ null）
-function newGameFor(room, seats) {
-  if (!seats.b || !seats.w || seats.b === seats.w) return null;
-  if (!seatable(room, seats.b) || !seatable(room, seats.w)) return null;
+// 席の人たちで新しい対局を作る（そろっていなければ null）
+function newGameFor(room, seats, n) {
+  if (!seatsReady(room, seats, n)) return null;
   const id = (Number(room.lastGameId) || 0) + 1;
   const proxy = {};
   const uids = {};
-  COLORS.forEach((c) => {
+  const used = {};
+  colorsOf(n).forEach((c) => {
+    used[c] = seats[c];
     if (room.proxies?.[seats[c]]) proxy[c] = true;
     else uids[c] = room.players[seats[c]].uid;
   });
-  return { id, seats: { ...seats }, uids, proxy, ...E.newGame(), hist: [], moveTime: moveTimeOf(room.moveTime), turnAt: serverTimestamp(), rev: 0 };
+  return { id, seats: used, uids, proxy, ...E.newGame(n), hist: [], moveTime: moveTimeOf(room.moveTime), turnAt: serverTimestamp(), rev: 0 };
 }
 
-function countStart() {
+function countStart(n) {
   window.RoomkStats?.count('start');
-  window.RoomkStats?.count('players-2');
+  window.RoomkStats?.count('players-' + nOf(n));
 }
 
 async function startGame() {
   const ok = await hostTransaction((room) => {
     if (room.status !== STATUS.WAITING) return;
-    const game = newGameFor(room, seatsOf(room));
+    const game = newGameFor(room, seatsOf(room), nOf(room.n));
     if (!game) return;
     return { ...room, status: STATUS.PLAY, lastGameId: game.id, game };
   }, 'はじめられませんでした。もう一度ためしてね');
-  if (ok) countStart();
-  else if (ok === false) toast('対戦する2人を選んでね');
+  if (ok) countStart(state.room?.n);
+  else if (ok === false) toast('対戦する人を選んでね');
 }
 
 async function undoMove() {
@@ -1070,7 +1126,15 @@ async function undoMove() {
   if (ok === false) toast('盤が進んだので、もどさなかったよ。もう一度ためしてね', false);
 }
 
-// もう一回（黒と白を入れかえる）
+// 席を1つずつまわす（2人なら黒と白の入れかえ。3〜4人は、2番目の人が次は黒＝先に置く）
+function rotateSeats(seats, n) {
+  const cs = colorsOf(n);
+  const out = {};
+  cs.forEach((c, k) => { out[c] = seats[cs[(k + 1) % cs.length]]; });
+  return out;
+}
+
+// もう一回（色を入れかえる）
 async function playAgain() {
   const gid = gameOf(state.room)?.id;
   let reason = '';
@@ -1078,16 +1142,16 @@ async function playAgain() {
     reason = '';
     const game = gameOf(room);
     if (room.status !== STATUS.PLAY || !game || game.id !== gid || !game.over) return;
-    const seats = { b: game.seats.w, w: game.seats.b };
-    const next = newGameFor(room, seats);
+    const seats = rotateSeats(game.seats, game.n);
+    const next = newGameFor(room, seats, game.n);
     if (!next) { reason = 'そろっていない'; return; }
     return { ...room, seats, lastGameId: next.id, game: next };
   }, 'はじめられませんでした。もう一度ためしてね');
   if (ok) {
     window.RoomkStats?.count('again');
-    countStart();
+    countStart(gameOf(state.room)?.n);
   } else if (ok === false && reason) {
-    toast('対戦した2人がそろっていないよ。「対戦する人を選びなおす」から選んでね');
+    toast('対戦した人がそろっていないよ。「対戦する人を選びなおす」から選んでね');
   }
 }
 
@@ -1100,7 +1164,7 @@ async function backToLobby() {
   const ok = await hostTransaction((room) => {
     const cur = gameOf(room);
     if (room.status !== STATUS.PLAY || !cur || cur.id !== gid) return;
-    return { ...room, status: STATUS.WAITING, game: null, seats: { ...cur.seats } };
+    return { ...room, status: STATUS.WAITING, game: null, seats: { ...cur.seats }, n: cur.n };
   }, 'もどれませんでした。もう一度ためしてね');
   if (ok && wasOver) window.RoomkStats?.count('again');
 }
@@ -1133,7 +1197,7 @@ async function placeRoom(i, auto = false) {
         // 時間切れは、ホストか、その番に置ける端末が確かめる。締め切りを過ぎていなければ何もしない
         if (!(role === 'host' && r.hostUid === uid) && !mayMove(r, cur, cur.turn, uid, nickname, role)) return;
         if (!cur.moveTime || cur.turnAt == null || RoomkRTDB.now() < cur.turnAt + cur.moveTime * 1000 - LATE_MS) return;
-        at = E.autoMove(cur.board, cur.turn);
+        at = E.autoMove(cur.board, cur.turn, undefined, cur.n);
       } else if (!mayMove(r, cur, cur.turn, uid, nickname, role)) {
         return;
       }
@@ -1161,7 +1225,7 @@ function remainingMs(V) {
   // ホストが切れている間は時計を止める（戻ると、その番の時間を最初から数えなおす）
   if (V.room && V.room.hostConnected === false) return null;
   // CPU と対戦するときの CPU の番は、時間を数えない
-  if (V.cpu && g.turn === V.cpu) return null;
+  if (V.isCpu(g.turn)) return null;
   const now = state.role === 'local' ? Date.now() : RoomkRTDB.now();
   const start = g.turnAt == null ? now : g.turnAt;
   return Math.max(0, start + g.moveTime * 1000 - now);
@@ -1216,14 +1280,19 @@ function loadLocal() {
     if (!saved || typeof saved !== 'object') return null;
     const game = gameOf({ game: saved.game });
     if (!game || game.over) return null;
+    const names = {};
+    COLORS.forEach((c) => { names[c] = String(saved.names?.[c] || '').slice(0, 8); });
+    const vs = cpuOf(saved.cpu);
     return {
-      names: { b: String(saved.names?.b || '').slice(0, 8), w: String(saved.names?.w || '').slice(0, 8) },
-      aid: normAid(saved.aid),
-      cpu: cpuOf(saved.cpu),
+      names,
+      aid: aidForN(saved.aid, game.n),
+      cpu: vs,
+      // 「もう一回」で色をまわしたあとは、自分の色が黄・青のこともあるので、保存した列を使う
+      cpus: Array.isArray(saved.cpus) ? colorsOf(game.n).filter((c) => saved.cpus.includes(c)) : cpusOf(vs, game.n),
       level: levelOf(saved.level),
       // 読み込み直したら、いまの番の時間は最初から数えなおす。
       // 直前の手を CPU が置いたかの印（bot）も残す（ないと「CPU は D3 に置いたよ。」が消える。2026-11-15）
-      game: { ...game, turnAt: Date.now(), bot: saved.game?.bot === 'b' || saved.game?.bot === 'w' ? saved.game.bot : null },
+      game: { ...game, turnAt: Date.now(), bot: colorsOf(game.n).includes(saved.game?.bot) ? saved.game.bot : null },
     };
   } catch {
     return null;
@@ -1240,10 +1309,18 @@ function clearLocal() {
 
 /* ── CPU と対戦する（1台の画面だけ。2026-11-11 フィードバックボード「人とCPUで対戦したい」）──
    CPU の色を選ぶと、その色は CPU が置く（名前は「CPU」）。置き方は選んだ強さの cpuMove（「ふつう」は時間切れの手と同じ autoMove）。
-   CPU の番は CPU_MS 待ってから置く（どこに置いたか見えるように）。CPU の番は時間を数えない */
+   CPU の番は CPU_MS 待ってから置く（どこに置いたか見えるように）。CPU の番は時間を数えない。
+   3〜4人では、自分の色（黒か白）のほかを、みんな CPU が置く（2026-11-25）。cpu は「対戦の相手」で選んだ値（2人のときの CPU の色）のまま持ち、
+   CPU が置く色の列は cpus に持つ */
 const CPU_NAME = 'CPU';
 const CPU_MS = 900;
 const cpuOf = (v) => (v === 'b' || v === 'w' ? v : null);
+// 「対戦の相手」の値（2人のときの CPU の色）から、CPU が置く色の列
+function cpusOf(vs, n) {
+  if (!vs) return [];
+  const me = E.other(vs);
+  return colorsOf(n).filter((c) => c !== me);
+}
 // CPU の強さ（よわい・ふつう・つよい）。はじめは「ふつう」（時間切れの手と同じ置き方）
 const levelOf = (v) => (v === 'weak' || v === 'strong' ? v : 'normal');
 const cpuTurnKey = (L) => L.game.ply + ':' + L.game.hist.length + ':' + L.game.turnAt;
@@ -1254,7 +1331,7 @@ function stopCpu() {
 }
 function scheduleCpu() {
   const L = state.local;
-  if (state.role !== 'local' || !L?.cpu || L.game.over || L.game.turn !== L.cpu) return;
+  if (state.role !== 'local' || !L?.cpus.length || L.game.over || !L.cpus.includes(L.game.turn)) return;
   const key = cpuTurnKey(L);
   if (state.cpuKey === key) return;
   clearTimeout(state.cpuTimer);
@@ -1262,50 +1339,65 @@ function scheduleCpu() {
   state.cpuTimer = setTimeout(() => {
     state.cpuTimer = null;
     const cur = state.local;
-    if (state.role !== 'local' || cur !== L || cur.game.over || cur.game.turn !== cur.cpu || cpuTurnKey(cur) !== key) return;
+    if (state.role !== 'local' || cur !== L || cur.game.over || !cur.cpus.includes(cur.game.turn) || cpuTurnKey(cur) !== key) return;
     placeLocal(-1, false, true);
   }, CPU_MS);
 }
 const localVs = () => cpuOf(document.querySelector('input[name="localVs"]:checked')?.value);
 const localLevel = () => levelOf(document.querySelector('input[name="localLevel"]:checked')?.value);
-// CPU の色の名前の欄は、使わないので押せなくする
+const localN = () => nOf(document.querySelector('input[name="localN"]:checked')?.value);
+const LOCAL_NAME_ID = { b: 'localNameB', w: 'localNameW', y: 'localNameY', u: 'localNameU' };
+// 人数に合わせて名前の欄を出し、CPU の色の名前の欄は、使わないので押せなくする
 function syncLocalVs() {
-  const cpu = localVs();
-  ['b', 'w'].forEach((c) => {
-    const input = $(c === 'b' ? 'localNameB' : 'localNameW');
-    input.disabled = cpu === c;
-    input.placeholder = cpu === c ? CPU_NAME : '';
-    if (cpu === c) input.value = '';
+  const n = localN();
+  const cpus = cpusOf(localVs(), n);
+  COLORS.forEach((c) => {
+    const input = $(LOCAL_NAME_ID[c]);
+    input.closest('.rv-name').hidden = !colorsOf(n).includes(c);
+    input.disabled = cpus.includes(c);
+    input.placeholder = cpus.includes(c) ? CPU_NAME : '';
+    if (cpus.includes(c)) input.value = '';
   });
-  $('btnLocalSwap').disabled = !!cpu;
-  $('localLevelBox').hidden = !cpu;
+  $('btnLocalSwap').hidden = n !== 2;
+  $('btnLocalSwap').disabled = cpus.length > 0;
+  $('localLevelBox').hidden = !cpus.length;
+  $('localNames').classList.toggle('rv-names--multi', n !== 2);
+  // 3〜4人のときは「CPU（自分が黒）」＝自分のほかはみんな CPU
+  $('localVsCpuW').textContent = n === 2 ? 'CPU（自分が黒）' : 'CPU（自分が黒・ほかは CPU）';
+  $('localVsCpuB').textContent = n === 2 ? 'CPU（自分が白）' : 'CPU（自分が白・ほかは CPU）';
+  // 補助の「使う人」も人数に合わせる
+  state.localAid = aidForN(state.localAid, n);
+  aidEditor($('localAid'), state.localAid, (a) => { state.localAid = a; }, n);
 }
 
-function openLocalSetup(names, moveTime = 0, cpu = null, level = 'normal') {
+function openLocalSetup(names, moveTime = 0, cpu = null, level = 'normal', n = 2) {
   const radio = document.querySelector('input[name="localVs"][value="' + (cpuOf(cpu) || '') + '"]');
   if (radio) radio.checked = true;
   const lv = document.querySelector('input[name="localLevel"][value="' + levelOf(level) + '"]');
   if (lv) lv.checked = true;
-  $('localNameB').value = cpu === 'b' ? '' : names?.b || '';
-  $('localNameW').value = cpu === 'w' ? '' : names?.w || '';
-  syncLocalVs();
+  const nr = document.querySelector('input[name="localN"][value="' + nOf(n) + '"]');
+  if (nr) nr.checked = true;
+  const cpus = cpusOf(cpuOf(cpu), nOf(n));
+  COLORS.forEach((c) => { $(LOCAL_NAME_ID[c]).value = cpus.includes(c) ? '' : names?.[c] || ''; });
   $('localMoveTime').value = String(moveTimeOf(moveTime));
   state.localAid = normAid(state.localAid);
-  aidEditor($('localAid'), state.localAid, (a) => { state.localAid = a; });
+  syncLocalVs();
   showScreen('local');
 }
 
-function newLocalGame(moveTime) {
-  return { ...E.newGame(), hist: [], moveTime: moveTimeOf(moveTime), turnAt: Date.now(), auto: null };
+function newLocalGame(moveTime, n) {
+  return { ...E.newGame(n), hist: [], moveTime: moveTimeOf(moveTime), turnAt: Date.now(), auto: null };
 }
 
 function startLocal() {
   const cpu = localVs();
-  const nameB = cpu === 'b' ? CPU_NAME : $('localNameB').value.trim().slice(0, 8);
-  const nameW = cpu === 'w' ? CPU_NAME : $('localNameW').value.trim().slice(0, 8);
+  const n = localN();
+  const cpus = cpusOf(cpu, n);
+  const names = {};
+  colorsOf(n).forEach((c) => { names[c] = cpus.includes(c) ? CPU_NAME : $(LOCAL_NAME_ID[c]).value.trim().slice(0, 8); });
   state.role = 'local';
   stopCpu();
-  state.local = { names: { b: nameB, w: nameW }, aid: normAid(state.localAid), cpu, level: localLevel(), game: newLocalGame($('localMoveTime').value) };
+  state.local = { names, aid: aidForN(state.localAid, n), cpu, cpus, level: localLevel(), game: newLocalGame($('localMoveTime').value, n) };
   saveLocal();
   window.RoomkStats?.count('local-start');
   showScreen('game');
@@ -1317,7 +1409,8 @@ function startLocal() {
 function placeLocal(i, auto = false, bot = false) {
   const L = state.local;
   // 時間切れの代わりの手はいつも「ふつう」。対戦相手の CPU は選んだ強さ
-  const at = bot ? E.cpuMove(L.game.board, L.game.turn, levelOf(L.level)) : auto ? E.autoMove(L.game.board, L.game.turn) : i;
+  const n = L.game.n;
+  const at = bot ? E.cpuMove(L.game.board, L.game.turn, levelOf(L.level), undefined, n) : auto ? E.autoMove(L.game.board, L.game.turn, undefined, n) : i;
   const ng = E.play(L.game, at);
   if (!ng) return;
   const first = ng.over && !L.game.ended;
@@ -1429,16 +1522,31 @@ function renderWaiting(room) {
   const host = state.role === 'host';
   const watch = state.role === 'spectator';
   const seats = seatsOf(room);
+  const n = nOf(room.n);
+  const cs = colorsOf(n);
   $('lobbyJoin').hidden = !watch;
   $('lobbyJoinCode').textContent = state.roomCode || '';
+
+  // 対戦する人数
+  $('playersEdit').hidden = !host;
+  $('playersView').hidden = host;
+  if (host) {
+    const r = document.querySelector('input[name="players"][value="' + n + '"]');
+    if (r) r.checked = true;
+  } else {
+    $('playersView').textContent = n + '人';
+  }
 
   // 席
   $('seatEdit').hidden = !host;
   $('seatView').hidden = host;
+  $('seatEdit').classList.toggle('rv-seats-edit--multi', n !== 2);
+  $('btnSeatSwap').hidden = n !== 2;
   const people = memberNames(room).concat(proxyNames(room));
   if (host) {
     COLORS.forEach((c) => {
-      const sel = $(c === 'b' ? 'seatB' : 'seatW');
+      const sel = $(SEAT_ID[c]);
+      sel.closest('.rv-seatsel').hidden = !cs.includes(c);
       const empty = makeElement('option', '', '（えらんでね）');
       empty.value = '';
       const opts = [empty];
@@ -1457,7 +1565,7 @@ function renderWaiting(room) {
       sel.value = seats[c] || '';
     });
   } else {
-    $('seatView').replaceChildren(...COLORS.map((c) => {
+    $('seatView').replaceChildren(...cs.map((c) => {
       const box = makeElement('div', 'rv-seatview');
       box.append(makeElement('span', 'rv-chip rv-chip--' + c), makeElement('span', 'rv-seatview__color', COLOR[c]));
       const name = seats[c];
@@ -1466,12 +1574,12 @@ function renderWaiting(room) {
       return box;
     }));
   }
-  const ready = !!seats.b && !!seats.w && seats.b !== seats.w && seatable(room, seats.b) && seatable(room, seats.w);
+  const ready = seatsReady(room, seats, n);
   let note = '';
   if (host) {
-    if (people.length < 2) note = 'もう1人入ると、はじめられるよ。ホストも対戦するときは、自分を選んでね';
-    else if (!ready) note = '黒と白の人を選んでね。ホストも対戦できるよ';
-    else note = '黒の人から先に置くよ';
+    if (people.length < n) note = 'あと' + (n - people.length) + '人入ると、はじめられるよ。ホストも対戦するときは、自分を選んでね';
+    else if (!ready) note = cs.map((c) => COLOR[c]).join('・') + 'の人を選んでね。ホストも対戦できるよ';
+    else note = n === 2 ? '黒の人から先に置くよ' : cs.map((c) => COLOR[c]).join('→') + 'の順に置くよ';
   }
   $('seatNote').textContent = note;
   $('seatNote').hidden = !note;
@@ -1484,8 +1592,8 @@ function renderWaiting(room) {
     li.append(msIcon(host && proxy ? 'person_off' : 'person'), makeElement('span', 'rv-person__name', name));
     if (name === room.host) li.append(makeElement('span', 'rv-tag rv-tag--muted', 'ホスト'));
     if (host && proxy) li.append(makeElement('span', 'rv-tag rv-tag--muted', '端末なし'));
-    if (seats.b === name) li.append(makeElement('span', 'rv-tag rv-tag--b', '黒'));
-    else if (seats.w === name) li.append(makeElement('span', 'rv-tag rv-tag--w', '白'));
+    const seat = cs.find((c) => seats[c] === name);
+    if (seat) li.append(makeElement('span', 'rv-tag rv-tag--' + seat, COLOR[seat]));
     else li.append(makeElement('span', 'rv-tag rv-tag--watch', '観戦'));
     if (name === state.nickname && !watch) li.append(makeElement('span', 'rv-tag rv-tag--watch', 'あなた'));
     if (host && proxy) {
@@ -1502,13 +1610,13 @@ function renderWaiting(room) {
   $('lobbyAid').hidden = !host;
   $('lobbyAidView').hidden = host;
   if (host) {
-    const key = JSON.stringify(normAid(room.aid));
+    const key = n + ':' + JSON.stringify(aidForN(room.aid, n));
     if ($('lobbyAid')._key !== key) {
-      aidEditor($('lobbyAid'), room.aid, (a) => { $('lobbyAid')._key = JSON.stringify(a); setAid(a); });
+      aidEditor($('lobbyAid'), room.aid, (a) => { $('lobbyAid')._key = n + ':' + JSON.stringify(a); setAid(a); }, n);
       $('lobbyAid')._key = key;
     }
   } else {
-    $('lobbyAidView').textContent = aidSummary(room.aid);
+    $('lobbyAidView').textContent = aidSummary(room.aid, n);
   }
 
   // 1手の制限時間
@@ -1522,6 +1630,8 @@ function renderWaiting(room) {
   $('lobbyWait').hidden = host || watch;
 }
 
+const SEAT_ID = { b: 'seatB', w: 'seatW', y: 'seatY', u: 'seatU' };
+
 // 画面に出すための共通の形にそろえる（1台の画面とルーム）
 function viewModel() {
   if (state.role === 'local') {
@@ -1529,12 +1639,13 @@ function viewModel() {
     return {
       game: L.game,
       aid: L.aid,
-      name: (c) => L.names[c],
+      name: (c) => L.names[c] || '',
       away: () => false,
       proxy: () => false,
-      cpu: L.cpu,
-      canPlay: () => !L.game.over && L.game.turn !== L.cpu,
-      mine: (c) => !!L.cpu && c !== L.cpu,
+      hasCpu: L.cpus.length > 0,
+      isCpu: (c) => L.cpus.includes(c),
+      canPlay: () => !L.game.over && !L.cpus.includes(L.game.turn),
+      mine: (c) => L.cpus.length > 0 && !L.cpus.includes(c),
       key: 'local',
     };
   }
@@ -1549,6 +1660,8 @@ function viewModel() {
     name: (c) => game.seats[c] || '',
     away: (c) => !seatPresent(room, game, c),
     proxy: (c) => game.proxy[c],
+    hasCpu: false,
+    isCpu: () => false,
     canPlay: () => !game.over && mayMove(room, game, game.turn, uid, state.nickname, state.role),
     mine: (c) => (state.role === 'host' || state.role === 'guest') && game.seats[c] === state.nickname && game.uids[c] === uid,
     key: state.roomCode + ':' + game.id,
@@ -1560,8 +1673,9 @@ const seatLabel = (V, c) => (V.name(c) ? COLOR[c] + '（' + V.name(c) + '）' : 
 // 保存やファイルの書き出しはしない
 function kifuText(V) {
   const g = V.game;
-  const lines = ['リバーシ'];
-  for (const c of COLORS) if (V.name(c)) lines.push(COLOR[c] + ': ' + V.name(c));
+  const n = nOf(g.n);
+  const lines = [n === 2 ? 'リバーシ' : 'リバーシ（' + n + '人）'];
+  for (const c of colorsOf(n)) if (V.name(c)) lines.push(COLOR[c] + ': ' + V.name(c));
   lines.push('');
   // hist は置く前の局面の列。k 手目に置いたのは hist[k] の番の色で、場所はその次の局面の last
   const states = [...g.hist, g];
@@ -1574,10 +1688,23 @@ function kifuText(V) {
     if (states[i + 1].passed) lines.push('（' + COLOR[states[i + 1].passed] + 'はパス）');
   }
   if (k) lines.push('');
-  const n = E.count(g.board);
-  const w = E.winner(g.board);
-  lines.push((w === 'draw' ? '引き分け' : seatLabel(V, w) + 'の勝ち') + '　黒 ' + n.b + ' ー 白 ' + n.w);
+  lines.push(resultLine(V, false));
   return lines.join('\n');
+}
+
+// 結果の一行。2人は両方の石の数。3〜4人は勝った人と、その石の数だけ（少ない人を並べない）
+function resultLine(V, bang) {
+  const g = V.game;
+  const n = nOf(g.n);
+  const k = E.count(g.board);
+  const mark = bang ? '！' : '';
+  if (n === 2) {
+    const w = E.winner(g.board);
+    return (w === 'draw' ? '引き分け' : seatLabel(V, w) + 'の勝ち') + mark + '　黒 ' + k.b + ' ー 白 ' + k.w;
+  }
+  const ws = E.winners(g.board, n);
+  if (ws.length === n) return 'みんな同じ数で、引き分け' + mark;
+  return ws.map((c) => seatLabel(V, c)).join('と') + 'の勝ち' + mark + '　石 ' + k[ws[0]] + 'こ';
 }
 
 function renderGame() {
@@ -1587,11 +1714,14 @@ function renderGame() {
   const local = state.role === 'local';
   const host = state.role === 'host';
   const n = E.count(g.board);
+  const gn = nOf(g.n);
+  const wins = g.over ? E.winners(g.board, gn) : [];
   const pickKey = V.key + ':' + g.ply;
   if (state.pickKey !== pickKey) { state.pick = -1; state.pickKey = pickKey; }
 
-  // 対戦する2人
-  $('seats').replaceChildren(...COLORS.map((c) => {
+  // 対戦する人（3〜4人は盤のまわりに時計まわりで並べる。style.css の .is-multi）
+  document.querySelector('.rv-game').classList.toggle('is-multi', gn !== 2);
+  $('seats').replaceChildren(...colorsOf(gn).map((c) => {
     const turn = !g.over && g.turn === c;
     const box = makeElement('div', 'rv-seat rv-seat--' + c + (turn ? ' is-turn' : ''));
     const stone = makeElement('span', 'rv-seat__stone');
@@ -1601,7 +1731,7 @@ function renderGame() {
     if (V.name(c)) who.append(makeElement('span', 'rv-seat__name', V.name(c)));
     const tags = makeElement('div', 'rv-seat__tags');
     if (turn) tags.append(makeElement('span', 'rv-tag rv-tag--turn', 'の番'));
-    if (g.over && E.winner(g.board) === c) tags.append(makeElement('span', 'rv-tag rv-tag--win', '勝ち'));
+    if (g.over && wins.includes(c) && wins.length < gn) tags.append(makeElement('span', 'rv-tag rv-tag--win', '勝ち'));
     if (V.away(c)) tags.append(makeElement('span', 'rv-tag rv-tag--warn', '通信が切れた'));
     // 「端末なし」の印はホストの画面にだけ出す（子どもどうしの画面で区別しない）
     if (host && V.proxy(c)) tags.append(makeElement('span', 'rv-tag rv-tag--muted', '端末なし'));
@@ -1619,23 +1749,23 @@ function renderGame() {
   // いまの番・パス・結果
   const can = V.canPlay();
   // CPU と対戦するときの CPU の番は、補助の印を出さない（押せないのに、自分の置ける場所に見えるため）
-  const ad = V.cpu && g.turn === V.cpu ? { spots: false, count: false, confirm: false } : aidFor(V.aid, g.turn);
+  const ad = V.isCpu(g.turn) ? { spots: false, count: false, confirm: false } : aidFor(V.aid, g.turn);
+  const botNote = gn === 2 ? 'CPU は ' : 'CPU（' + COLOR[g.bot] + '）は ';
   const autoNote = g.auto && g.last >= 0 ? '時間切れ。CPU が' + COLOR[g.auto] + 'の代わりに ' + E.coord(g.last) + ' に置いたよ。'
-    : local && V.cpu && g.bot === V.cpu && g.last >= 0 ? 'CPU は ' + E.coord(g.last) + ' に置いたよ。' : '';
+    : local && g.bot && V.isCpu(g.bot) && g.last >= 0 ? botNote + E.coord(g.last) + ' に置いたよ。' : '';
   const pass = autoNote + (g.passed && !g.over ? seatLabel(V, g.passed) + 'は置ける場所がないので、パス。' : '');
   let status = '';
   if (g.over) {
-    const w = E.winner(g.board);
-    status = autoNote + (w === 'draw' ? '引き分け！' : seatLabel(V, w) + 'の勝ち！') + '　黒 ' + n.b + ' ー 白 ' + n.w;
-  } else if (local && !V.cpu) status = pass + seatLabel(V, g.turn) + 'の番だよ';
+    status = autoNote + resultLine(V, true);
+  } else if (local && !V.hasCpu) status = pass + seatLabel(V, g.turn) + 'の番だよ';
   else if (V.mine(g.turn)) status = pass + 'あなたの番だよ（' + COLOR[g.turn] + '）';
   else if (can) status = pass + seatLabel(V, g.turn) + 'の番。代わりに置いてね';
   else status = pass + seatLabel(V, g.turn) + 'が考え中';
-  if (!g.over && can && ad.spots && (!local || V.cpu)) status += '。置ける場所に印が出ているよ';
+  if (!g.over && can && ad.spots && (!local || V.hasCpu)) status += '。置ける場所に印が出ているよ';
   const st = $('gameStatus');
   st.textContent = status;
   st.classList.toggle('is-pass', !!pass && !g.over);
-  st.classList.toggle('is-mine', can && (!local || !!V.cpu) && !g.over);
+  st.classList.toggle('is-mine', can && (!local || V.hasCpu) && !g.over);
   st.classList.toggle('is-result', g.over);
 
   renderBoard($('board'), g, { canPlay: can, aid: ad, pick: state.pick, key: V.key });
@@ -1644,8 +1774,8 @@ function renderGame() {
   const picking = can && ad.confirm && state.pick >= 0;
   $('confirmBox').hidden = !picking;
   if (picking) {
-    const k = E.flipsAt(g.board, state.pick, g.turn).length;
-    $('confirmText').textContent = E.coord(state.pick) + ' に置くと、' + k + 'こ ひっくり返るよ';
+    const k = E.flipsFor(g.board, state.pick, g.turn, gn).length;
+    $('confirmText').textContent = k ? E.coord(state.pick) + ' に置くと、' + k + 'こ ひっくり返るよ' : E.coord(state.pick) + ' に置く（ひっくり返る石はないよ）';
   }
 
   updateClock();
@@ -1655,11 +1785,12 @@ function renderGame() {
   if (g.over) {
     $('resultHost').hidden = !(host || local);
     $('resultWait').hidden = host || local;
+    const again = gn === 2 ? 'もう一回（黒と白を入れかえる）' : 'もう一回（色をまわす）';
     if (local) {
-      $('btnAgain').textContent = V.name('b') || V.name('w') ? 'もう一回（黒と白を入れかえる）' : 'もう一回あそぶ';
+      $('btnAgain').textContent = colorsOf(gn).some((c) => V.name(c)) ? again : 'もう一回あそぶ';
       $('btnRelobby').textContent = '名前と補助を変える';
     } else {
-      $('btnAgain').textContent = 'もう一回（黒と白を入れかえる）';
+      $('btnAgain').textContent = again;
       $('btnRelobby').textContent = '対戦する人を選びなおす';
     }
   }
@@ -1667,7 +1798,7 @@ function renderGame() {
   // そのほかの操作（1台の画面・ホスト）
   $('tools').hidden = !(host || local);
   // CPU と対戦するときは、自分の手までもどす（自分がまだ置いていなければ押せない）
-  $('btnUndo').disabled = !g.hist.length || (local && !!V.cpu && !g.hist.some((h) => h.turn !== V.cpu));
+  $('btnUndo').disabled = !g.hist.length || (local && V.hasCpu && !g.hist.some((h) => !V.isCpu(h.turn)));
   $('btnReset').textContent = local ? '最初からやりなおす' : 'この対局をやめる';
   $('btnQuit').hidden = !local;
   if (local) scheduleCpu();
@@ -1712,8 +1843,8 @@ function buildBoard(root) {
 function renderBoard(root, g, opt) {
   if (!root._cells) buildBoard(root);
   const cells = root._cells;
-  const legal = opt.canPlay || opt.aid.spots ? E.legalMoves(g.board, g.turn) : {};
-  const preview = opt.pick >= 0 ? E.flipsAt(g.board, opt.pick, g.turn) : [];
+  const legal = opt.canPlay || opt.aid.spots ? E.movesOf(g.board, g.turn, g.n) : {};
+  const preview = opt.pick >= 0 ? E.flipsFor(g.board, opt.pick, g.turn, g.n) : [];
   // 同じ対局で1手すすんだときだけ動かす（もどす・新しい対局・読み込み直しでは動かさない）
   const animate = root._key === opt.key && g.ply === root._ply + 1;
   const flipped = animate ? new Set(g.flipped) : new Set();
@@ -1723,7 +1854,7 @@ function renderBoard(root, g, opt) {
     const ch = g.board[i];
     const stone = b.firstChild;
     const mark = b.lastChild;
-    stone.className = 'rv-stone' + (ch === 'b' ? ' is-b' : ch === 'w' ? ' is-w' : '');
+    stone.className = 'rv-stone' + (COLOR[ch] ? ' is-' + ch : '');
     if (animate && i === g.last) stone.classList.add('is-new');
     if (flipped.has(i)) {
       stone.classList.add('is-flip');
@@ -1733,16 +1864,18 @@ function renderBoard(root, g, opt) {
     }
     const isLegal = legal[i] != null;
     const spot = opt.aid.spots && isLegal && !g.over;
-    mark.className = 'rv-mark' + (spot ? ' is-spot is-' + g.turn : '') + (spot && opt.aid.count ? ' is-count' : '');
-    mark.textContent = spot && opt.aid.count ? String(legal[i]) : '';
+    // ひっくり返る石がない場所（3〜4人の、となりに置く手）は、数のかわりに点だけ
+    const num = spot && opt.aid.count && legal[i] > 0;
+    mark.className = 'rv-mark' + (spot ? ' is-spot is-' + g.turn : '') + (num ? ' is-count' : '');
+    mark.textContent = num ? String(legal[i]) : '';
     b.classList.toggle('is-last', i === g.last && ch !== '.');
     b.classList.toggle('is-pick', i === opt.pick);
     b.classList.toggle('is-will-flip', preview.includes(i));
-    b.classList.remove('is-ghost-b', 'is-ghost-w');
+    b.classList.remove('is-ghost-b', 'is-ghost-w', 'is-ghost-y', 'is-ghost-u');
     if (i === opt.pick) b.classList.add('is-ghost-' + g.turn);
     b.classList.toggle('is-playable', opt.canPlay && isLegal);
     b.disabled = !opt.canPlay;
-    const what = ch === 'b' ? '黒' : ch === 'w' ? '白' : spot ? '置ける' + (opt.aid.count ? '（' + legal[i] + 'こ）' : '') : '空き';
+    const what = COLOR[ch] || (spot ? '置ける' + (num ? '（' + legal[i] + 'こ）' : '') : '空き');
     b.setAttribute('aria-label', E.coord(i) + ' ' + what);
   });
   // アニメーションをやり直すため、クラスを付け直したあとに一度だけ再計算させる
@@ -1773,8 +1906,14 @@ function onCell(i) {
   const V = viewModel();
   if (!V || !V.canPlay()) return;
   const g = V.game;
-  if (!E.flipsAt(g.board, i, g.turn).length) {
-    toast(g.board[i] === '.' ? 'そこには置けないよ。相手の石をはさめる場所に置いてね' : 'そこにはもう石があるよ', false);
+  const moves = E.movesOf(g.board, g.turn, g.n);
+  if (moves[i] == null) {
+    let msg = 'そこにはもう石があるよ';
+    if (g.board[i] === '.') {
+      if (nOf(g.n) === 2) msg = 'そこには置けないよ。相手の石をはさめる場所に置いてね';
+      else msg = Object.values(moves).some((v) => v > 0) ? 'そこには置けないよ。ほかの色の石をはさめる場所に置いてね' : 'そこには置けないよ。石のとなりに置いてね';
+    }
+    toast(msg, false);
     return;
   }
   if (aidFor(V.aid, g.turn).confirm && state.pick !== i) {
@@ -1865,8 +2004,8 @@ $('btnOpenWatch').addEventListener('click', () => {
 $('btnLeave').addEventListener('click', leaveRoom);
 $('btnOverlayLeave').addEventListener('click', leaveRoom);
 
-$('seatB').addEventListener('change', (event) => setSeat('b', event.currentTarget.value));
-$('seatW').addEventListener('change', (event) => setSeat('w', event.currentTarget.value));
+COLORS.forEach((c) => $(SEAT_ID[c]).addEventListener('change', (event) => setSeat(c, event.currentTarget.value)));
+document.querySelectorAll('input[name="players"]').forEach((r) => r.addEventListener('change', (event) => setPlayers(event.currentTarget.value)));
 $('btnSeatSwap').addEventListener('click', swapSeats);
 $('moveTime').addEventListener('change', (event) => setMoveTime(event.currentTarget.value));
 $('btnAddProxy').addEventListener('click', addProxy);
@@ -1879,7 +2018,7 @@ $('btnLocalSwap').addEventListener('click', () => {
   $('localNameW').value = b;
 });
 $('btnLocalStart').addEventListener('click', startLocal);
-document.querySelectorAll('input[name="localVs"]').forEach((r) => r.addEventListener('change', syncLocalVs));
+document.querySelectorAll('input[name="localVs"], input[name="localN"]').forEach((r) => r.addEventListener('change', syncLocalVs));
 
 $('btnPlace').addEventListener('click', () => { if (state.pick >= 0) place(state.pick); });
 $('btnUnpick').addEventListener('click', () => { state.pick = -1; renderGame(); });
@@ -1890,10 +2029,10 @@ $('btnUndo').addEventListener('click', () => {
     const hist = L.game.hist.slice();
     let prev = hist.pop();
     // CPU と対戦するときは、自分の番までもどす（CPU の手と、その前の自分の手をいっしょに）
-    while (L.cpu && prev.turn === L.cpu && hist.length) prev = hist.pop();
-    if (L.cpu && prev.turn === L.cpu) return;
+    while (L.cpus.includes(prev.turn) && hist.length) prev = hist.pop();
+    if (L.cpus.includes(prev.turn)) return;
     stopCpu();
-    L.game = { ...prev, flipped: [], over: false, hist, moveTime: L.game.moveTime, turnAt: Date.now(), auto: null, bot: null, ended: L.game.ended };
+    L.game = { ...prev, n: L.game.n, flipped: [], over: false, hist, moveTime: L.game.moveTime, turnAt: Date.now(), auto: null, bot: null, ended: L.game.ended };
     state.pick = -1;
     saveLocal();
     renderGame();
@@ -1903,6 +2042,7 @@ $('btnUndo').addEventListener('click', () => {
 });
 $('btnAid').addEventListener('click', () => {
   const cur = state.role === 'local' ? state.local.aid : state.room?.aid;
+  const gn = viewModel()?.game.n;
   aidEditor($('dialogAid'), cur, (a) => {
     if (state.role === 'local') {
       state.local.aid = a;
@@ -1911,7 +2051,7 @@ $('btnAid').addEventListener('click', () => {
     } else {
       setAid(a);
     }
-  });
+  }, gn);
   $('aidDialog').showModal();
 });
 $('btnAidClose').addEventListener('click', () => $('aidDialog').close());
@@ -1920,7 +2060,7 @@ $('btnReset').addEventListener('click', () => {
     const g = state.local.game;
     if (!g.over && g.ply && !window.confirm('最初からやりなおす？')) return;
     stopCpu();
-    state.local.game = newLocalGame(state.local.game.moveTime);
+    state.local.game = newLocalGame(state.local.game.moveTime, state.local.game.n);
     state.pick = -1;
     saveLocal();
     window.RoomkStats?.count('local-start');
@@ -1938,10 +2078,15 @@ $('btnCopyKifu').addEventListener('click', (event) => {
 $('btnAgain').addEventListener('click', () => {
   if (state.role === 'local') {
     const L = state.local;
-    L.names = { b: L.names.w, w: L.names.b };
-    if (L.cpu) L.cpu = E.other(L.cpu);
+    const gn = L.game.n;
+    // 2人は黒と白を入れかえ、3〜4人は色を1つずつまわす（CPU の色もいっしょに）
+    L.names = rotateSeats(L.names, gn);
+    const cs = colorsOf(gn);
+    L.cpus = L.cpus.map((c) => cs[(cs.indexOf(c) - 1 + cs.length) % cs.length]);
+    // cpu（「対戦の相手」で選んだ値）は、名前と補助を変える画面にもどすときに使う。3〜4人では選んだままにする
+    if (L.cpu && gn === 2) L.cpu = E.other(L.cpu);
     stopCpu();
-    L.game = newLocalGame(L.game.moveTime);
+    L.game = newLocalGame(L.game.moveTime, gn);
     state.pick = -1;
     saveLocal();
     window.RoomkStats?.count('local-start');
@@ -1952,10 +2097,15 @@ $('btnAgain').addEventListener('click', () => {
 });
 $('btnRelobby').addEventListener('click', () => {
   if (state.role === 'local') {
-    const names = state.local.names;
     const moveTime = state.local.game.moveTime;
     const cpu = state.local.cpu;
     const level = state.local.level;
+    const gn = state.local.game.n;
+    // 人の名前を、準備の画面の人の欄へ順に入れる（3〜4人で色をまわしたあとは、自分の色が準備の画面とちがうため）
+    const humans = colorsOf(gn).filter((c) => !state.local.cpus.includes(c)).map((c) => state.local.names[c]);
+    const setupCpus = cpusOf(cpu, gn);
+    const names = {};
+    colorsOf(gn).filter((c) => !setupCpus.includes(c)).forEach((c, k) => { names[c] = humans[k] || ''; });
     state.localAid = state.local.aid;
     clearLocal();
     state.local = null;
@@ -1963,7 +2113,7 @@ $('btnRelobby').addEventListener('click', () => {
     stopClock();
     stopCpu();
     resetBoxes();
-    openLocalSetup(names, moveTime, cpu, level);
+    openLocalSetup(names, moveTime, cpu, level, gn);
   } else if (state.role === 'host') {
     backToLobby();
   }

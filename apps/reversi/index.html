@@ -9,13 +9,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
   <!-- index.html と app.js・engine.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261124a">
+  <link rel="stylesheet" href="style.css?v=20261125a">
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-database-compat.js"></script>
   <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
   <script src="../shared/js/room-qr.js?v=20261022"></script>
-  <script src="engine.js?v=20261124a"></script>
+  <script src="engine.js?v=20261125a"></script>
 </head>
 <body data-genre="board">
 
@@ -86,11 +86,19 @@
       <h2 class="rv-panel__title rv-panel__title--sub">1台の画面であそぶ</h2>
       <p class="rv-panel__lead">1台の画面をみんなで見てあそぶ。石を置くのは、画面を動かす人。</p>
       <fieldset class="rv-fieldset">
+        <legend class="rv-legend">対戦する人数</legend>
+        <div class="rv-seg rv-seg--3" id="localN">
+          <label class="rv-seg__opt"><input type="radio" name="localN" value="2" checked><span>2人</span></label>
+          <label class="rv-seg__opt"><input type="radio" name="localN" value="3"><span>3人</span></label>
+          <label class="rv-seg__opt"><input type="radio" name="localN" value="4"><span>4人</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="rv-fieldset">
         <legend class="rv-legend">対戦の相手</legend>
         <div class="rv-seg rv-seg--3" id="localVs">
           <label class="rv-seg__opt"><input type="radio" name="localVs" value="" checked><span>人どうし</span></label>
-          <label class="rv-seg__opt"><input type="radio" name="localVs" value="w"><span>CPU（自分が黒）</span></label>
-          <label class="rv-seg__opt"><input type="radio" name="localVs" value="b"><span>CPU（自分が白）</span></label>
+          <label class="rv-seg__opt"><input type="radio" name="localVs" value="w"><span id="localVsCpuW">CPU（自分が黒）</span></label>
+          <label class="rv-seg__opt"><input type="radio" name="localVs" value="b"><span id="localVsCpuB">CPU（自分が白）</span></label>
         </div>
       </fieldset>
       <fieldset class="rv-fieldset" id="localLevelBox" hidden>
@@ -103,7 +111,7 @@
       </fieldset>
       <fieldset class="rv-fieldset">
         <legend class="rv-legend">対戦する人の名前（なくてもいい）</legend>
-        <div class="rv-names">
+        <div class="rv-names" id="localNames">
           <label class="rv-name">
             <span class="rv-name__label"><span class="rv-chip rv-chip--b" aria-hidden="true"></span>黒（先に置く）</span>
             <input id="localNameB" class="form-input" type="text" maxlength="8" autocomplete="off">
@@ -114,6 +122,14 @@
           <label class="rv-name">
             <span class="rv-name__label"><span class="rv-chip rv-chip--w" aria-hidden="true"></span>白</span>
             <input id="localNameW" class="form-input" type="text" maxlength="8" autocomplete="off">
+          </label>
+          <label class="rv-name" hidden>
+            <span class="rv-name__label"><span class="rv-chip rv-chip--y" aria-hidden="true"></span>黄</span>
+            <input id="localNameY" class="form-input" type="text" maxlength="8" autocomplete="off">
+          </label>
+          <label class="rv-name" hidden>
+            <span class="rv-name__label"><span class="rv-chip rv-chip--u" aria-hidden="true"></span>青</span>
+            <input id="localNameU" class="form-input" type="text" maxlength="8" autocomplete="off">
           </label>
         </div>
       </fieldset>
@@ -157,6 +173,15 @@
 
       <div class="card">
         <h2 class="rv-h2">対戦する人</h2>
+        <fieldset id="playersEdit" class="rv-fieldset rv-players" hidden>
+          <legend class="rv-legend">人数</legend>
+          <div class="rv-seg rv-seg--3">
+            <label class="rv-seg__opt"><input type="radio" name="players" value="2" checked><span>2人</span></label>
+            <label class="rv-seg__opt"><input type="radio" name="players" value="3"><span>3人</span></label>
+            <label class="rv-seg__opt"><input type="radio" name="players" value="4"><span>4人</span></label>
+          </div>
+        </fieldset>
+        <p id="playersView" class="rv-aid-view rv-players" hidden></p>
         <div id="seatEdit" class="rv-seats-edit" hidden>
           <label class="rv-seatsel">
             <span class="rv-name__label"><span class="rv-chip rv-chip--b" aria-hidden="true"></span>黒（先に置く）</span>
@@ -168,6 +193,14 @@
           <label class="rv-seatsel">
             <span class="rv-name__label"><span class="rv-chip rv-chip--w" aria-hidden="true"></span>白</span>
             <select id="seatW" class="form-input"></select>
+          </label>
+          <label class="rv-seatsel" hidden>
+            <span class="rv-name__label"><span class="rv-chip rv-chip--y" aria-hidden="true"></span>黄</span>
+            <select id="seatY" class="form-input"></select>
+          </label>
+          <label class="rv-seatsel" hidden>
+            <span class="rv-name__label"><span class="rv-chip rv-chip--u" aria-hidden="true"></span>青</span>
+            <select id="seatU" class="form-input"></select>
           </label>
         </div>
         <div id="seatView" class="rv-seats-view" hidden></div>
@@ -277,26 +310,32 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261124a"></script>
+  <script type="module" src="app.js?v=20261125a"></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
     RoomkHowto.init({
       slides: 'slides.html',
       title: 'あそびかた',
-      lead: '黒と白の石を交互に置いて、相手の石をはさんでひっくり返すゲーム。最後に自分の色の石が多いほうの勝ち。',
+      lead: '黒と白の石を交互に置いて、相手の石をはさんでひっくり返すゲーム。最後に自分の色の石が多いほうの勝ち。3人・4人でもあそべる。',
       sections: [
         { heading: 'はじめかた', items: [
           'ホストが「ルームを作る」で名前を入れる。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる。スマホやタブレットで入る人には「QRコードを出す」をカメラで読み取ってもらう',
           '参加する人は「ルームに参加する」で名前、ルームコード（6文字）の順に入れ、「参加する」を押す。リンクから開いたときは、ルームコードは入っているので名前だけ入れる',
-          '対戦するのは2人。ほかの人は、自分の画面で勝負を見られる',
-          '1台の画面でみんなで見るときは「1台の画面であそぶ」。そこで相手を「CPU」にすると、CPU と対戦できる。CPU の強さは「よわい・ふつう・つよい」から選べる',
+          '対戦するのは2〜4人（はじめは2人）。待合室で人数を「3人」「4人」にすると、黄・青の石も入れて、みんなで1つの盤であそべる。ほかの人は、自分の画面で勝負を見られる',
+          '1台の画面でみんなで見るときは「1台の画面であそぶ」（人数も選べる）。そこで相手を「CPU」にすると、CPU と対戦できる。CPU の強さは「よわい・ふつう・つよい」から選べる',
         ] },
-        { heading: '置きかた', items: [
+        { heading: '置きかた（2人のとき）', items: [
           '黒から先に置く',
           '相手の石を、自分の石ではさめる場所にだけ置ける（たて・よこ・ななめ）',
           'はさんだ相手の石は、ぜんぶ自分の色にひっくり返る',
           '置ける場所がないときはパスになって、相手がつづけて置く',
+        ] },
+        { heading: '3人・4人のとき', items: [
+          '黒→白→黄→青の順に置く',
+          '自分の石で、ほかの色の石をはさめる場所に置く。はさむ石の色はまじっていてもいい。はさんだ石は、ぜんぶ自分の色になる',
+          'はさめる場所がないときは、どれかの石のとなりに置ける。パスはない',
+          '盤がうまったらおしまい。自分の色の石がいちばん多い人の勝ち',
         ] },
         { heading: '補助', items: [
           '「置ける場所を見せる」: 置ける場所に点が出る',
@@ -305,7 +344,7 @@
         ] },
         { heading: 'おわりかた', items: [
           '「1手の制限時間」を決めたときは、残り時間が出る。時間を過ぎると CPU が代わりに置くよ',
-          'どちらも置けなくなったらおしまい。自分の色の石が多いほうの勝ち。同じ数なら引き分け',
+          '2人のときは、どちらも置けなくなったらおしまい。自分の色の石が多いほうの勝ち。同じ数なら引き分け',
           '場所は、横が左から A〜H、たてが上から 1〜8。「D3」のように言うと伝わるよ',
         ] },
       ],
