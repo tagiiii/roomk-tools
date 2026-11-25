@@ -303,7 +303,16 @@ const SLIDES = [
     ),
     note:'あとから変えたいときも、マップを押すだけだよ。\nジャンルの横の丸い「＋」を押すと、中身を足せる。「×」のついたものを押すと、その場で消える。\nべつのジャンルを足したいときは、「＋ ジャンルを足す」を押してね。' },
 
-  /* 8 */ { type:'content', accent:'teal', section:'あそびかた', sectionEn:'how to play', num:'5',
+  /* 8 */ { type:'content', accent:'coral', section:'あそびかた', sectionEn:'how to play', num:'5',
+    headline:'ホストと<span class="hl">いっしょに作る</span><br>こともできる',
+    body: rows(
+      ['group', 'ホストも、みんなのマップに足せる・消せる', '声やチャットで教えてくれたものを、ホストが足すこともあるよ'],
+      ['sync', 'どちらが押しても、すぐ出る', '自分の画面にも、ホストの画面にも、同じマップが出る'],
+      ['task_alt', '完成と、みんなに出すかは自分で決める', '「マップを完成する」と「みんなに出す」は、自分だけが押せる'],
+    ),
+    note:'ホストが、みんなのマップをいっしょに作ることもできるよ。\n声やチャットで教えてくれたものを、ホストが足したり消したりできる。どちらが押しても、自分の画面にもホストの画面にもすぐ出るよ。\n「マップを完成する」と「見せあいのときにみんなに出す」は、これまでどおり自分で決めてね。' },
+
+  /* 9 */ { type:'content', accent:'teal', section:'あそびかた', sectionEn:'how to play', num:'6',
     headline:'できたら<br><span class="hl">「マップを完成する」</span>',
     body: rows(
       ['task_alt', '「マップを完成する」を押して待つ', 'みんなができるまで、自分のマップを見ながら待とう'],
@@ -312,7 +321,7 @@ const SLIDES = [
     ),
     note:'マップができたら、下の「マップを完成する」を押してね。\n押したあとでも「選びなおす」で直せるよ。\nみんなに見せたくないときは、「見せあいのときにみんなに出す」を外しておけば、自分のマップは出ないよ。' },
 
-  /* 9 */ { type:'content', accent:'coral', section:'あそびかた', sectionEn:'how to play', num:'6',
+  /* 10 */ { type:'content', accent:'coral', section:'あそびかた', sectionEn:'how to play', num:'7',
     headline:'1人ずつマップを出して、<br><span class="hl">見せあう</span>',
     body: rows(
       ['slideshow', '1人ずつ、マップが大きく出る', 'ホストが「つぎの人」で順番に出していく'],
@@ -321,7 +330,7 @@ const SLIDES = [
     ),
     note:'みんなができたら、見せあいの時間だよ。\n1人ずつマップが大きく出て、その下に「きいてみよう」の質問が出る。\n声でもチャットでもいいよ。話したいことだけ話してね。' },
 
-  /* 10 */ { type:'content', accent:'blue', section:'Q&A', sectionEn:'question & answer',
+  /* 11 */ { type:'content', accent:'blue', section:'Q&A', sectionEn:'question & answer',
     headline:'よくある質問',
     body: qa(
       ['好きなものが、選択肢にないときは？', '「自分で書く」で足せるよ。1つのジャンルに3つまで書ける。'],
@@ -330,19 +339,19 @@ const SLIDES = [
     ),
     note:'よくある質問だよ。\n好きなものが選択肢にないときは、「自分で書く」で足せるよ。\n少ししか選ばなくてもだいじょうぶ。ジャンル1つだけでも完成できる。\nみんなに見せたくないときは、完成のあとの「見せあいのときにみんなに出す」を外してね。' },
 
-  /* 11 */ { type:'divider', accent:'blue', icon:'help', jp:'質問タイム', en:'questions',
+  /* 12 */ { type:'divider', accent:'blue', icon:'help', jp:'質問タイム', en:'questions',
     sub:'わからないことはあるかな？',
     note:'ここまでで、わからないことはあるかな？\nチャットでも声でも、なんでも聞いてね。' },
 
-  /* 12 */ { type:'divider', accent:'teal', solid:true, icon:'rocket_launch', jp:'＼ マップを作ろう ／', en:'start',
+  /* 13 */ { type:'divider', accent:'teal', solid:true, icon:'rocket_launch', jp:'＼ マップを作ろう ／', en:'start',
     sub:'まずは「＋」を押してみよう',
     note:'それでは、好きなものマップをはじめるよ。\nまずは、自分の名前から出ている「＋ 好きなジャンルを足す」を押してみよう。できたら「マップを完成する」を押してね。' },
 
-  /* 13 */ { type:'divider', accent:'coral', icon:'slideshow', jp:'見せあいタイム', en:'show & talk',
+  /* 14 */ { type:'divider', accent:'coral', icon:'slideshow', jp:'見せあいタイム', en:'show & talk',
     sub:'1人ずつ、マップを出していくよ',
     note:'見せあいの時間だよ。\n1人ずつマップを出していくね。「きいてみよう」の質問に、声かチャットで答えてみよう。話したいことだけでいいよ。' },
 
-  /* 14 */ { type:'divider', accent:'teal', solid:true, icon:'favorite', jp:'おしまい', en:'thank you',
+  /* 15 */ { type:'divider', accent:'teal', solid:true, icon:'favorite', jp:'おしまい', en:'thank you',
     sub:'おつかれさま！',
     note:'これでおしまい。\nみんなの「好き」が見られて楽しかったね。おつかれさま。' },
 ];
