@@ -35,7 +35,7 @@ t('nickname', !L.validNickname('そら') && !!L.validNickname('') && !!L.validNi
 // ── ルーム ──
 const base = () => ({
   status: 'waiting', host: 'メンター', hostUid: 'u0', hostConnected: true,
-  settings: { hostPlays: true, order: 'turn', level: 'two' },
+  settings: { hostPlays: true, order: 'turn', judge: 'all', level: 'two' },
   players: {
     'メンター': { isHost: true, uid: 'u0', joinedAt: 1 },
     'そら': { isHost: false, uid: 'u1', joinedAt: 2 },
@@ -110,6 +110,47 @@ rhint = L.hint(rhint, 'メンター');
 t('hint 2 cap', L.hintStageOf(rhint.game) === 2);
 rhint = L.move(rhint, 'メンター', 1, 'ま');
 t('hint resets', L.hintStageOf(rhint.game) === 0);
+
+// ことばの判定: ホストが決める
+t('judge default host', L.settingsOf({}).judge === 'host' && L.settingsOf({ settings: { judge: 'x' } }).judge === 'host');
+const hj = base(); hj.settings.judge = 'host';
+let rj = L.newGame(hj, P, null);
+rj = L.move(rj, 'メンター', 1, 'ま'); // ホストの手はそのまま確定 → そらの番
+t('host move commits', L.currentWord(rj.game) === 'うま' && !L.pendingOf(rj) && L.turnOf(rj) === 'そら');
+rj = L.move(rj, 'そら', 0, 'ぬ');     // ぬま（仮）
+t('guest move pending', L.currentWord(rj.game) === 'うま' && L.pendingOf(rj).w === 'ぬま' && L.turnOf(rj) === 'そら');
+t('pending blocks', !L.canMove(rj, 'そら') && !L.canMove(rj, 'メンター') && !L.canUndo(rj, 'メンター') && !L.canPass(rj, 'メンター'));
+t('approve host only', L.approve(rj, 'そら') === null && L.approve(rj, 'みどり') === null);
+t('reject by host or mover', L.canReject(rj, 'メンター') && L.canReject(rj, 'そら') && !L.canReject(rj, 'みどり'));
+const rjr = L.reject(rj, 'メンター');
+t('reject keeps turn', !L.pendingOf(rjr) && L.currentWord(rjr.game) === 'うま' && L.turnOf(rjr) === 'そら' && L.canMove(rjr, 'そら'));
+const rja = L.approve(rj, 'メンター');
+t('approve commits', !L.pendingOf(rja) && L.currentWord(rja.game) === 'ぬま' && rja.game.ladder.slice(-1)[0].by === 'そら' && L.turnOf(rja) === 'みどり');
+// 仮に置いたあとで、変えた人が抜けた → OK でも、つぎの人（みどり）を飛ばさない
+const rjl = L.leave(rj, 'そら');
+t('leave pending turn moves', L.turnOf(rjl) === 'みどり' && !!L.pendingOf(rjl));
+const rjla = L.approve(rjl, 'メンター');
+t('approve after leave keeps next', L.currentWord(rjla.game) === 'ぬま' && L.turnOf(rjla) === 'みどり');
+// ゴールのことばは判定を待たない
+let rg = L.newGame(hj, P, null);
+rg = L.move(rg, 'メンター', 1, 'ま');
+rg = L.move(rg, 'そら', 0, 'や');
+t('goal skips judge', rg.game.cleared && !L.pendingOf(rg));
+// 古い仮置き（ことばの数がずれた）は読まない
+t('stale pending ignored', L.pendingOf({ ...rja, game: { ...rja.game, pending: { w: 'ああ', by: 'そら', actor: 'そら', n: 1 } } }) === null);
+// だれでも＋ホストが決める
+const fj = base(); fj.settings.order = 'free'; fj.settings.judge = 'host';
+let rfj = L.newGame(fj, P, null);
+rfj = L.move(rfj, 'みどり', 1, 'ま');
+t('free pending', !!L.pendingOf(rfj) && !L.canMove(rfj, 'そら') && L.canReject(rfj, 'みどり'));
+rfj = L.approve(rfj, 'メンター');
+t('free approve', L.currentWord(rfj.game) === 'うま' && L.turnOf(rfj) === null && L.canUndo(rfj, 'みどり'));
+// 端末なしの参加者の番（ホストが代わりに押す）は、そのまま確定
+const pj = base(); pj.settings.judge = 'host'; pj.proxies = { 'あお': { addedAt: 1.5 } };
+let rpj = L.newGame(pj, P, null);
+rpj = L.move(rpj, 'メンター', 1, 'ま'); // あお の番
+rpj = L.move(rpj, 'メンター', 0, 'し');
+t('proxy by host commits', !L.pendingOf(rpj) && L.currentWord(rpj.game) === 'しま' && L.turnOf(rpj) === 'そら');
 
 // 出したお題
 const u = L.unseenIndexes({ seen: { c3: [31] } }, PUZZLES, 3);

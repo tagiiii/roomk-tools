@@ -21,6 +21,10 @@ const ORDER_ITEMS = [
   { id: 'turn', label: '順番に', note: '1人ずつ順番に変える。思いつかないときは「パス」' },
   { id: 'free', label: 'だれでも', note: 'だれが変えてもいい。早く押した人の手が入る' },
 ];
+const JUDGE_ITEMS = [
+  { id: 'host', label: 'ホストが決める', note: '変えたことばを、ホストが「OK」か「やりなおし」で決める' },
+  { id: 'all', label: 'みんなで決める', note: '変えたらすぐに進む。ことばじゃなかったら「1つ戻す」' },
+];
 
 /* ── 文字の表（1行10マス。左が あ〜な 行、右が は〜わ 行。空きは空白） ── */
 const PAD_ROWS = [
@@ -167,12 +171,13 @@ function view() {
       hintStage: L.hintStageOf(g),
       canEdit: L.canMove(room, me),
       canUndo: L.canUndo(room, me),
-      canHint: isHost && !g.cleared,
+      canHint: isHost && !g.cleared && !g.pending,
+      pending: g.pending,
       isHost,
       levelLabel: lv.id === 'custom' ? '自分で決めたお題' : lv.label + 'のお題',
       skipLabel: lv.id === 'custom' ? 'お題を決めなおす' : 'お題を変える',
       nextLabel: lv.id === 'custom' ? 'お題を決めなおす' : '次のお題',
-      key: g.id + ':' + g.ladder.length + ':' + (L.turnOf(room) || ''),
+      key: g.id + ':' + g.ladder.length + ':' + (L.turnOf(room) || '') + ':' + (g.pending ? g.pending.w : ''),
     };
   }
   if (!local.puzzle) return null;
@@ -185,6 +190,7 @@ function view() {
     canEdit: !local.cleared,
     canUndo: local.words.length > 1 && !local.cleared,
     canHint: !local.cleared,
+    pending: null,
     isHost: true,
     levelLabel: lv.id === 'custom' ? '自分で決めたお題' : lv.label + 'のお題',
     skipLabel: lv.id === 'custom' ? 'お題を決めなおす' : 'お題を変える',
@@ -210,8 +216,9 @@ function renderPlay() {
   renderTiles(v);
   renderPad(v);
   renderHint(v);
-  $('nowArea').hidden = v.cleared;
-  $('playActions').hidden = v.cleared;
+  renderJudge(v);
+  $('nowArea').hidden = v.cleared || !!v.pending;
+  $('playActions').hidden = v.cleared || !!v.pending;
   $('btnUndo').hidden = !v.canUndo && isRoom;
   $('btnUndo').disabled = !v.canUndo;
   $('btnHint').hidden = !v.canHint;
@@ -237,6 +244,42 @@ function renderLadder(v) {
     });
     ol.appendChild(li);
   });
+}
+
+// ホストの判定を待っていることば（ルームの「ホストが決める」）
+function renderJudge(v) {
+  const area = $('judgeArea');
+  if (!v.pending || v.cleared) {
+    area.hidden = true;
+    area.dataset.shown = '';
+    return;
+  }
+  const box = $('judgeWord');
+  box.textContent = '';
+  const prev = chars(v.words[v.words.length - 1]);
+  chars(v.pending.w).forEach((c, j) => {
+    const span = document.createElement('span');
+    span.className = 'hmc-tile hmc-tile--static';
+    if (prev[j] !== c) span.classList.add('is-changed');
+    span.textContent = c;
+    box.appendChild(span);
+  });
+  const isHost = v.isHost;
+  const mine = !isHost && v.pending.actor === net.nickname;
+  $('judgeText').textContent = isHost
+    ? `「${v.pending.w}」ということばはある？`
+    : 'ホストが見ているよ。ちょっと待ってね';
+  $('judgeHostActions').hidden = !isHost;
+  $('btnJudgeRetry').hidden = !mine;
+  if (area.hidden || area.dataset.shown !== v.pending.w) {
+    area.hidden = false;
+    area.dataset.shown = v.pending.w;
+    popIn(area);
+    if (isHost) {
+      $('btnJudgeOk').focus({ preventScroll: true });
+      area.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }
 }
 
 function hintInfo(v) {
@@ -441,6 +484,7 @@ const net = {
   orphanTimer: null,
   orphanAt: null,
   lastKey: '',
+  lastPending: null,
 };
 
 let fb = null;
@@ -523,7 +567,7 @@ function cleanupRoom() {
     role: null, nickname: null, roomCode: null, roomRef: null, room: null, joinedAt: null,
     roomCallback: null, connectedRef: null, connectedCallback: null, isConnected: false,
     presenceDirty: false, presenceAt: 0, leaving: false, acting: false,
-    timerInterval: null, orphanTimer: null, orphanAt: null, lastKey: '',
+    timerInterval: null, orphanTimer: null, orphanAt: null, lastKey: '', lastPending: null,
   });
   clearSession();
   ui.mode = null;
@@ -660,7 +704,7 @@ async function createRoom() {
           hostConnected: true,
           hostDisconnectedAt: null,
           createdAt: serverTimestamp(),
-          settings: { hostPlays: true, order: 'turn', level: 'two' },
+          settings: { hostPlays: true, order: 'turn', judge: 'host', level: 'two' },
           players: { [nickname]: { isHost: true, uid, joinedAt } },
         };
       });
@@ -989,6 +1033,14 @@ function handleRoom(room) {
   else if (needsPresence(room)) ensurePresence();
   updateHostOverlay(room);
   if (room.status === S.PLAYING && L.gameOf(room)) {
+    // 自分が仮に置いたことばが「やりなおし」になったら、もう一度選べることを知らせる
+    const g = L.gameOf(room);
+    const p = g.pending;
+    const prev = net.lastPending;
+    if (prev && prev.actor === net.nickname && prev.id === g.id && !p && g.ladder.length === prev.n && net.role !== 'host') {
+      toast('もう一度、変える文字を選んでね', false);
+    }
+    net.lastPending = p ? { actor: p.actor, n: p.n, id: g.id } : null;
     const v = view();
     // ことば・番が変わったら、選んでいた文字を外す
     if (v.key !== net.lastKey) ui.selPos = null;
@@ -997,6 +1049,7 @@ function handleRoom(room) {
     renderPlay();
   } else {
     net.lastKey = '';
+    net.lastPending = null;
     ui.selPos = null;
     $('clearArea').hidden = true;
     showScreen('screen-waiting');
@@ -1067,7 +1120,8 @@ function renderWaiting(room) {
     addRow(p.name, tags, p.proxy && isHost ? () => removeProxy(p.name) : null);
   });
   const orderLabel = ORDER_ITEMS.find((o) => o.id === s.order).label;
-  $('waitingSettings').textContent = '変える人: ' + orderLabel + ' ／ お題: ' + levelOf(s.level).label;
+  const judgeLabel = JUDGE_ITEMS.find((o) => o.id === s.judge).label;
+  $('waitingSettings').textContent = '変える人: ' + orderLabel + ' ／ ことばの判定: ' + judgeLabel + ' ／ お題: ' + levelOf(s.level).label;
   $('hostWaitingTools').hidden = !isHost;
   $('guestWaitingNote').hidden = isHost;
   if (!isHost) return;
@@ -1086,6 +1140,19 @@ function renderWaiting(room) {
     seg.appendChild(b);
   });
   $('roomOrderNote').textContent = ORDER_ITEMS.find((o) => o.id === s.order).note;
+  const jseg = $('roomJudge');
+  jseg.textContent = '';
+  JUDGE_ITEMS.forEach((o) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = o.label;
+    b.dataset.judge = o.id;
+    b.setAttribute('role', 'radio');
+    b.setAttribute('aria-checked', String(s.judge === o.id));
+    b.addEventListener('click', () => setRoomSetting('judge', o.id));
+    jseg.appendChild(b);
+  });
+  $('roomJudgeNote').textContent = JUDGE_ITEMS.find((o) => o.id === s.judge).note;
   renderLevelGrid($('roomLevelGrid'), s.level, (id) => {
     setError('roomCustomError', '');
     setRoomSetting('level', id);
@@ -1101,7 +1168,7 @@ function renderTurn() {
   if (ui.mode !== 'room' || !net.room) { bar.hidden = true; return; }
   const room = net.room;
   const g = L.gameOf(room);
-  if (!g || g.cleared) { bar.hidden = true; return; }
+  if (!g || g.cleared || g.pending) { bar.hidden = true; return; }
   const s = L.settingsOf(room);
   const me = net.nickname;
   let text;
@@ -1163,6 +1230,9 @@ $('btnToWaiting').addEventListener('click', hostToWaiting);
 $('btnSkip').addEventListener('click', () => (ui.mode === 'room' ? hostNext() : nextLocal()));
 $('btnPadClose').addEventListener('click', closePad);
 $('btnUndo').addEventListener('click', undo);
+$('btnJudgeOk').addEventListener('click', () => roomAct((room) => L.approve(room, net.nickname)));
+$('btnJudgeNo').addEventListener('click', () => roomAct((room) => L.reject(room, net.nickname)));
+$('btnJudgeRetry').addEventListener('click', () => roomAct((room) => L.reject(room, net.nickname)));
 $('btnHint').addEventListener('click', showHint);
 $('btnNext').addEventListener('click', () => (ui.mode === 'room' ? hostNext() : nextLocal()));
 $('btnTop').addEventListener('click', () => (ui.mode === 'room' ? hostToWaiting() : backToTop()));
