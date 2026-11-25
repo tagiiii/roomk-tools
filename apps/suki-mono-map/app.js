@@ -76,6 +76,11 @@ const state = {
   // 作っている途中のマップ（この画面だけ。キーは「回:選ぶ時間の番号:名前」。ホストは端末なしの参加者の分も持つ）
   picks: {},
   sendTimers: {},   // 名前ごとの、送るまでのタイマー
+  // 参加する人のマップは、本人とホストの2台で編集できる。送るときは「前にルームから読んだ形（bases）」との差だけを
+  // いまのルームの分に重ねる（同時に押しても、相手の分を消さない）。edits は編集した回数、synced は送り終えた回数
+  bases: {},
+  edits: {},
+  synced: {},
   target: null,     // いま作っているのはだれの分か
   pop: null,        // ひらいているポップアップ（null・'add'＝ジャンルを足す・ジャンルのid＝その中身を選ぶ）
   freeOpen: false,  // 「自分で書く」を開いているか
@@ -181,6 +186,9 @@ function resetDrafts() {
   Object.values(state.sendTimers).forEach((t) => clearTimeout(t));
   state.sendTimers = {};
   state.picks = {};
+  state.bases = {};
+  state.edits = {};
+  state.synced = {};
   state.target = null;
   state.pop = null;
   state.freeOpen = false;
@@ -835,17 +843,58 @@ function drawMap(box, name, mp, keyId, edit) {
 // 作る（マップを直接押して作る。＋でポップアップ・× で消す）
 // ══════════════════════════════════════════════
 // だれの分を作るか（ホストは端末なしの参加者の分も作る）
+// ホストは、自分（作るとき）・参加する人・端末なしの参加者の分を作れる（参加する人の分は、本人といっしょに編集する）
 function pickTargets(room) {
-  const list = [];
-  if (state.role !== 'host' || hostPlaysOf(room)) list.push(state.nickname);
-  if (state.role === 'host') proxyNames(room).forEach((n) => list.push(n));
-  return list;
+  if (state.role === 'host') return makerNames(room);
+  return [state.nickname];
 }
+// ホストが、端末を持って参加している人のマップを編集しているか（完成・みんなに出すは本人が決める）
+const isGuestMap = (room, name) => state.role === 'host' && name !== state.nickname && !!room.players?.[name] && !room.players[name].isHost;
+const copyMap = (m) => JSON.parse(JSON.stringify(m));
+const draftKey = (room, name) => `${room.round}:${room.seq || 0}:${name}`;
+const isDirty = (key) => (state.edits[key] || 0) !== (state.synced[key] || 0);
 // 作っている途中のマップ。はじめてのとき・ホストが「もう一度作る時間」にしたときは、ルームにある分から作る
 function draftOf(room, name) {
-  const key = `${room.round}:${room.seq || 0}:${name}`;
-  if (!state.picks[key]) state.picks[key] = cleanMap(mapOf(room, name), settingsOf(room).maxGenres);
+  const key = draftKey(room, name);
+  if (!state.picks[key]) {
+    state.picks[key] = cleanMap(mapOf(room, name), settingsOf(room).maxGenres);
+    state.bases[key] = copyMap(state.picks[key]);
+  }
   return state.picks[key];
+}
+// ほかの端末（本人・ホスト）が編集した分を、作っている途中のマップに取りこむ（まだ送っていない編集があるときは待つ）
+function syncDrafts(room) {
+  const max = settingsOf(room).maxGenres;
+  pickTargets(room).forEach((name) => {
+    const key = draftKey(room, name);
+    if (!state.picks[key] || isDirty(key)) return;
+    const remote = cleanMap(mapOf(room, name), max);
+    if (JSON.stringify(remote) === JSON.stringify(state.picks[key])) return;
+    state.picks[key] = remote;
+    state.bases[key] = copyMap(remote);
+  });
+}
+// 前に読んだ形（base）から自分が変えた所だけを、いまのルームの分（cur）に重ねる
+function mergeMap(base, local, cur, max) {
+  const removed = (b, l) => (x) => b.includes(x) && !l.includes(x);
+  const genres = cur.genres.filter((g) => !removed(base.genres, local.genres)(g));
+  local.genres.forEach((g) => {
+    if (!base.genres.includes(g) && !genres.includes(g) && (!max || genres.length < max)) genres.push(g);
+  });
+  const items = {};
+  genres.forEach((g) => {
+    const b = base.items[g] || [];
+    const l = local.items[g] || [];
+    const list = (cur.items[g] || []).filter((t) => !removed(b, l)(t));
+    l.forEach((t) => { if (!b.includes(t) && !list.includes(t)) list.push(t); });
+    items[g] = list;
+  });
+  return {
+    genres,
+    items,
+    done: local.done !== base.done ? local.done : cur.done,
+    share: local.share !== base.share ? local.share : cur.share,
+  };
 }
 // 自分（か、ホストが代わりに作る人）のマップをルームに書く
 async function pushMap(name) {
@@ -856,20 +905,37 @@ async function pushMap(name) {
   if (!ref || !room || room.status !== STATUS.PICK) return;
   const round = room.round;
   const seq = room.seq || 0;
-  const d = state.picks[`${round}:${seq}:${name}`];
+  const key = `${round}:${seq}:${name}`;
+  const d = state.picks[key];
   if (!d) return;
-  const items = {};
-  d.genres.forEach((gid) => { if ((d.items[gid] || []).length) items[gid] = d.items[gid].slice(); });
-  const payload = { r: round, genres: d.genres.slice(), items, done: !!d.done, share: d.share !== false };
+  const base = state.bases[key] || emptyMap();
+  const ver = state.edits[key] || 0;
+  const max = settingsOf(room).maxGenres;
   const uid = firebase.auth().currentUser?.uid;
   const mine = name === state.nickname;
   try {
-    await ref.transaction((cur) => {
+    const res = await ref.transaction((cur) => {
       if (!cur || cur.status !== STATUS.PICK || cur.round !== round || (cur.seq || 0) !== seq) return undefined;
-      const ok = mine ? cur.players?.[name]?.uid === uid : (cur.hostUid === uid && !!cur.proxies?.[name]);
+      const p = cur.players?.[name];
+      const ok = mine ? p?.uid === uid : (cur.hostUid === uid && (!!cur.proxies?.[name] || (!!p && !p.isHost)));
       if (!ok) return undefined;
+      const old = cur.maps?.[name];
+      const m = cleanMap(mergeMap(base, d, cleanMap(old && old.r === round ? old : null, max), max), max);
+      const items = {};
+      m.genres.forEach((gid) => { if (m.items[gid].length) items[gid] = m.items[gid]; });
+      const payload = { r: round, genres: m.genres, items, done: m.done, share: m.share };
       return { ...cur, maps: { ...(cur.maps || {}), [name]: payload } };
     });
+    if (res.committed && state.picks[key] === d) {
+      // 送れた形が、つぎの「前に読んだ形」。送っているあいだに編集していなければ、相手の編集も重なった形に合わせる
+      const m = cleanMap(res.snapshot.val()?.maps?.[name], max);
+      state.bases[key] = m;
+      if ((state.edits[key] || 0) === ver) {
+        state.picks[key] = copyMap(m);
+        state.synced[key] = ver;
+        render();
+      }
+    }
   } catch (error) {
     console.warn('[suki-mono-map] map send failed', error);
     // 通信が切れて止まった分は、つながりなおしたときに送りなおす（resendDrafts）ので、ここでは知らせない
@@ -881,11 +947,15 @@ function resendDrafts() {
   const room = state.room;
   if (!room || room.status !== STATUS.PICK) return;
   pickTargets(room).forEach((name) => {
-    if (state.picks[`${room.round}:${room.seq || 0}:${name}`]) pushMap(name);
+    if (state.picks[draftKey(room, name)]) pushMap(name);
   });
 }
 // 選ぶたびに送ると多いので、少しまとめて送る
 function sendDraft(name, nowFlag) {
+  if (state.room) {
+    const key = draftKey(state.room, name);
+    state.edits[key] = (state.edits[key] || 0) + 1;
+  }
   clearTimeout(state.sendTimers[name]);
   if (nowFlag) { pushMap(name); return; }
   state.sendTimers[name] = setTimeout(() => pushMap(name), SEND_MS);
@@ -979,17 +1049,23 @@ function setDone(done) {
 function renderPick(room) {
   if (state.currentScreen !== 'pick') showScreen('pick');
   const targets = pickTargets(room);
+  syncDrafts(room);
   const host = state.role === 'host';
   const watching = !targets.length;
   $('p-watch').hidden = !watching;
-  if (!targets.includes(state.target)) state.target = targets.length ? targets[0] : null;
+  // はじめは自分の分、つぎに端末なしの参加者の分（ホストが代わりに作る）。参加する人の分は押して切りかえる
+  // （参加する人が退出・切断して切りかわったときは、ひらいていたポップアップを閉じる。ほかの人の分にひらいたまま残さない）
+  if (!targets.includes(state.target)) {
+    if (state.target) { state.pop = null; state.freeOpen = false; state.confirmDel = false; }
+    state.target = targets.find((n) => n === state.nickname || !isGuestMap(room, n)) || targets[0] || null;
+  }
 
   // ホストは「だれの分を作るか」を切りかえる（端末なしの参加者がいるとき）
   const sw = $('p-switch');
   sw.hidden = !(host && targets.length > 1);
   if (!sw.hidden) {
     sw.textContent = '';
-    sw.appendChild(el('span', 'sm-switch__label', 'だれの分を作る？'));
+    sw.appendChild(el('span', 'sm-switch__label', 'だれのマップ？'));
     targets.forEach((n) => {
       const b = el('button', null, n === state.nickname ? `${n}（自分）` : n);
       b.type = 'button';
@@ -1004,7 +1080,8 @@ function renderPick(room) {
   if (watching) { $('p-box').hidden = true; $('p-sent').hidden = true; syncPop(null); drawPickHost(room, true); return; }
   const name = state.target;
   const d = draftOf(room, name);
-  const sent = d.done;
+  const other = isGuestMap(room, name);
+  const sent = d.done && !other;
   const n = d.genres.length;
   const max = maxOf(room);
 
@@ -1032,11 +1109,14 @@ function renderPick(room) {
     onGenre: (gid) => openPop(gid),
     onLeaf: (gid, t) => toggleItem(gid, t),
   });
-  $('p-map-hint').textContent = n === 0
-    ? '「＋」を押して、好きなジャンルを足そう'
-    : '「＋」で足す・× で消す。ジャンルを押すと選びなおせるよ';
+  $('p-map-hint').textContent = other
+    ? (d.done ? `${name}さんのマップはできあがっているよ。ここから直すこともできるよ` : `${name}さんのマップを、いっしょに作れるよ`)
+    : n === 0
+      ? '「＋」を押して、好きなジャンルを足そう'
+      : '「＋」で足す・× で消す。ジャンルを押すと選びなおせるよ';
+  $('p-finish').hidden = other;
   $('p-done').disabled = n === 0;
-  drawPickHost(room, false);
+  drawPickHost(room, other);
 
   // ポップアップ（ひらいているときだけ中身を作る）
   syncPop(panel);

@@ -272,7 +272,9 @@ async function waitRoom(code, test, timeout = 5000) {
   await host.page.click('#btnStart');
   await L.waitVisible(host, '#screen-pick');
   check('stats: players-4 again (2 guests + late + proxy)', await L.waitStats(host, 'players-4', 2));
-  check('host only: makes the proxy map, no switcher', (await L.visible(host, '#p-box')) && !(await L.visible(host, '#p-switch')));
+  // 進行だけのホストは、はじめは端末なしの参加者の分。参加する人の分も切りかえて作れる（2026-11-26）
+  check('host only: makes the proxy map first, switcher for guests', (await L.visible(host, '#p-box')) && (await L.visible(host, '#p-switch'))
+    && (await host.page.evaluate(() => document.querySelector('#p-switch button[aria-selected="true"]')?.textContent)) === 'じろう');
   check('round 2: previous maps are not shown', (await genres(yu)).length === 0);
 
   // 退出・ルームを閉じる
