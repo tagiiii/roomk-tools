@@ -84,6 +84,12 @@
   .barrow .material-symbols-rounded{ font-size:56px; color:var(--acc); }
   .mb{ display:grid; grid-template-columns:22px repeat(8, var(--c)); grid-template-rows:22px repeat(8, var(--c)); --c:40px; }
   .mb.big{ --c:50px; }
+  .mb.sm{ --c:27px; grid-template-columns:18px repeat(8, var(--c)); grid-template-rows:18px repeat(8, var(--c)); }
+  .mb.sm .mb__lab{ font-size:12px; }
+  .side .boards{ gap:14px; align-items:flex-start; }
+  .side .barrow{ align-self:center; margin-bottom:56px; }
+  .side .barrow .material-symbols-rounded{ font-size:40px; }
+  .side .bfig__cap{ font-size:19px; text-align:center; line-height:1.4; }
   .mb__lab{ display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:900; color:var(--ink-soft); }
   .mb__lab.on{ color:var(--coral); font-size:18px; }
   .mb__cell{ position:relative; background:#2F7A55; border:1px solid #1F5A3D; display:flex; align-items:center; justify-content:center; }
@@ -236,7 +242,7 @@ function miniBoard(board, o){
   const at = (s) => (Number(s[1]) - 1) * 8 + COLS.indexOf(s[0]);
   const spots = (o.spots || []).map(at), flips = (o.flips || []).map(at);
   const last = o.last ? at(o.last) : -1, ring = o.ring ? at(o.ring) : -1;
-  let h = '<div class="mb' + (o.big ? ' big' : '') + '"><span></span>';
+  let h = '<div class="mb' + (o.big ? ' big' : '') + (o.sm ? ' sm' : '') + '"><span></span>';
   for (let c = 0; c < 8; c++) h += '<span class="mb__lab' + (ring % 8 === c && o.coords ? ' on' : '') + '">' + COLS[c] + '</span>';
   for (let r = 0; r < 8; r++) {
     h += '<span class="mb__lab' + (Math.floor(ring / 8) === r && o.coords ? ' on' : '') + '">' + (r + 1) + '</span>';
@@ -254,6 +260,9 @@ function miniBoard(board, o){
 const START = '...........................wb......bw...........................';
 const AFTER_D3 = '...................b.......bb......bw...........................';
 const START4 = '...........................bw......uy...........................';
+// 3〜4人: 色がまじった列（白 E4・黄 F4）を、黒が G4 に置いてはさむ
+const MIX_BEFORE = '...........................bwy.....uy...........................';
+const MIX_AFTER = '...........................bbbb....uy...........................';
 
 const SLIDES = [
   /* 1 */ { type:'divider', accent:'teal', icon:'waving_hand', jp:'チェックイン', en:'check-in',
@@ -311,7 +320,7 @@ const SLIDES = [
   /* 8 */ { type:'content', accent:'blue', section:'場所の言いかた', sectionEn:'where to put',
     headline:'場所は「<span class="hl">D3</span>」のように言おう',
     body:`<div class="side">
-      ${miniBoard(START, { ring:'D3', coords:true, big:true })}
+      ${miniBoard(START4, { ring:'D3', coords:true, big:true })}
       <div class="rows">
         <div class="row"><div class="row__ic"><span class="material-symbols-rounded">east</span></div><div><div class="row__t">横は、左から A〜H</div></div></div>
         <div class="row"><div class="row__ic"><span class="material-symbols-rounded">south</span></div><div><div class="row__t">たては、上から 1〜8</div></div></div>
@@ -341,14 +350,18 @@ const SLIDES = [
   /* 11 */ { type:'content', accent:'coral', section:'遊びかた', sectionEn:'3 or 4 players',
     headline:'3人・4人なら、<br><span class="hl">黄と青</span>も入れて1つの盤で',
     body:`<div class="side">
-      ${miniBoard(START4, { spots:['F4','D6','F6'] })}
+      <div class="boards">
+        <div class="bfig">${miniBoard(MIX_BEFORE, { ring:'G4', sm:true })}<div class="bfig__cap">黒が G4 に<br>置くと</div></div>
+        <div class="barrow"><span class="material-symbols-rounded">arrow_forward</span></div>
+        <div class="bfig">${miniBoard(MIX_AFTER, { flips:['E4','F4'], last:'G4', sm:true })}<div class="bfig__cap">白と黄が、どちらも<br><span>黒にかわる</span></div></div>
+      </div>
       <div class="rows">
-        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">autorenew</span></div><div><div class="row__t">黒→白→黄→青の順に置く</div><div class="row__d">ほかの色の石をはさむと自分の色に。はさむ石の色は、まじっていてもいいよ</div></div></div>
-        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">add_circle</span></div><div><div class="row__t">はさめないときは、石のとなりに置ける</div><div class="row__d">パスはないよ</div></div></div>
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">autorenew</span></div><div><div class="row__t">黒→白→黄→青の順に置く</div><div class="row__d">はさむ石の色は、まじっていてもいい</div></div></div>
+        <div class="row"><div class="row__ic"><span class="material-symbols-rounded">add_circle</span></div><div><div class="row__t">はさめないときは、石のとなりへ</div><div class="row__d">パスはないよ</div></div></div>
         <div class="row"><div class="row__ic"><span class="material-symbols-rounded">emoji_events</span></div><div><div class="row__t">盤がうまったら、おしまい</div><div class="row__d">自分の色の石がいちばん多い人の勝ち</div></div></div>
       </div>
     </div>`,
-    note:'3人や4人で遊ぶときは、黄と青の石も入れて、みんなで1つの盤を使うよ。\n置く順番は、黒、白、黄、青。\nほかの色の石を自分の石ではさむと、自分の色にひっくり返る。はさむ石の色は、まじっていてもいいよ。\nはさめる場所がないときは、どれかの石のとなりに置ける。だからパスはないよ。\n盤がうまったら、おしまい。自分の色の石がいちばん多い人の勝ち！' },
+    note:'3人や4人で遊ぶときは、黄と青の石も入れて、みんなで1つの盤を使うよ。\n置く順番は、黒、白、黄、青。\nほかの色の石を自分の石ではさむと、自分の色にひっくり返る。はさむ石の色は、まじっていてもいいよ。たとえば、黒が G4 に置くと、あいだの白と黄が、どちらも黒にかわるよ。\nはさめる場所がないときは、どれかの石のとなりに置ける。だからパスはないよ。\n盤がうまったら、おしまい。自分の色の石がいちばん多い人の勝ち！' },
 
   /* 12 */ { type:'content', accent:'teal', section:'Q&A', sectionEn:'question & answer',
     headline:'よくある質問',
