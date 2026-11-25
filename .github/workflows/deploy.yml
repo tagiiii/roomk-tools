@@ -26,25 +26,37 @@ jobs:
         run: bash scripts/lint.sh
 
   # ─────────────────────────────────────────────
-  # Job 2: GitHub Pages デプロイ（lint 通過後）
+  # Job 2: 公開するファイル（apps/）を成果物として上げる（lint 通過後）
+  # 上げるジョブと公開するジョブを分ける（GitHub の見本と同じ形）。
+  # 同じジョブで上げた直後に公開すると、成果物の一覧への反映が間に合わず
+  # 「Found 0 artifact(s)」で失敗することが続いたため（2026-11-25）。
+  # 分けておくと、公開だけが失敗したときに deploy ジョブだけをやり直せる。
   # ─────────────────────────────────────────────
-  deploy:
+  build:
     runs-on: ubuntu-latest
     needs: lint
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
         with:
           path: ./apps
+
+  # ─────────────────────────────────────────────
+  # Job 3: GitHub Pages デプロイ（成果物を上げたあと）
+  # ─────────────────────────────────────────────
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - id: deployment
         uses: actions/deploy-pages@v5
 
   # ─────────────────────────────────────────────
-  # Job 3: デプロイ後の疎通確認
+  # Job 4: デプロイ後の疎通確認
   # ─────────────────────────────────────────────
   healthcheck:
     runs-on: ubuntu-latest
