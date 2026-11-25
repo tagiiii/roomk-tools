@@ -147,7 +147,7 @@ kotobahiroi_rooms/{code}
 - `rtdb-utils.js`: `initFirebase`・`now`・`generateRoomCode`・`isRoomExpired`・`getHostDisconnectedAt`・`cancelRoomOnDisconnect`・`copyRoomCode`・`copyRoomLink`・`showToast`
 - `room-qr.js`: 「QRコードを出す」
 - `overlay-a11y.js`・`focus-keep.js`: ホストの戻りを待つ画面
-- `howto.js`: あそびかた
+- `howto.js`: あそびかた（「説明スライドを見る」から `slides.html`）
 - `stats.js`: `room-create`・`start`・`players-{N}`・`mode-coop` / `mode-race`・`again`
 
 ## 問題（`data.js`）
@@ -162,4 +162,5 @@ kotobahiroi_rooms/{code}
 
 - 配慮の理由は画面・あそびかた・更新情報に書かない
 - ツール一覧とはじめの画面の絵（`apps/assets/illustrations/kotoba-hiroi.webp`）: 2026-11-25 にオーナーの依頼で作った。4回作り、並んだ文字の板の上に虫めがねときらめきがある4回目にした（1回目は毛むくじゃらの生き物の顔が出た、2回目は板がトレーに4枚まとまっているだけ、3回目ははしごが出た）
+- 説明スライド `slides.html`（2026-11-25、15枚。テンプレートは slides-generator の正本と同じエンジン。チャンネル `kotoba_hiroi_deck`・保存の接頭辞 `khs_`）。ルールを変えたら、スライドの文と発表者ノートも合わせる
 - 未確認（2026-11-25 公開時点）: Safari・iPad の実機
