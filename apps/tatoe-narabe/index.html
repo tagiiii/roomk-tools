@@ -357,6 +357,56 @@
     .ito-page-sub { font-size: 13px; color: var(--color-muted); margin-bottom: 20px; }
     .ito-link-hint { font-size: 14px; color: var(--color-muted); line-height: 1.6; margin: 0 0 16px; }
 
+    /* ── 入力欄（端末なしの参加者・チャット） ── */
+    .ito-input {
+      flex: 1; min-width: 0; padding: 10px 12px;
+      border: 1px solid var(--color-border); border-radius: 10px;
+      font-size: 16px; font-family: var(--font-base); box-sizing: border-box;
+      background: var(--color-surface); color: var(--color-text);
+    }
+    .ito-row { display: flex; gap: 8px; align-items: center; }
+    .ito-card-title { font-size: 14px; font-weight: 700; color: var(--color-primary); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+    .ito-card-title .material-symbols-rounded { font-size: 18px; }
+    .ito-small { font-size: 13px; color: var(--color-muted); line-height: 1.7; }
+
+    /* ── 端末なしの参加者（ホストの画面だけ） ── */
+    .ito-proxy-list { list-style: none; margin-top: 8px; }
+    .ito-proxy-item {
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+      padding: 8px 0; border-bottom: 1px solid var(--color-border); font-size: 15px;
+    }
+    .ito-proxy-item:last-child { border-bottom: none; }
+    .ito-proxy-item .btn-sm { padding: 6px 12px; min-height: 36px; }
+    .ito-proxy-num { font-size: 20px; font-weight: 700; color: var(--color-primary); min-width: 2.2em; text-align: center; }
+
+    /* ── チャット（たとえを書いて送る） ── */
+    .ito-chat-log {
+      list-style: none; max-height: 260px; overflow-y: auto;
+      background: var(--color-surface); border: 1px solid var(--color-border);
+      border-radius: 12px; padding: 8px 12px; margin-bottom: 8px;
+    }
+    .ito-chat-item { display: flex; align-items: baseline; gap: 8px; padding: 6px 0; border-bottom: 1px dashed var(--color-border); font-size: 15px; }
+    .ito-chat-item:last-child { border-bottom: none; }
+    .ito-chat-item__name { font-weight: 700; color: var(--color-accent); flex-shrink: 0; }
+    .ito-chat-item__text { flex: 1; overflow-wrap: anywhere; }
+    .ito-chat-item__del { flex-shrink: 0; font-size: 12px; padding: 2px 8px; min-height: 28px; }
+    .ito-chat-empty { color: var(--color-muted); font-size: 13px; padding: 6px 0; }
+    .ito-chat-form select { padding: 10px 8px; border: 1px solid var(--color-border); border-radius: 10px; font-size: 15px; font-family: var(--font-base); max-width: 40%; background: var(--color-surface); }
+    .ito-word { display: block; font-size: 13px; font-weight: 500; color: var(--color-muted); margin-top: 2px; overflow-wrap: anywhere; }
+
+    /* ── 見学の画面（?watch=） ── */
+    #screen-watch .page { max-width: 960px; }
+    .ito-watch-badge {
+      display: inline-block; color: var(--color-accent); background: var(--color-accent-soft);
+      border-radius: 999px; font-size: 13px; font-weight: 700; padding: 4px 12px; margin-top: 8px;
+    }
+    .ito-watch-grid { display: grid; gap: 16px; }
+    @media (min-width: 860px) {
+      .ito-watch-grid.has-side { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); align-items: start; }
+      .ito-watch-grid .ito-chat-log { max-height: 480px; }
+    }
+    .ito-watch-wait { text-align: center; padding: 24px 16px; }
+
     @media (max-width: 600px) {
       .page { padding: 28px 16px 60px; }
       .ito-header { padding: 32px 0 24px; }
@@ -387,6 +437,10 @@
             <span class="material-symbols-rounded" aria-hidden="true">login</span>
             ルームに参加する
           </button>
+          <button class="btn btn-ghost btn-full" onclick="showScreen('watch-join')">
+            <span class="material-symbols-rounded" aria-hidden="true">visibility</span>
+            見学する（みんなにみせる画面）
+          </button>
         </div>
       </section>
 
@@ -399,6 +453,7 @@
           <li>ホストがルームを作り、コードを参加者に共有</li>
           <li>全員が1〜100のカードを受け取る（自分だけが見える）</li>
           <li>お題が発表されたらMetalifeで自由に話し合う</li>
+          <li>言葉は声で言っても、アプリのチャットに書いてもOK</li>
           <li>「自分の数字が小さい！」と思ったら宣言ボタンを押す</li>
           <li>全員宣言したら答え合わせ。数字の順番と一致したら正解！</li>
         </ol>
@@ -489,6 +544,59 @@
   </div>
 
   <!-- ============================= -->
+  <!-- WATCH JOIN 画面（見学の入口）    -->
+  <!-- ============================= -->
+  <div id="screen-watch-join" class="screen">
+    <div class="page">
+      <button class="btn btn-ghost" style="margin-bottom:16px;" onclick="showScreen('top')">
+        <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
+        もどる
+      </button>
+
+      <div class="ito-page-title">見学する</div>
+      <div class="ito-page-sub">ルームの様子を見るだけの画面です。数字は答え合わせまで出ません</div>
+
+      <div class="error-msg" id="watch-error" role="alert"></div>
+
+      <div class="card" style="padding:20px;">
+        <label for="watch-code" style="display:block; font-size:13px; font-weight:700; margin-bottom:8px; color:var(--color-primary);">
+          ルームコード（6文字）
+        </label>
+        <input
+          type="text"
+          id="watch-code"
+          maxlength="6" autocomplete="off" autocorrect="off" spellcheck="false"
+          placeholder="例：AB3XYZ"
+          autocapitalize="characters"
+          style="width:100%; padding:12px 14px; border:1px solid var(--color-border); border-radius:10px; font-size:24px; font-weight:700; letter-spacing:0.2em; text-align:center; font-family:var(--font-base); box-sizing:border-box; text-transform:uppercase;"
+        >
+        <button class="btn btn-primary btn-full" id="btn-open-watch" style="margin-top:16px;" onclick="openWatchFromForm()">
+          <span class="material-symbols-rounded" aria-hidden="true">visibility</span>
+          見学の画面をひらく
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================= -->
+  <!-- WATCH 画面（?watch=）            -->
+  <!-- ============================= -->
+  <div id="screen-watch" class="screen">
+    <div class="page">
+      <div class="ito-header" style="padding:24px 0 16px;">
+        <div class="ito-header__title">たとえならべ</div>
+        <div><span class="ito-watch-badge">見学の画面</span></div>
+        <div class="ito-header__sub" id="watch-code-line"></div>
+      </div>
+      <div id="watch-body"></div>
+      <button class="btn btn-ghost btn-full" style="margin-top:20px;" onclick="leaveWatch()">
+        <span class="material-symbols-rounded" aria-hidden="true">home</span>
+        トップへ戻る
+      </button>
+    </div>
+  </div>
+
+  <!-- ============================= -->
   <!-- WAITING 画面                  -->
   <!-- ============================= -->
   <div id="screen-waiting" class="screen">
@@ -513,6 +621,14 @@
           <span class="material-symbols-rounded" aria-hidden="true">qr_code_2</span>
           QRコードを出す
         </button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnCopyWatchLink" style="margin-top:12px;" onclick="copyWatchLink(this)">
+          <span class="material-symbols-rounded" aria-hidden="true">visibility</span>
+          見学用のリンクをコピー
+        </button>
+        <a class="btn btn-ghost btn-sm" id="watch-open-link" style="margin-top:12px;" href="#" target="_blank" rel="noopener" hidden>
+          <span class="material-symbols-rounded" aria-hidden="true">open_in_new</span>
+          みんなにみせる画面をひらく
+        </a>
       </div>
 
       <div class="card" style="padding:20px; margin-bottom:16px;">
@@ -535,6 +651,17 @@
         </div>
       </div>
 
+      <div class="card" id="waiting-proxy-box" style="padding:20px; margin-bottom:16px; display:none;">
+        <div class="ito-card-title">
+          <span class="material-symbols-rounded" aria-hidden="true">person_add</span>
+          端末なしの参加者を足す
+        </div>
+        <p class="ito-small" style="margin-bottom:10px;">アプリに入れない人の名前を足すと、ホストが代わりに数字を伝えて、宣言やチャットを代わりに押せます（6人まで）。足すと、ホストは進行役になります</p>
+        <div class="ito-row">
+          <input type="text" class="ito-input" id="waiting-proxy-name" maxlength="8" placeholder="名前（8文字以内）" aria-label="端末なしの参加者の名前" onkeydown="if(event.key==='Enter'){event.preventDefault(); if(!event.isComposing && event.keyCode!==229) addProxy('waiting');}">
+          <button type="button" class="btn btn-secondary" id="waiting-proxy-add" onclick="addProxy('waiting')">足す</button>
+        </div>
+      </div>
       <button id="btn-start-game" class="btn btn-primary btn-lg btn-full" onclick="startGame()" disabled>
         <span class="material-symbols-rounded" aria-hidden="true">play_circle</span>
         ゲームスタート（2人以上）
@@ -583,6 +710,15 @@
           <span class="material-symbols-rounded" aria-hidden="true">check_circle</span>
           確認した！
         </button>
+      </div>
+
+      <div class="card" id="revealing-proxy-box" style="padding:20px; margin-bottom:16px; display:none;">
+        <div class="ito-card-title">
+          <span class="material-symbols-rounded" aria-hidden="true">mail</span>
+          端末なしの参加者に数字を伝える
+        </div>
+        <p class="ito-small">「数字をコピー」で、チャットの個別メッセージにはって送ってね。伝えたら「伝えた」を押す</p>
+        <ul class="ito-proxy-list" id="revealing-proxy-list"></ul>
       </div>
 
       <div class="card" style="padding:20px; margin-bottom:16px;">
@@ -667,6 +803,32 @@
         </div>
       </div>
 
+      <!-- チャット（たとえを書いて送る） -->
+      <div class="card" id="playing-chat-card" style="padding:16px; margin-bottom:16px;">
+        <div class="ito-card-title">
+          <span class="material-symbols-rounded" aria-hidden="true">chat</span>
+          たとえのチャット
+        </div>
+        <ul class="ito-chat-log" id="playing-chat-log" aria-live="polite"></ul>
+        <form class="ito-chat-form ito-row" id="playing-chat-form" onsubmit="event.preventDefault(); sendChat();" style="display:none;">
+          <select id="chat-as" aria-label="だれとして送るか" style="display:none;"></select>
+          <input type="text" class="ito-input" id="chat-input" maxlength="40" placeholder="たとえを書いて送る" aria-label="チャットに送る言葉" autocomplete="off" onkeydown="if(event.key==='Enter' && (event.isComposing || event.keyCode===229)) event.preventDefault();">
+          <button type="submit" class="btn btn-primary" id="btn-chat-send">
+            <span class="material-symbols-rounded" aria-hidden="true">send</span>
+            送る
+          </button>
+        </form>
+        <p class="ito-small" id="playing-chat-note" style="margin-top:6px; display:none;"></p>
+      </div>
+
+      <div class="card" id="playing-proxy-box" style="padding:16px; margin-bottom:16px; display:none;">
+        <div class="ito-card-title">
+          <span class="material-symbols-rounded" aria-hidden="true">flag</span>
+          端末なしの参加者の代わりに宣言する
+        </div>
+        <ul class="ito-proxy-list" id="playing-proxy-list"></ul>
+      </div>
+
       <hr class="ito-divider">
 
       <!-- 宣言リスト -->
@@ -747,7 +909,29 @@
       </div>
       <div id="result-rows"></div>
 
+      <div class="card" id="result-chat-card" style="padding:16px; margin-top:16px; display:none;">
+        <div class="ito-card-title">
+          <span class="material-symbols-rounded" aria-hidden="true">chat</span>
+          たとえのチャット
+        </div>
+        <ul class="ito-chat-log" id="result-chat-log"></ul>
+      </div>
+
       <hr class="ito-divider">
+
+      <div class="card" id="result-proxy-box" style="padding:20px; margin-bottom:16px; display:none;">
+        <div class="ito-card-title">
+          <span class="material-symbols-rounded" aria-hidden="true">person_add</span>
+          端末なしの参加者を足す
+        </div>
+        <p class="ito-small" style="margin-bottom:10px;">アプリに入れない人の名前を足すと、ホストが代わりに数字を伝えて、宣言やチャットを代わりに押せます（6人まで）。足すと、ホストは進行役になります</p>
+        <div class="ito-row">
+          <input type="text" class="ito-input" id="result-proxy-name" maxlength="8" placeholder="名前（8文字以内）" aria-label="端末なしの参加者の名前" onkeydown="if(event.key==='Enter'){event.preventDefault(); if(!event.isComposing && event.keyCode!==229) addProxy('result');}">
+          <button type="button" class="btn btn-secondary" id="result-proxy-add" onclick="addProxy('result')">足す</button>
+        </div>
+        <ul class="ito-proxy-list" id="result-proxy-list"></ul>
+      </div>
+
 
       <!-- アクション -->
       <div style="display:flex; flex-direction:column; gap:12px;">
@@ -810,6 +994,9 @@
       currentRoundId: null,
       hostPlays: true,      // ホストもプレイヤーとして参加するか（room.settings.hostPlays）
       expectedRoomRemoval: false,
+      currentRoom: null,    // 最後に受けとったルーム（チャット・端末なしの参加者の表示に使う）
+      lastChatAt: 0,        // この端末で最後にチャットを送った時刻（3秒に1回まで）
+      shownProxyNumbers: new Set(), // ホストが「見る」で開いた、端末なしの参加者の数字（この端末だけ）
     };
 
     const SESSION_KEY = "tatoenarabe_session";
@@ -836,6 +1023,98 @@
       "めずらしいもの", "あったらうれしいもの", "つよそうな名前のもの", "夜に合うもの",
       "夏らしいもの", "ふわっと香りそうなもの", "びっくりするもの", "気持ちいいもの",
     ];
+
+    // ── 端末なしの参加者・チャット・見学（2026-11-25） ──
+    const PROXY_MAX = 6;            // 端末なしの参加者は6人まで
+    const CHAT_MAX_LEN = 40;        // チャットは1回40文字まで
+    const CHAT_INTERVAL_MS = 3000;  // 同じ端末から3秒に1回まで
+    const CHAT_ROUND_LIMIT = 100;   // 1回のゲームで100件まで（ルームのデータを大きくしすぎない）
+    const CHAT_SHOW = 60;           // 画面に出すのは新しい60件
+
+    // 端末なしの参加者（ホストが名前を足し、代わりに押す。在室を持たないので、いつもつながっている扱い）
+    function isProxy(p) { return !!p && p.proxy === true && !p.isHost; }
+    function proxyNames(players) {
+      return Object.entries(players || {}).filter(([, p]) => isProxy(p)).map(([n]) => n);
+    }
+    // この回（roundId が同じ）のチャットを、送った順に
+    function roundChat(room) {
+      const roundId = room?.roundId ?? null;
+      return Object.entries(room?.chat || {})
+        .filter(([, m]) => m && typeof m.text === "string" && typeof m.name === "string" && (m.roundId ?? null) === roundId)
+        .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+        .map(([key, m]) => ({ key, name: m.name, text: m.text }));
+    }
+    // 人ごとの、いちばん新しいたとえ（宣言の一覧・答え合わせに添える）
+    function latestWords(msgs) {
+      const words = {};
+      msgs.forEach((m) => { words[m.name] = m.text; });
+      return words;
+    }
+    function wordHtml(words, nick) {
+      return words[nick] ? `<span class="ito-word">「${esc(words[nick])}」</span>` : "";
+    }
+    function chatLogHtml(msgs, deletable = false) {
+      if (!msgs.length) return '<li class="ito-chat-empty">まだ書きこみはありません</li>';
+      return msgs.slice(-CHAT_SHOW).map((m) => `
+        <li class="ito-chat-item">
+          <span class="ito-chat-item__name">${esc(m.name)}</span>
+          <span class="ito-chat-item__text">${esc(m.text)}</span>
+          ${deletable ? `<button type="button" class="btn btn-ghost btn-sm ito-chat-item__del" data-key="${esc(m.key)}" onclick="deleteChat(this.dataset.key)" aria-label="${esc(m.name)}さんの書きこみを消す">消す</button>` : ""}
+        </li>`).join("");
+    }
+    function renderChatLog(id, msgs, deletable = false) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
+      el.innerHTML = chatLogHtml(msgs, deletable);
+      if (atBottom || !el.dataset.rendered) el.scrollTop = el.scrollHeight;
+      el.dataset.rendered = "1";
+    }
+    // 数字を配られた人（答え合わせの対象）。結果の画面で設定や端末なしの参加者が変わっても、その回の結果は変えない
+    function dealtEntries(players) {
+      return Object.entries(players || {}).filter(([, p]) => Number(p?.number) > 0);
+    }
+    // 宣言した順・数字の順で、正解の人と数を出す（同じ数字の人どうしは入れかわっても正解）
+    function judgeResult(players) {
+      const declared = dealtEntries(players)
+        .filter(([, p]) => p.declaredAt != null)
+        .sort(([, a], [, b]) => a.declaredAt - b.declaredAt)
+        .map(([nick]) => nick);
+      const correctOrder = [...declared].sort((a, b) => players[a].number - players[b].number);
+      const correctSet = new Set();
+      for (let i = 0; i < correctOrder.length;) {
+        const num = players[correctOrder[i]].number;
+        let j = i;
+        while (j < correctOrder.length && players[correctOrder[j]].number === num) j++;
+        const block = correctOrder.slice(i, j);
+        for (let k = i; k < j; k++) {
+          if (block.includes(declared[k])) correctSet.add(declared[k]);
+        }
+        i = j;
+      }
+      return { declared, correctSet, matches: correctSet.size };
+    }
+    async function copyText(text, okMsg) {
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          ta.style.cssText = "position:fixed;opacity:0;";
+          document.body.appendChild(ta);
+          ta.focus(); ta.select();
+          document.execCommand("copy");
+          document.body.removeChild(ta);
+        }
+        showMsg(okMsg, false);
+        return true;
+      } catch (e) {
+        console.error(e);
+        showMsg("コピーできませんでした");
+        return false;
+      }
+    }
 
     // ── ユーティリティ ──────────────────────
 
@@ -888,11 +1167,11 @@
 
     function validGuestRoom(room, nickname) {
       const player = room?.players?.[nickname];
-      return !!player && player.isHost === false && room.host !== nickname
+      return !!player && player.isHost === false && player.proxy !== true && room.host !== nickname
         && ROOM_PHASES.includes(room.status) && !isRoomExpired(room);
     }
     function playerConnected(player) {
-      return player.isHost || player.presenceVersion !== 1
+      return player.isHost || player.proxy === true || player.presenceVersion !== 1
         || Object.values(player.connections || {}).some(value => value === true);
     }
     function guestCanAct() {
@@ -1062,6 +1341,9 @@
       state.currentRoundId = null;
       state.hostPlays = true;
       state.expectedRoomRemoval = false;
+      state.currentRoom = null;
+      state.lastChatAt = 0;
+      state.shownProxyNumbers = new Set();
     }
 
     function validateNickname(nick) {
@@ -1092,20 +1374,29 @@
       if (!kickable || state.role !== "host" || p.isHost || nick === state.nickname || playerConnected(p)) return "";
       return `<button type="button" class="btn btn-ghost btn-sm" data-kick="${esc(nick)}" onclick="kickDisconnected(this.dataset.kick)">外す</button>`;
     }
-    function renderPlayerList(containerId, players, statusFn, room = null, kickable = false) {
+    // 端末なしの参加者の「外す」（ホストだけ。待合室と結果の画面）
+    function proxyRemoveHtml(nick, p, removable) {
+      if (!removable || state.role !== "host" || !isProxy(p)) return "";
+      return `<button type="button" class="btn btn-ghost btn-sm" data-proxy="${esc(nick)}" onclick="removeProxy(this.dataset.proxy)">外す</button>`;
+    }
+    function renderPlayerList(containerId, players, statusFn, room = null, kickable = false, proxyRemovable = false) {
       const container = document.getElementById(containerId);
       if (!container) return;
-      container.innerHTML = Object.entries(players).map(([nick, p]) => `
+      container.innerHTML = Object.entries(players).map(([nick, p]) => {
+        const removeBtn = proxyRemoveHtml(nick, p, proxyRemovable);
+        const right = removeBtn ? `<div class="player-right">${statusFn(nick, p)}${removeBtn}</div>` : statusFn(nick, p);
+        return `
         <li class="player-item">
           <div class="player-name">
             ${esc(nick)}
             ${p.isHost ? '<span class="player-tag">ホスト</span>' : ""}
             ${p.isHost && room && !hostPlaysOf(room) ? '<span class="player-tag role">進行役</span>' : ""}
+            ${isProxy(p) && state.role === "host" ? '<span class="player-tag role">端末なし</span>' : ""}
             ${nick === state.nickname ? '<span class="player-tag me">あなた</span>' : ""}
           </div>
-          ${playerConnected(p) ? statusFn(nick, p) : `<div class="player-right"><span class="player-tag">接続を待っています</span>${kickButtonHtml(nick, p, kickable)}</div>`}
-        </li>
-      `).join("");
+          ${playerConnected(p) ? right : `<div class="player-right"><span class="player-tag">接続を待っています</span>${kickButtonHtml(nick, p, kickable)}</div>`}
+        </li>`;
+      }).join("");
     }
 
     function pickThemeOptions(count = 3, recentThemes = []) {
@@ -1467,6 +1758,11 @@
           const nicknames = Object.keys(players);
           // 数字を配るのは遊ぶ人だけ（ホストが進行だけならホストを除く）。人数も遊ぶ人で数える
           hostPlays = hostPlaysOf(room);
+          // 端末なしの参加者がいるときは、ホストは進行役（数字を代わりに伝えるので、ホストに秘密が見える）
+          if (hostPlays && proxyNames(players).length > 0) {
+            abortReason = "proxy_host_plays";
+            return;
+          }
           const playing = playingEntries(room, players).map(([n]) => n);
           if (!Object.values(players).every(playerConnected)) {
             abortReason = "disconnected";
@@ -1504,6 +1800,7 @@
             theme: "",
             themeOptions,
             discussionEndsAt: null,
+            chat: null,   // チャットは1回ごとに消す
             players: nextPlayers
           };
         });
@@ -1515,6 +1812,7 @@
           else if (abortReason === "too_few_after_skip") showMsg("遊ぶ人が足りないので、ここで終わりにできるよ（「退出する」でルームを閉じます）");
           else if (abortReason === "too_few") showMsg(hostPlays ? "2人以上で始められます" : "ホストのほかに2人以上で始められます");
           else if (abortReason === "too_many") showMsg("人数が多すぎます");
+          else if (abortReason === "proxy_host_plays") showMsg("端末なしの参加者がいるときは、ホストは進行役になります");
           else if (abortReason === "invalid_state") showMsg("ルームが終了しています。トップへ戻ってください");
           return;
         }
@@ -1582,6 +1880,8 @@
       try {
         ({ committed } = await ref.transaction((room) => {
           if (!room || room.status !== "waiting" || room.host !== me) return;
+          // 端末なしの参加者がいる間は、ホストは遊ぶ人にならない
+          if (checked && proxyNames(room.players).length > 0) return;
           return { ...room, settings: { ...(room.settings || {}), hostPlays: !!checked } };
         }));
       } catch (e) {
@@ -1591,6 +1891,195 @@
       if (!committed) showMsg("設定を変えられませんでした");
       const box = document.getElementById("set-host-plays");
       if (box) box.checked = state.hostPlays;
+    }
+
+    // ── 端末なしの参加者（ホストが名前を足して、代わりに押す。2026-11-25） ──
+    // 足せるのは待合室と結果の画面。足すとホストは進行役になる（数字を代わりに伝えるので）。
+    // 結果の画面で足した人は、次の回から数字が配られる（その回の結果には出ない）
+    async function addProxy(sfx) {
+      if (state.role !== "host" || !state.roomRef) return;
+      if (state.currentStatus !== "waiting" && state.currentStatus !== "result") return;
+      const input = document.getElementById(`${sfx}-proxy-name`);
+      const name = input ? input.value.trim() : "";
+      const err = validateNickname(name);
+      if (err) { showMsg(err.replace("ニックネーム", "名前")); return; }
+      const ref = state.roomRef;
+      const me = state.nickname;
+      let reason = null;
+      try {
+        const { committed } = await ref.transaction((room) => {
+          if (state.roomRef !== ref || state.role !== "host" || state.expectedRoomRemoval) return;
+          if (!room) { reason = "gone"; return; }
+          if ((room.status !== "waiting" && room.status !== "result") || room.host !== me) { reason = "stale"; return; }
+          const players = room.players || {};
+          if (players[name]) { reason = "taken"; return; }
+          if (proxyNames(players).length >= PROXY_MAX) { reason = "full"; return; }
+          reason = null;
+          return {
+            ...room,
+            settings: { ...(room.settings || {}), hostPlays: false },
+            players: { ...players, [name]: { isHost: false, proxy: true, number: 0, ready: false, declaredAt: null } },
+          };
+        });
+        if (state.roomRef !== ref) return;
+        if (committed) {
+          if (input) input.value = "";
+          return;
+        }
+        if (reason === "taken") showMsg("その名前は使われています");
+        else if (reason === "full") showMsg(`端末なしの参加者は${PROXY_MAX}人までです`);
+        else if (reason === "stale") showMsg("足せませんでした。画面を見なおしてね");
+      } catch (e) {
+        console.error(e);
+        showMsg("足せませんでした");
+      }
+    }
+
+    async function removeProxy(name) {
+      if (state.role !== "host" || !state.roomRef) return;
+      if (state.currentStatus !== "waiting" && state.currentStatus !== "result") return;
+      if (!isProxy(state.currentPlayers?.[name])) return;
+      if (!window.confirm(`${name}さんを外しますか？`)) return;
+      const ref = state.roomRef;
+      const me = state.nickname;
+      try {
+        const { committed } = await ref.transaction((room) => {
+          if (state.roomRef !== ref || state.role !== "host" || state.expectedRoomRemoval || !room) return;
+          if ((room.status !== "waiting" && room.status !== "result") || room.host !== me || !isProxy(room.players?.[name])) return;
+          const players = { ...room.players };
+          delete players[name];
+          return { ...room, players };
+        });
+        if (state.roomRef === ref && !committed) showMsg("外せませんでした。画面を見なおしてね");
+      } catch (e) {
+        console.error(e);
+        showMsg("外せませんでした");
+      }
+    }
+
+    // ホストが、端末なしの参加者の代わりに書きこむ（数字を伝えた・宣言した）。回（roundId）と画面が同じときだけ
+    async function updateProxy(name, phase, apply) {
+      if (state.role !== "host" || !state.roomRef || state.currentStatus !== phase) return false;
+      const ref = state.roomRef;
+      const me = state.nickname;
+      const roundId = state.currentRoundId;
+      const { committed } = await ref.transaction((room) => {
+        if (state.roomRef !== ref || state.role !== "host" || state.expectedRoomRemoval || !room) return;
+        if (room.status !== phase || room.host !== me || (room.roundId ?? null) !== roundId) return;
+        const p = room.players?.[name];
+        if (!isProxy(p)) return;
+        const next = apply(p);
+        if (!next) return;
+        return { ...room, players: { ...room.players, [name]: next } };
+      });
+      return committed;
+    }
+    async function confirmProxy(name) {
+      try {
+        await updateProxy(name, "revealing", (p) => (p.ready ? null : { ...p, ready: true }));
+      } catch (e) {
+        console.error(e);
+        showMsg("送れませんでした");
+      }
+    }
+    async function declareProxy(name) {
+      if (!window.confirm(`${name}さんの代わりに宣言しますか？`)) return;
+      const declaredAt = getEstimatedServerNow();
+      try {
+        await updateProxy(name, "playing", (p) => (p.declaredAt != null ? null : { ...p, declaredAt }));
+      } catch (e) {
+        console.error(e);
+        showMsg("宣言できませんでした");
+      }
+    }
+    function toggleProxyNumber(name) {
+      if (state.shownProxyNumbers.has(name)) state.shownProxyNumbers.delete(name);
+      else state.shownProxyNumbers.add(name);
+      if (state.currentRoom) renderRevealingProxies(state.currentRoom, state.currentPlayers);
+    }
+    function copyProxyNumber(name) {
+      const p = state.currentPlayers?.[name];
+      if (!isProxy(p) || !(Number(p.number) > 0)) return;
+      // チャットの個別メッセージで送る文（絵文字なし）
+      copyText(`${name}さんの数字は ${p.number} です。ほかの人には内緒にしてね。`, `${name}さんの数字をコピーしました`);
+    }
+
+    // ── チャット（発言フェーズで、たとえを書いて送る。2026-11-25） ──
+    // 送れるのは遊ぶ人（進行だけのホストは自分としては送らない）と、ホストが代わりに送る端末なしの参加者。
+    // ルーム全体の transaction で、発言フェーズのまま・同じ回・送る人がいるかを確かめてから書く（消えたルームに書きこみだけが残らないように）
+    function chatSenderOptions() {
+      const players = state.currentPlayers || {};
+      const names = [];
+      if (iAmPlaying() && players[state.nickname]) names.push(state.nickname);
+      if (state.role === "host") proxyNames(players).forEach((n) => names.push(n));
+      return names;
+    }
+    async function sendChat() {
+      if (!state.roomRef || state.currentStatus !== "playing") return;
+      const input = document.getElementById("chat-input");
+      const text = input ? input.value.replace(/\s+/g, " ").trim() : "";
+      if (!text) return;
+      if (text.length > CHAT_MAX_LEN) { showMsg(`${CHAT_MAX_LEN}文字までだよ`); return; }
+      const options = chatSenderOptions();
+      const select = document.getElementById("chat-as");
+      const as = options.length > 1 && select ? select.value : options[0];
+      if (!as || !options.includes(as)) return;
+      if (as === state.nickname && !guestCanAct()) return;
+      const nowLocal = Date.now();
+      if (nowLocal - state.lastChatAt < CHAT_INTERVAL_MS) { showMsg("少し待ってから送ってね"); return; }
+      state.lastChatAt = nowLocal;
+      const ref = state.roomRef;
+      const me = state.nickname;
+      const role = state.role;
+      const roundId = state.currentRoundId;
+      const action = capturePlayerAction();
+      const key = ref.child("chat").push().key; // 鍵を作るだけ（書きこまない）。送った順に並ぶ
+      const at = getEstimatedServerNow();
+      let reason = null;
+      try {
+        const { committed } = await ref.transaction((room) => {
+          if (state.roomRef !== ref || state.expectedRoomRemoval) return;
+          if (!room || room.status !== "playing" || (room.roundId ?? null) !== roundId) { reason = "stale"; return; }
+          if (as === me) {
+            if (!canApplyPlayerAction(action, room, "playing")) { reason = "stale"; return; }
+          } else if (role !== "host" || room.host !== me || !isProxy(room.players?.[as])) {
+            reason = "stale"; return;
+          }
+          const count = Object.values(room.chat || {}).filter((m) => (m?.roundId ?? null) === roundId).length;
+          if (count >= CHAT_ROUND_LIMIT) { reason = "full"; return; }
+          reason = null;
+          return { ...room, chat: { ...(room.chat || {}), [key]: { name: as, text, at, roundId } } };
+        });
+        if (state.roomRef !== ref) return;
+        if (committed) {
+          if (input) { input.value = ""; input.focus({ preventScroll: true }); }
+        } else if (reason === "full") {
+          showMsg("この回はこれ以上書きこめません");
+        } else if (reason === "stale") {
+          showMsg("送れませんでした");
+        }
+      } catch (e) {
+        console.error(e);
+        showMsg("送れませんでした");
+      }
+    }
+    // ホストは書きこみを消せる
+    async function deleteChat(key) {
+      if (state.role !== "host" || !state.roomRef || !key) return;
+      if (!window.confirm("この書きこみを消しますか？")) return;
+      const ref = state.roomRef;
+      const me = state.nickname;
+      try {
+        await ref.transaction((room) => {
+          if (state.roomRef !== ref || state.expectedRoomRemoval || !room || room.host !== me || !room.chat?.[key]) return;
+          const chat = { ...room.chat };
+          delete chat[key];
+          return { ...room, chat };
+        });
+      } catch (e) {
+        console.error(e);
+        showMsg("消せませんでした");
+      }
     }
 
     async function startTimer(secs) {
@@ -1820,6 +2309,7 @@
           }
         }
         const players = room.players || {};
+        state.currentRoom = room;
         state.currentPlayers = players;
         state.themeOptions = Array.isArray(room.themeOptions) ? room.themeOptions : [];
         const myPlayer = getMyPlayer(players);
@@ -1853,7 +2343,15 @@
       const codeEl = document.getElementById("waiting-room-code");
       if (codeEl) codeEl.textContent = state.roomCode || "";
 
-      renderPlayerList("waiting-player-list", players, () => '<div class="player-status">参加中</div>', room, true);
+      renderPlayerList("waiting-player-list", players, () => '<div class="player-status">参加中</div>', room, true, true);
+      const hasProxies = proxyNames(players).length > 0;
+      const proxyBox = document.getElementById("waiting-proxy-box");
+      if (proxyBox) proxyBox.style.display = state.role === "host" ? "" : "none";
+      const watchOpen = document.getElementById("watch-open-link");
+      if (watchOpen) {
+        watchOpen.hidden = state.role !== "host";
+        watchOpen.href = `?watch=${encodeURIComponent(state.roomCode || "")}`;
+      }
 
       // 最少人数は遊ぶ人だけで数える（進行だけのホストは数えない）
       const hostPlays = hostPlaysOf(room);
@@ -1863,7 +2361,12 @@
       const settingsEl = document.getElementById("waiting-host-settings");
       if (settingsEl) settingsEl.style.display = isHost ? "" : "none";
       const hostPlaysBox = document.getElementById("set-host-plays");
-      if (hostPlaysBox && isHost) hostPlaysBox.checked = hostPlays;
+      if (hostPlaysBox && isHost) {
+        hostPlaysBox.checked = hostPlays;
+        // 端末なしの参加者がいる間は、ホストは進行役のまま（数字を代わりに伝えるので）
+        hostPlaysBox.disabled = hasProxies;
+        hostPlaysBox.closest("label").title = hasProxies ? "端末なしの参加者がいるときは、ホストは進行役になります" : "";
+      }
       const minMsg = document.getElementById("waiting-min-msg");
       if (minMsg) {
         let msg = "";
@@ -1900,6 +2403,34 @@
       const me = getMyPlayer(state.currentPlayers);
       if (button) button.style.display = (state.currentStatus === 'revealing' && state.numberRevealed
         && !state.confirmingNumber && guestCanAct() && iAmPlaying() && me && !me.ready) ? '' : 'none';
+    }
+
+    // 数字確認: ホストの画面にだけ、端末なしの参加者の数字を伝える欄（数字ははじめ隠す。画面共有で見えないように）
+    function renderRevealingProxies(room, players) {
+      const box = document.getElementById("revealing-proxy-box");
+      const list = document.getElementById("revealing-proxy-list");
+      const names = proxyNames(players);
+      const show = state.role === "host" && room.status === "revealing" && names.length > 0;
+      if (box) box.style.display = show ? "" : "none";
+      if (!show || !list) return;
+      list.innerHTML = names.map((n) => {
+        const p = players[n];
+        const open = state.shownProxyNumbers.has(n);
+        return `
+          <li class="ito-proxy-item">
+            <span style="display:flex; align-items:center; gap:8px; font-weight:700;">
+              ${esc(n)}
+              <span class="ito-proxy-num" aria-label="${open ? "数字" : "数字はかくれています"}">${open ? esc(String(p.number)) : "？"}</span>
+            </span>
+            <span class="player-right" style="flex-wrap:wrap;">
+              <button type="button" class="btn btn-ghost btn-sm" data-proxy="${esc(n)}" onclick="toggleProxyNumber(this.dataset.proxy)">${open ? "かくす" : "見る"}</button>
+              <button type="button" class="btn btn-ghost btn-sm" data-proxy="${esc(n)}" onclick="copyProxyNumber(this.dataset.proxy)">数字をコピー</button>
+              ${p.ready
+                ? '<span class="player-tag ready-ok">確認した！</span>'
+                : `<button type="button" class="btn btn-secondary btn-sm" data-proxy="${esc(n)}" onclick="confirmProxy(this.dataset.proxy)">伝えた</button>`}
+            </span>
+          </li>`;
+      }).join("");
     }
 
     function handleRevealing(room, players) {
@@ -1947,6 +2478,7 @@
       if (readyArea) readyArea.style.display = (state.numberRevealed && !facilitating) ? "block" : "none";
 
       updateConfirmNumberButton();
+      renderRevealingProxies(room, players);
 
       const themeHelp = document.getElementById("revealing-theme-help");
       if (themeHelp) {
@@ -2005,6 +2537,50 @@
       if (leaveBtn) leaveBtn.style.display = "";
     }
 
+    // 発言フェーズのチャット。送る欄は、送れる人（遊ぶ人・端末なしの参加者がいるホスト）だけに出す
+    function renderPlayingChat(room, msgs) {
+      renderChatLog("playing-chat-log", msgs, state.role === "host");
+      const form = document.getElementById("playing-chat-form");
+      const note = document.getElementById("playing-chat-note");
+      const select = document.getElementById("chat-as");
+      const options = chatSenderOptions();
+      const canSend = options.length > 0 && (state.role === "host" || guestCanAct());
+      if (form) form.style.display = canSend ? "" : "none";
+      if (select) {
+        const key = options.join("\n");
+        if (select.dataset.options !== key) {
+          const prev = select.value;
+          select.innerHTML = options.map((n) => `<option value="${esc(n)}">${esc(n === state.nickname ? `${n}（自分）` : n)}</option>`).join("");
+          if (options.includes(prev)) select.value = prev;
+          select.dataset.options = key;
+        }
+        select.style.display = options.length > 1 || (options.length === 1 && options[0] !== state.nickname) ? "" : "none";
+      }
+      if (note) {
+        let text = "";
+        if (canSend) text = `声のかわりに、ここに書いて伝えてもいいよ（${CHAT_MAX_LEN}文字まで）`;
+        else if (state.role === "host") text = "みんなの書きこみが出ます。ホストは「消す」で消せます";
+        note.textContent = text;
+        note.style.display = text ? "" : "none";
+      }
+    }
+    // 発言フェーズ: ホストの画面にだけ、端末なしの参加者の代わりに宣言するボタン
+    function renderPlayingProxies(room, playing) {
+      const box = document.getElementById("playing-proxy-box");
+      const list = document.getElementById("playing-proxy-list");
+      const proxies = playing.filter(([, p]) => isProxy(p));
+      const show = state.role === "host" && proxies.length > 0;
+      if (box) box.style.display = show ? "" : "none";
+      if (!show || !list) return;
+      list.innerHTML = proxies.map(([n, p]) => `
+        <li class="ito-proxy-item">
+          <span style="font-weight:700;">${esc(n)}</span>
+          ${p.declaredAt != null
+            ? '<span class="ito-declared-item__badge">宣言ずみ</span>'
+            : `<button type="button" class="btn btn-primary btn-sm" data-proxy="${esc(n)}" onclick="declareProxy(this.dataset.proxy)">代わりに宣言する</button>`}
+        </li>`).join("");
+    }
+
     function handlePlaying(room, players) {
       showScreen("playing");
 
@@ -2033,6 +2609,8 @@
       const undeclaredEntries = playing
         .filter(([, p]) => p.declaredAt == null);
 
+      const chatMsgs = roundChat(room);
+      const words = latestWords(chatMsgs);
       const declaredList = document.getElementById("declared-list");
       if (declaredList) {
         declaredList.innerHTML = declaredEntries.length === 0
@@ -2044,6 +2622,7 @@
                 ${esc(nick)}
                 ${p.isHost ? '<span class="player-tag" style="font-size:10px;">ホスト</span>' : ""}
                 ${nick === state.nickname ? '<span class="player-tag me" style="font-size:10px;">あなた</span>' : ""}
+                ${wordHtml(words, nick)}
               </div>
               <span class="ito-declared-item__badge">宣言ずみ</span>
             </li>
@@ -2060,6 +2639,7 @@
                 ${esc(nick)}
                 ${p.isHost ? '<span class="player-tag">ホスト</span>' : ""}
                 ${nick === state.nickname ? '<span class="player-tag me">あなた</span>' : ""}
+                ${wordHtml(words, nick)}
               </div>
               <div class="player-status">まだだよ</div>
             </li>
@@ -2068,6 +2648,8 @@
 
       // 宣言ボタン表示制御
       updateDeclareButton();
+      renderPlayingChat(room, chatMsgs);
+      renderPlayingProxies(room, playing);
 
       // タイマーコントロール（ホスト・タイマー未開始時）
       const timerControls = document.getElementById("timer-controls");
@@ -2092,45 +2674,10 @@
       const themeEl = document.getElementById("result-theme");
       if (themeEl) themeEl.textContent = room.theme || "";
 
-      // 宣言順にソート（結果の対象は遊ぶ人だけ）
-      const declared = playingEntries(room, players)
-        .filter(([, p]) => p.declaredAt != null)
-        .sort(([, a], [, b]) => a.declaredAt - b.declaredAt)
-        .map(([nick]) => nick);
-
-      // 実際の正解順（数字昇順）
-      const correctOrder = [...declared].sort((a, b) => players[a].number - players[b].number);
-
-      // 同数考慮の一致カウント
-      function countMatches(proposed, correct) {
-        let count = 0;
-        for (let i = 0; i < proposed.length;) {
-          const num = players[correct[i]].number;
-          let j = i;
-          while (j < correct.length && players[correct[j]].number === num) j++;
-          const block = correct.slice(i, j);
-          for (let k = i; k < j; k++) {
-            if (block.includes(proposed[k])) count++;
-          }
-          i = j;
-        }
-        return count;
-      }
-
-      // 正解セット（位置ごとに判定）
-      const correctSet = new Set();
-      for (let i = 0; i < correctOrder.length;) {
-        const num = players[correctOrder[i]].number;
-        let j = i;
-        while (j < correctOrder.length && players[correctOrder[j]].number === num) j++;
-        const block = correctOrder.slice(i, j);
-        for (let k = i; k < j; k++) {
-          if (block.includes(declared[k])) correctSet.add(declared[k]);
-        }
-        i = j;
-      }
-
-      const matches = countMatches(declared, correctOrder);
+      // 結果の対象は、この回に数字を配られた人（結果の画面で端末なしの参加者を足しても、その回の結果は変えない）
+      const { declared, correctSet, matches } = judgeResult(players);
+      const chatMsgs = roundChat(room);
+      const words = latestWords(chatMsgs);
 
       // スコア表示
       const scoreEl = document.getElementById("result-score");
@@ -2162,6 +2709,7 @@
                     <span class="material-symbols-rounded" aria-hidden="true" style="font-size:14px;vertical-align:middle;">tag</span>
                     数字: <strong>${players[nick].number}</strong>
                   </div>
+                  ${wordHtml(words, nick)}
                 </div>
                 <div class="ito-result-row__judgment">${ok ? "正解" : "おしい"}</div>
               </div>
@@ -2197,6 +2745,23 @@
       }
       const skipBtn = document.getElementById("btn-play-again-skip");
       if (skipBtn) skipBtn.style.display = isHost && waitingFor.length > 0 && connectedPlaying >= 2 ? "" : "none";
+
+      // たとえのチャットのふりかえり（書きこみがあった回だけ）
+      const chatCard = document.getElementById("result-chat-card");
+      if (chatCard) chatCard.style.display = chatMsgs.length ? "" : "none";
+      if (chatMsgs.length) renderChatLog("result-chat-log", chatMsgs, false);
+
+      // 端末なしの参加者（ホストだけ）。足した人は次の回から遊ぶ
+      const proxyBox = document.getElementById("result-proxy-box");
+      if (proxyBox) proxyBox.style.display = isHost ? "" : "none";
+      const proxyList = document.getElementById("result-proxy-list");
+      if (proxyList && isHost) {
+        proxyList.innerHTML = proxyNames(players).map((n) => `
+          <li class="ito-proxy-item">
+            <span style="font-weight:700;">${esc(n)}</span>
+            ${proxyRemoveHtml(n, players[n], true)}
+          </li>`).join("");
+      }
     }
 
     // ── タイマー ─────────────────────────
@@ -2335,6 +2900,222 @@
       RoomkQR.show(state.roomCode);
     }
 
+    // 見学用のリンク（?watch=コード）。数字は答え合わせまで出ない、見るだけの画面
+    function watchUrl(code) {
+      return `${location.origin}${location.pathname}?watch=${encodeURIComponent(code)}`;
+    }
+    function copyWatchLink() {
+      if (!state.roomCode || !ROOM_CODE_PATTERN.test(state.roomCode)) {
+        RoomkRTDB.showToast("ルームコードがありません");
+        return;
+      }
+      copyText(watchUrl(state.roomCode), "見学用のリンクをコピーしました");
+    }
+
+    // ── 見学の画面（?watch=コード。2026-11-25） ──
+    // ルームを読むだけで、何も書きこまない（期限切れの片づけもしない）。数字は答え合わせの画面まで出さない
+    const watch = { ref: null, code: null, timer: null };
+    function stopWatch() {
+      if (watch.ref) watch.ref.off();
+      watch.ref = null;
+      watch.code = null;
+      clearInterval(watch.timer);
+      watch.timer = null;
+    }
+    function leaveWatch() {
+      stopWatch();
+      history.replaceState(null, "", location.pathname);
+      showScreen("top");
+    }
+    function openWatchFromForm() {
+      hideError("watch-error");
+      const code = normalizeRoomCode(document.getElementById("watch-code").value);
+      if (!code) { showError("watch-error", "ルームコードを入力してください"); return; }
+      const imeErr = roomCodeImeError(code);
+      if (imeErr) { showError("watch-error", imeErr); return; }
+      if (!ROOM_CODE_PATTERN.test(code)) { showError("watch-error", "ルームコードは6文字です"); return; }
+      history.replaceState(null, "", `${location.pathname}?watch=${encodeURIComponent(code)}`);
+      startWatch(code);
+    }
+    async function startWatch(code) {
+      stopWatch();
+      showScreen("watch");
+      document.getElementById("watch-code-line").textContent = `ルームコード ${code}`;
+      const body = document.getElementById("watch-body");
+      body.innerHTML = '<div class="ito-watch-wait ito-small"><span class="spinner" style="display:inline-block; width:20px; height:20px; vertical-align:middle; margin-right:6px;"></span>つないでいます...</div>';
+      try {
+        await authReady;
+      } catch (e) {
+        console.error(e);
+        body.innerHTML = `<div class="ito-watch-wait ito-small">${esc(AUTH_FAIL_MSG)}</div>`;
+        return;
+      }
+      if (state.currentScreen !== "watch") return;
+      const ref = db.ref(`tatoenarabe_rooms/${code}`);
+      watch.ref = ref;
+      watch.code = code;
+      ref.on("value", (snap) => {
+        if (watch.ref !== ref) return;
+        renderWatch(snap.exists() ? snap.val() : null);
+      }, (err) => {
+        console.error(err);
+        if (watch.ref === ref) body.innerHTML = '<div class="ito-watch-wait ito-small">ルームを読みこめませんでした</div>';
+      });
+    }
+    function watchTimerHtml(endsAt) {
+      return endsAt == null ? "" : `
+        <div class="ito-timer-wrap">
+          <div class="ito-timer" id="watch-timer">--:--</div>
+          <div class="ito-timer-expired" id="watch-timer-expired">
+            <span class="material-symbols-rounded" aria-hidden="true" style="font-size:16px; vertical-align:middle;">alarm</span>
+            時間です！宣言しましょう
+          </div>
+        </div>`;
+    }
+    function startWatchTimer(endsAt) {
+      clearInterval(watch.timer);
+      watch.timer = null;
+      if (endsAt == null) return;
+      const tick = () => {
+        const el = document.getElementById("watch-timer");
+        const ex = document.getElementById("watch-timer-expired");
+        if (!el) return;
+        const remainSec = Math.max(0, Math.ceil((Number(endsAt) - getEstimatedServerNow()) / 1000));
+        el.textContent = `${String(Math.floor(remainSec / 60)).padStart(2, "0")}:${String(remainSec % 60).padStart(2, "0")}`;
+        el.classList.toggle("urgent", remainSec <= 5 && remainSec > 0);
+        if (ex) ex.style.display = remainSec <= 0 ? "block" : "none";
+        if (remainSec <= 0) { clearInterval(watch.timer); watch.timer = null; }
+      };
+      tick();
+      watch.timer = setInterval(tick, 500);
+    }
+    function watchThemeHtml(theme) {
+      return `
+        <div class="ito-theme-banner">
+          <div class="ito-theme-banner__label">お題</div>
+          <div class="ito-theme-banner__text">${esc(theme || "")}</div>
+        </div>`;
+    }
+    function watchChatHtml(msgs) {
+      return `
+        <div class="card" style="padding:16px;">
+          <div class="ito-card-title"><span class="material-symbols-rounded" aria-hidden="true">chat</span>たとえのチャット</div>
+          <ul class="ito-chat-log" id="watch-chat-log">${chatLogHtml(msgs)}</ul>
+        </div>`;
+    }
+    function renderWatch(room) {
+      const body = document.getElementById("watch-body");
+      clearInterval(watch.timer);
+      watch.timer = null;
+      if (!room || !ROOM_PHASES.includes(room.status) || isRoomExpired(room)) {
+        body.innerHTML = '<div class="card ito-watch-wait"><p style="font-weight:700; color:var(--color-primary);">このルームは見つからないか、終わりました</p><p class="ito-small" style="margin-top:6px;">ルームコードを確かめてね</p></div>';
+        return;
+      }
+      const players = room.players || {};
+      const playing = playingEntries(room, players);
+      const hostNote = room.hostConnected === false
+        ? '<div class="card ito-watch-wait" style="margin-bottom:16px;"><span class="spinner" style="display:inline-block; width:20px; height:20px; vertical-align:middle; margin-right:6px;"></span>ホストの戻りを待っています</div>'
+        : "";
+      const msgs = roundChat(room);
+      const words = latestWords(msgs);
+      let html = "";
+      if (room.status === "waiting") {
+        html = `
+          <div class="card" style="padding:20px;">
+            <div class="ito-card-title"><span class="material-symbols-rounded" aria-hidden="true">group</span>参加者を待っています</div>
+            <ul class="player-list">${Object.entries(players).map(([n, p]) => `
+              <li class="player-item"><div class="player-name">${esc(n)}
+                ${p.isHost ? '<span class="player-tag">ホスト</span>' : ""}
+                ${p.isHost && !hostPlaysOf(room) ? '<span class="player-tag role">進行役</span>' : ""}
+              </div></li>`).join("")}</ul>
+            <p class="ito-small" style="margin-top:12px;">「ルームに参加する」から、ルームコード <strong>${esc(watch.code || "")}</strong> で参加できます</p>
+          </div>`;
+      } else if (room.status === "revealing") {
+        const options = Array.isArray(room.themeOptions) ? room.themeOptions : [];
+        html = `
+          <div class="card" style="padding:20px; margin-bottom:16px;">
+            <div class="ito-card-title">みんなが自分の数字を確認しています</div>
+            <ul class="player-list">${playing.map(([n, p]) => `
+              <li class="player-item"><div class="player-name">${esc(n)}</div>
+                ${p.ready ? '<span class="player-tag ready-ok">確認した！</span>' : '<div class="player-status">確認中...</div>'}</li>`).join("")}</ul>
+          </div>
+          <div class="card" style="padding:20px;">
+            <div class="ito-card-title">お題を選ぼう</div>
+            <p class="ito-small" style="margin-bottom:12px;">${room.theme ? `選択中のお題: ${esc(room.theme)}` : "ホストがお題を選んでいます"}</p>
+            <div class="ito-theme-picker">${options.map((t, i) => `
+              <div class="ito-theme-option ${room.theme === t ? "selected" : ""}">
+                <span class="ito-theme-option__num">${themeNumber(i)}</span>
+                <span class="ito-theme-option__text">${esc(t)}</span>
+              </div>`).join("")}</div>
+          </div>`;
+      } else if (room.status === "playing") {
+        const declared = playing.filter(([, p]) => p.declaredAt != null).sort(([, a], [, b]) => a.declaredAt - b.declaredAt);
+        const undeclared = playing.filter(([, p]) => p.declaredAt == null);
+        html = `
+          ${watchThemeHtml(room.theme)}
+          ${watchTimerHtml(room.discussionEndsAt)}
+          <div class="ito-watch-grid has-side">
+            <div>
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+                <div class="ito-section-label" style="margin:0;">宣言した順番</div>
+                <div style="font-size:12px; color:var(--color-muted);">← 小さい数　大きい数 →</div>
+              </div>
+              <ul style="list-style:none;">${declared.length === 0
+                ? '<li style="color:var(--color-muted);font-size:13px;padding:8px 0;">まだ誰も宣言していません</li>'
+                : declared.map(([n], i) => `
+                  <li class="ito-declared-item">
+                    <div class="ito-declared-item__rank">${i + 1}</div>
+                    <div class="ito-declared-item__name">${esc(n)}${wordHtml(words, n)}</div>
+                    <span class="ito-declared-item__badge">宣言ずみ</span>
+                  </li>`).join("")}</ul>
+              <div class="ito-section-label" style="margin-top:16px;">まだ宣言していない</div>
+              <ul style="list-style:none;">${undeclared.length === 0
+                ? '<li style="color:var(--color-muted);font-size:13px;padding:8px 0;">全員が宣言しました！</li>'
+                : undeclared.map(([n]) => `
+                  <li class="player-item"><div class="player-name">${esc(n)}${wordHtml(words, n)}</div><div class="player-status">まだだよ</div></li>`).join("")}</ul>
+            </div>
+            ${watchChatHtml(msgs)}
+          </div>`;
+      } else if (room.status === "result") {
+        const { declared, correctSet, matches } = judgeResult(players);
+        html = `
+          ${watchThemeHtml(room.theme)}
+          <div class="ito-score-banner">
+            <div class="ito-score-banner__num">${matches}/${declared.length}</div>
+            <div class="ito-score-banner__label">人正解！</div>
+          </div>
+          ${matches === declared.length && declared.length > 0 ? `
+            <div class="ito-perfect-msg" style="display:block;">
+              <span class="material-symbols-rounded" aria-hidden="true" style="font-size:32px; display:block; margin-bottom:4px;">celebration</span>
+              パーフェクト！全員正解！
+            </div>` : ""}
+          <div class="ito-watch-grid ${msgs.length ? "has-side" : ""}">
+            <div>
+              <div style="font-size:12px; color:var(--color-muted); margin-bottom:8px;">宣言した順（左が小さいと思った人）</div>
+              ${declared.length === 0
+                ? '<div style="color:var(--color-muted);text-align:center;padding:24px 0;">宣言がありませんでした</div>'
+                : declared.map((n, i) => {
+                  const ok = correctSet.has(n);
+                  return `
+                    <div class="ito-result-row ${ok ? "ito-result-row--correct" : "ito-result-row--wrong"}">
+                      <div class="ito-result-row__info">
+                        <div class="ito-result-row__nick"><span style="color:var(--color-muted);font-size:13px;">${i + 1}.</span>${esc(n)}</div>
+                        <div class="ito-result-row__number">数字: <strong>${esc(String(players[n].number))}</strong></div>
+                        ${wordHtml(words, n)}
+                      </div>
+                      <div class="ito-result-row__judgment">${ok ? "正解" : "おしい"}</div>
+                    </div>`;
+                }).join("")}
+            </div>
+            ${msgs.length ? watchChatHtml(msgs) : ""}
+          </div>`;
+      }
+      body.innerHTML = hostNote + html;
+      const log = document.getElementById("watch-chat-log");
+      if (log) log.scrollTop = log.scrollHeight;
+      if (room.status === "playing") startWatchTimer(room.discussionEndsAt);
+    }
+
     // お題の候補の番号は丸数字（画面とチャット用のコピーで同じ表記。ui.md「選択肢・カードの番号付け」）
     const THEME_NUMBERS = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
     function themeNumber(index) {
@@ -2422,6 +3203,17 @@
 
     window.addEventListener("load", async () => {
       const startParams = new URLSearchParams(location.search);
+      // 見学用のリンク（?watch=コード）: 参加の記録とは別に、見るだけの画面を開く
+      const watchParam = startParams.get("watch");
+      if (watchParam !== null) {
+        const watchCode = normalizeRoomCode(watchParam);
+        if (ROOM_CODE_PATTERN.test(watchCode)) {
+          startWatch(watchCode);
+          return;
+        }
+        RoomkRTDB.showToast("ルームコードが正しくないよ");
+        history.replaceState(null, "", location.pathname);
+      }
       const roomParam = startParams.get("room");
       if (roomParam === null) {
         await resumeFromSession();
@@ -2464,11 +3256,14 @@
           'ホストが進行だけするときは、待合室の「自分もプレイヤーとして参加する」を外す（ホストには数字が配られない）',
           '遊ぶ人が2人以上そろったら、ホストが「ゲームスタート」を押す',
           '通信が切れたままの人がいて始められないときは、ホストが名前の横の「外す」を押す。外された人は、同じニックネームで参加し直せる',
+          '端末のない子は、ホストが待合室の「端末なしの参加者を足す」で名前を足して、代わりに押す。足すとホストは進行役になる',
+          '見学する人には「見学用のリンクをコピー」で見学の画面を送る。トップの「見学する」からルームコードでも開ける。数字は答え合わせまで出ない',
         ] },
         { heading: 'すすめかた', items: [
           'カードをタップして自分の数字を見て、「確認した！」を押す。数字はほかの人には秘密',
           'ホストが3つの候補からお題を選んで、「発言フェーズへ」を押す',
-          '自分の数字の大きさを、お題に合わせた言葉で表す（数字そのものは言わない）',
+          '自分の数字の大きさを、お題に合わせた言葉で表す（数字そのものは言わない）。声で言っても、「たとえのチャット」に書いて送ってもいい',
+          '端末なしの子の数字は、ホストが「数字をコピー」でチャットの個別メッセージに送って「伝えた」を押す。宣言とチャットは、ホストが代わりに押す',
           '話し合いながら、数字が小さいと思った人から順番に「宣言する！」を押す',
           '全員が宣言したら、ホストが「答え合わせ！」を押す',
         ] },
