@@ -158,9 +158,12 @@ const cell = (i) => '#board .rv-cell[data-i="' + i + '"]';
 // 盤を画面から読む
 const readBoard = (c) => c.page.$$eval('#board .rv-cell', (cs) => cs.map((x) => {
   const s = x.firstChild.classList;
-  return s.contains('is-b') ? 'b' : s.contains('is-w') ? 'w' : '.';
+  return ['b', 'w', 'y', 'u'].find((k) => s.contains('is-' + k)) || '.';
 }).join(''));
-const turnOf = (c) => c.page.$eval('#seats', (s) => (s.querySelector('.rv-seat--b.is-turn') ? 'b' : s.querySelector('.rv-seat--w.is-turn') ? 'w' : null));
+const turnOf = (c) => c.page.$eval('#seats', (s) => {
+  const t = s.querySelector('.rv-seat.is-turn');
+  return t ? (['b', 'w', 'y', 'u'].find((k) => t.classList.contains('rv-seat--' + k)) || null) : null;
+});
 const counts = (c) => c.page.$$eval('#seats .rv-seat__count', (xs) => xs.map((x) => Number(x.textContent)));
 const spots = (c) => c.page.$$eval('#board .rv-mark.is-spot', (xs) => xs.map((x) => Number(x.parentElement.dataset.i)).sort((a, b) => a - b));
 const status = (c) => text(c, '#gameStatus');
