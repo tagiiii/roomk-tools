@@ -266,7 +266,16 @@ const SLIDES = [
     </div>`,
     note:'答え合わせでは、宣言した順番と、本当の数字の小さい順をくらべます。\n順番どおりだった人は「正解」、ずれていたら「おしい」。何人正解できたかが、みんなのスコアだよ。\n全員正解ならパーフェクト！ おしくても、「そのたとえむずかしい！」ってふりかえるのが楽しいゲームです。' },
 
-  /* 8 */ { type:'content', accent:'coral', section:'Q&A', sectionEn:'question & answer',
+  /* 8 */ { type:'content', accent:'teal', section:'ゲーム説明', sectionEn:'explain', num:'5',
+    headline:'見学する人は<span class="hl">見学の画面</span>で、<br>みんなの様子を見られる',
+    body:`<div class="rows">
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">link</span></div><div><div class="row__t">チャットに送られた「見学用のリンク」を開くだけ</div><div class="row__d">トップの「見学する」から、ルームコードを入れて開くこともできる</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">forum</span></div><div><div class="row__t">お題・宣言した順番・たとえのチャットが見える</div><div class="row__d">だれがどんなたとえを出したかも、いっしょに見られる</div></div></div>
+      <div class="row"><div class="row__ic"><span class="material-symbols-rounded">lock</span></div><div><div class="row__t">数字は、答え合わせまでヒミツのまま</div><div class="row__d">答え合わせになったら、見学の画面にもみんなの数字が出る</div></div></div>
+    </div>`,
+    note:'見学する人は「見学の画面」で、みんなの様子を見られるよ。\nチャットに送る「見学用のリンク」を開くだけ。トップの「見学する」から、ルームコードを入れて開くこともできるよ。\nお題や宣言した順番、たとえのチャットが見えるけど、数字は答え合わせまでヒミツのまま。答え合わせになったら、みんなの数字が出るよ。' },
+
+  /* 9 */ { type:'content', accent:'coral', section:'Q&A', sectionEn:'question & answer',
     headline:'よくある<ruby>質問<rt>しつもん</rt></ruby>',
     body:`<div class="qa">
       <div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>数字をそのまま言ってもいい？</div><div class="qa__a"><span class="qa__badge a">A</span>それはNG！「50くらい」みたいな言い方もダメ。お題にたとえて表現してね。</div></div>
@@ -275,35 +284,35 @@ const SLIDES = [
     </div>`,
     note:'よくある質問だよ\nQ. 数字をそのまま言っていい？→ A. NG！「50くらい」もダメ。お題にたとえて表現してね。\nQ. 順番をまちがえたら負け？→ A. とちゅうで負けはないよ。答え合わせで「おしい」と出るだけ。\nQ. 宣言の取り消しは？→ A. できないので、よく考えてから宣言しよう。' },
 
-  /* 9 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
+  /* 10 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
     sub:'気になることはある？',
     note:'ここまでで、質問がある人はいるかな？\nマイクON か チャットで教えてね！' },
 
-  /* 10 */ { type:'divider', accent:'coral', icon:'how_to_reg', jp:'参加確認', en:"let's check",
+  /* 11 */ { type:'divider', accent:'coral', icon:'how_to_reg', jp:'参加確認', en:"let's check",
     sub:'チャットで教えてね',
     note:'やってみたい人〜？\n「①参加」「②見学」「③その他」を、チャットで教えてね！' },
 
-  /* 11 */ { type:'divider', accent:'teal', solid:true, icon:'rocket_launch', jp:'＼ ゲームスタート ／', en:'game start',
+  /* 12 */ { type:'divider', accent:'teal', solid:true, icon:'rocket_launch', jp:'＼ ゲームスタート ／', en:'game start',
     sub:'ルームコードを入力して入ろう！',
     note:'それでは、たとえならべ スタート！\nチャットに送ったリンクを開いて、ニックネーム（8文字まで）とルームコードを入れて参加してね。参加用のリンクなら、ルームコードは入っているよ。\nアプリに入れない人は、名前を教えてね。メンターが代わりに入れて、数字は個別のチャットで送るよ。\n見学の人は、見学用のリンクを開くと、みんなの様子が見られるよ。\nわからなくなったら、いつでも聞いてね' },
 
-  /* 12 */ { type:'divider', accent:'teal', icon:'touch_app', jp:'カードを確認', en:'check your card',
+  /* 13 */ { type:'divider', accent:'teal', icon:'touch_app', jp:'カードを確認', en:'check your card',
     sub:'自分の数字を、こっそりチェック',
     note:'カードをタップして、自分の数字をこっそり確認しよう\n見たら「確認した！」ボタンを押してね。数字はぜったいにヒミツだよ！' },
 
-  /* 13 */ { type:'divider', accent:'coral', icon:'campaign', jp:'お題発表', en:'theme',
+  /* 14 */ { type:'divider', accent:'coral', icon:'campaign', jp:'お題発表', en:'theme',
     sub:'ホストが3つの候補から1つえらぶよ',
     note:'お題を発表するよ\nホストが3つの候補から1つえらびます。決まったら、自分の数字ならどれくらいかな？って考えてみてね。' },
 
-  /* 14 */ { type:'divider', accent:'blue', icon:'forum', jp:'たとえタイム', en:'talk time',
+  /* 15 */ { type:'divider', accent:'blue', icon:'forum', jp:'たとえタイム', en:'talk time',
     sub:'数字は言わずに、たとえて話そう',
     note:'たとえタイム！\n数字は言わずに、お題にたとえて表現し合おう。「それって、どっちが上？」って相談するのもOKだよ。' },
 
-  /* 15 */ { type:'divider', accent:'teal', icon:'flag', jp:'宣言タイム', en:'declare',
+  /* 16 */ { type:'divider', accent:'teal', icon:'flag', jp:'宣言タイム', en:'declare',
     sub:'「自分がいちばん小さい！」と思ったら宣言',
     note:'そろそろ宣言タイム！\n「残ってる中で自分がいちばん小さい！」と思った人から、宣言ボタンを押していこう。あわてなくて大丈夫だよ。' },
 
-  /* 16 */ { type:'divider', accent:'teal', solid:true, icon:'emoji_events', jp:'けっか', en:'result',
+  /* 17 */ { type:'divider', accent:'teal', solid:true, icon:'emoji_events', jp:'けっか', en:'result',
     sub:'数字をオープン！おつかれさま',
     note:'答え合わせ！\nみんなの数字がオープンされるよ。何人正解できたかな？\n最後に「このたとえがむずかしかった！」とか、ひとことずつふりかえってみよう。' },
 ];
