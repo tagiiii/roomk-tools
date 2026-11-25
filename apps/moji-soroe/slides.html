@@ -144,6 +144,7 @@
   .tbtn:hover{ background:#fff; } .tbtn .material-symbols-rounded{ font-size:19px; color:var(--teal); }
   .hint-help{ position:fixed; bottom:12px; left:16px; z-index:50; color:rgba(255,255,255,.5); font-size:13px; }
   .hint-help kbd{ background:rgba(0,0,0,.18); border-radius:5px; padding:1px 7px; font-family:var(--font); }
+  .no-gap .hint-help{ display:none; } /* 下にすき間がないとフッターに重なる */
 
   /* ===================== 発表者ビュー ===================== */
   body.presenter{ background:#EEF1F4; overflow:auto; }
@@ -365,7 +366,7 @@ if(!isPresenter){
     else if(e.key==='p'||e.key==='P'){ openPresenter(); }
   });
   const stage=document.getElementById('stage');
-  function fit(){ const sc=Math.min(window.innerWidth/1280, window.innerHeight/720); stage.style.transform=`translate(-50%,-50%) scale(${sc})`; }
+  function fit(){ const sc=Math.min(window.innerWidth/1280, window.innerHeight/720); stage.style.transform=`translate(-50%,-50%) scale(${sc})`; document.body.classList.toggle('no-gap', window.innerHeight-720*sc<40); }
   window.addEventListener('resize',fit); document.addEventListener('fullscreenchange',fit);
   function toggleFull(){ if(!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); }
   document.getElementById('btnFull').onclick=toggleFull;
