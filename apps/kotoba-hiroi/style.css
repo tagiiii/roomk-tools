@@ -1,0 +1,165 @@
+/* ことばひろい 固有スタイル（接頭辞: khi- / BEM）
+   色は共通の変数（こげ茶・茶オレンジ）と、ことば系の種類の色（--g・--g-pale・--g-ink）だけを使う。
+   大きくするのは遊ぶ画面（ボード・文字・つくる場所）だけ。はじめの画面・名前の入力・待合室・結果はほかのツールと同じ大きさにする（ui.md「画面の幅と文字の大きさ」） */
+
+.khi-wrap { max-width: 760px; margin: 0 auto; padding: 32px 16px 80px; box-sizing: border-box; }
+.khi-wrap:has(#screen-play.active) { max-width: 860px; }
+.khi-screen { display: none; }
+.khi-screen.active { display: block; }
+.khi-screen > * + * { margin-top: 16px; }
+
+/* ヘッダー（はじめの画面のあいだは隠す。入口の型の中に同じ名前を出す） */
+.khi-header { text-align: center; margin-bottom: 20px; }
+.khi-header__title { color: var(--color-primary); font-size: 1.6rem; font-weight: 700; margin: 0; }
+.khi-wrap.is-top .khi-header { display: none; }
+
+/* 作成・参加 */
+.khi-subhead { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.khi-subhead__title { color: var(--color-primary); font-size: 1.2rem; font-weight: 700; margin: 0; }
+.khi-form { max-width: 520px; margin: 0 auto; background: var(--color-surface); border-radius: var(--radius-card); box-shadow: var(--shadow-soft); padding: 22px; }
+.khi-form__label { display: block; color: var(--color-primary); font-size: 0.9rem; font-weight: 700; margin: 0 0 8px; }
+.khi-form__input + .khi-form__label { margin-top: 18px; }
+.khi-form__input { width: 100%; box-sizing: border-box; min-height: 48px; border: 1.5px solid var(--color-border); border-radius: 10px; padding: 10px 12px; font-family: inherit; font-size: 1rem; background: var(--color-surface); color: var(--color-text); }
+.khi-form__input:focus { outline: none; border-color: var(--color-accent); }
+.khi-form__input--code { text-transform: uppercase; letter-spacing: 0.18em; font-size: 1.3rem; }
+.khi-form__hint { color: var(--color-muted); font-size: 14px; line-height: 1.6; margin: 0 0 16px; }
+.khi-form__error { color: var(--color-error); background: #fef2f2; border-left: 3px solid var(--color-error); border-radius: 6px; padding: 10px 12px; margin: 12px 0 0; }
+.khi-form > .btn { margin-top: 18px; }
+
+/* ルームのバー */
+.khi-roombar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; color: var(--color-primary); background: var(--color-surface); border-radius: 12px; box-shadow: var(--shadow-soft); border-top: 4px solid var(--g); padding: 8px 12px; margin-bottom: 18px; }
+.khi-roombar strong { font-size: 1.25rem; letter-spacing: 0.13em; }
+.khi-roombar #btnLeave { margin-left: auto; }
+
+/* 待合室 */
+.khi-h2 { font-size: 1.2rem; color: var(--color-primary); margin: 0 0 14px; }
+.khi-h3 { font-size: 0.95rem; font-weight: 700; color: var(--color-primary); padding: 0; margin: 0 0 8px; }
+.khi-field { border: 0; padding: 0; margin: 0 0 20px; min-width: 0; }
+.khi-note { font-size: 14px; line-height: 1.6; color: var(--color-muted); margin: 6px 0 0; }
+.khi-note:empty { display: none; }
+.khi-center { text-align: center; }
+.khi-wait { font-size: 1rem; color: var(--color-muted); text-align: center; margin: 12px 0 0; }
+.khi-rule { margin: 0; font-size: 1rem; line-height: 1.7; }
+.khi-players { list-style: none; padding: 0; margin: 0 0 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+.khi-players li { display: inline-flex; align-items: center; background: var(--g-pale); border-radius: 999px; padding: 6px 14px; font-size: 1rem; }
+.khi-players small { color: var(--g-ink); font-weight: 700; margin-left: 6px; font-size: 12px; }
+.khi-players__remove { margin-left: 8px; min-height: 36px; padding: 0 10px; border: 1.5px solid var(--color-border); border-radius: 999px; background: var(--color-surface); color: var(--color-text); font: inherit; font-size: 13px; cursor: pointer; }
+.khi-check { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-weight: 700; cursor: pointer; }
+.khi-check input { width: 22px; height: 22px; accent-color: var(--color-accent); }
+.khi-proxy { margin-top: 14px; }
+.khi-proxy__row { display: flex; gap: 8px; }
+.khi-proxy__row .khi-form__input { flex: 1 1 auto; min-width: 0; }
+.khi-proxy__row .btn { flex: 0 0 auto; }
+
+/* 1つ選ぶボタン */
+.khi-seg { display: flex; flex-wrap: wrap; gap: 8px; }
+.khi-seg button { min-height: 48px; min-width: 80px; padding: 8px 16px; border-radius: 12px; border: 2px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font: inherit; font-size: 1rem; font-weight: 700; cursor: pointer; }
+.khi-seg button[aria-checked="true"] { border-color: var(--color-accent); background: var(--color-accent-soft); color: var(--color-accent); }
+
+/* 遊ぶ: 上の行 */
+.khi-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.khi-top p { margin: 0; display: flex; align-items: center; gap: 4px; }
+.khi-top__no { font-size: 1.2rem; font-weight: 700; }
+.khi-top__mode { font-size: 0.95rem; font-weight: 700; color: var(--g-ink); background: var(--g-pale); border-radius: 999px; padding: 4px 12px; }
+.khi-top__me { margin-left: auto !important; font-size: 1.3rem; font-weight: 700; }
+.khi-top__me b { font-size: 2rem; color: var(--color-accent); }
+
+/* 制限時間 */
+.khi-timer { display: flex; align-items: center; gap: 12px; }
+.khi-timer__track { flex: 1 1 auto; height: 14px; border-radius: 999px; background: var(--g-pale); overflow: hidden; }
+.khi-timer__bar { height: 100%; width: 100%; border-radius: 999px; background: var(--g); transition: width .25s linear; }
+.khi-timer__text { margin: 0; font-size: 1.15rem; font-weight: 700; color: var(--g-ink); white-space: nowrap; }
+
+/* ボード */
+.khi-board__head { margin: 0 0 12px; font-size: 1.15rem; font-weight: 700; color: var(--color-primary); }
+.khi-slots { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 10px; }
+.khi-slot { display: inline-flex; align-items: center; gap: 4px; min-height: 52px; padding: 4px 8px; border-radius: 12px; background: var(--color-surface); border: 2px dashed var(--g); }
+.khi-slot.is-found { border-style: solid; background: var(--g-pale); animation: khi-pop .3s ease-out both; }
+.khi-slot.is-mine { background: var(--color-accent-soft); border-color: var(--color-accent); }
+.khi-slot.is-open { border-style: solid; border-color: var(--color-border); }
+.khi-slot__word { padding: 0 8px; font-family: 'Zen Maru Gothic', var(--font-base); font-size: 1.7rem; font-weight: 700; letter-spacing: .06em; color: var(--color-text); }
+.khi-slot.is-mine .khi-slot__word { color: var(--color-accent); }
+.khi-slot.is-open .khi-slot__word { color: var(--color-muted); }
+.khi-cell { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 8px; background: var(--g-pale); font-family: 'Zen Maru Gothic', var(--font-base); font-size: 1.5rem; font-weight: 700; color: var(--g-ink); }
+.khi-cell.is-hint { background: var(--color-surface); outline: 2px solid var(--g); }
+.khi-extra { margin-top: 14px; }
+.khi-extra__head { margin: 0 0 6px; font-size: 0.95rem; font-weight: 700; color: var(--color-muted); }
+.khi-chips { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.khi-chips li { border-radius: 999px; padding: 6px 14px; font-size: 1.15rem; font-weight: 700; background: var(--g-pale); color: var(--color-text); }
+.khi-chips li.is-mine { background: var(--color-accent-soft); color: var(--color-accent); }
+.khi-chips li.is-hit { background: var(--g-pale); }
+.khi-chips li.is-miss { background: var(--color-surface); color: var(--color-muted); border: 1.5px solid var(--color-border); }
+.khi-chips--pend li { background: var(--color-surface); border: 2px dashed var(--color-border); }
+.khi-done { margin: 16px 0 0; text-align: center; font-size: 1.3rem; font-weight: 700; color: var(--color-primary); }
+.khi-done.is-clear { font-family: 'Zen Maru Gothic', var(--font-base); font-size: 1.9rem; color: var(--color-accent); animation: khi-pop .35s ease-out both; }
+@keyframes khi-pop { from { transform: scale(.85); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* 言葉をつくる */
+.khi-maker { background: var(--color-surface); border-radius: var(--radius-card); box-shadow: var(--shadow-soft); padding: 18px; }
+.khi-who { margin-bottom: 14px; }
+.khi-who__label { margin: 0 0 6px; font-size: 0.95rem; font-weight: 700; color: var(--color-primary); }
+.khi-maker__label { margin: 0 0 10px; text-align: center; font-size: 1.3rem; font-weight: 700; color: var(--color-primary); }
+.khi-compose { display: flex; justify-content: center; gap: 8px; margin-bottom: 16px; }
+.khi-cell--big { width: 64px; height: 64px; border-radius: 12px; border: 3px dashed var(--g); background: var(--color-surface); font-size: 2.4rem; }
+.khi-cell--big.is-filled { border-style: solid; background: var(--g-pale); }
+.khi-tiles { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 14px; }
+.khi-tile { width: 76px; height: 76px; border-radius: 16px; border: 3px solid var(--g); background: var(--color-surface); color: var(--color-text); font-family: 'Zen Maru Gothic', var(--font-base); font-size: 2.6rem; font-weight: 700; cursor: pointer; box-shadow: 0 3px 0 var(--g); transition: transform .08s ease; }
+.khi-tile:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 var(--g); }
+.khi-tile:disabled { cursor: default; }
+.khi-tile.is-used { opacity: .3; box-shadow: none; }
+.khi-maker__btns { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 14px; }
+.khi-feedback { min-height: 1.6em; margin: 12px 0 0; text-align: center; font-size: 1.2rem; font-weight: 700; color: var(--color-text); }
+.khi-feedback.is-hit { color: var(--color-accent); font-size: 1.6rem; animation: khi-pop .3s ease-out both; }
+
+/* ボタンの大事さを大きさの差で見せる。高さは 56（主）・48（ふつう・補助）・36（ルームのバーなど小）の3段 */
+.khi-btn-main { min-height: 56px; padding: 0 32px; font-size: 1.3rem; font-weight: 700; letter-spacing: .04em; }
+.khi-btn-mid { min-height: 48px; padding: 6px 20px; font-size: 1.05rem; }
+.khi-btn-sub { min-height: 48px; padding: 6px 16px; font-size: .95rem; display: inline-flex; align-items: center; gap: 4px; }
+.khi-btn-sub .material-symbols-rounded { font-size: 1.15rem; }
+#btnStart { margin-top: 8px; }
+
+/* ホスト */
+.khi-hostbox { background: var(--color-surface); border: 1px dashed var(--color-border); border-radius: 12px; padding: 12px 16px; }
+.khi-hostbox__head { margin: 0 0 8px; font-size: 1rem; font-weight: 700; color: var(--color-primary); }
+.khi-check-list { margin-bottom: 14px; }
+.khi-judge { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.khi-judge__item { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.khi-judge__word { min-width: 6em; font-family: 'Zen Maru Gothic', var(--font-base); font-size: 1.5rem; font-weight: 700; }
+.khi-hostbox__btns { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.khi-hostbox .khi-btn-main { flex: 1 1 100%; order: -1; }
+#screen-play .khi-wait { font-size: 1.2rem; }
+
+/* 結果 */
+.khi-result { text-align: center; }
+.khi-result__lead { font-size: 1.3rem; color: var(--color-muted); margin: 0; }
+.khi-result__main { margin: 10px 0 16px; font-family: 'Zen Maru Gothic', var(--font-base); font-size: 1.8rem; font-weight: 700; color: var(--color-accent); }
+.khi-result__main:empty { display: none; }
+.khi-res + .khi-res { margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--color-border); }
+.khi-res__tiles { margin: 0 0 8px; font-size: 1rem; font-weight: 700; color: var(--g-ink); letter-spacing: .2em; }
+.khi-res .khi-chips { justify-content: center; }
+.khi-people { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.khi-people li { display: inline-flex; align-items: baseline; gap: 10px; background: var(--g-pale); border-radius: 999px; padding: 8px 18px; font-size: 1.1rem; }
+.khi-people li.is-me { outline: 2px solid var(--g); }
+.khi-people__name { font-weight: 700; }
+.khi-people__n { color: var(--g-ink); font-weight: 700; }
+
+/* ホストの戻りを待つ */
+.khi-overlay { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(40, 30, 20, .45); }
+.khi-overlay__panel { max-width: 420px; width: 100%; background: var(--color-surface); border-radius: var(--radius-card); padding: 24px; text-align: center; box-shadow: var(--shadow-soft); }
+.khi-overlay__panel h2 { margin: 0 0 8px; font-size: 1.3rem; color: var(--color-primary); }
+
+@media (max-width: 600px) {
+  .khi-wrap { padding: 16px 12px 60px; }
+  .khi-tiles { gap: 6px; }
+  .khi-tile { width: 54px; height: 54px; font-size: 1.9rem; border-radius: 12px; }
+  .khi-cell { width: 32px; height: 32px; font-size: 1.2rem; }
+  .khi-cell.khi-cell--big { width: 52px; height: 52px; font-size: 1.9rem; }
+  .khi-slot { min-height: 44px; }
+  .khi-slot__word { font-size: 1.35rem; }
+  .khi-maker { padding: 14px 12px; }
+  .khi-roombar #btnLeave { margin-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .khi-slot.is-found, .khi-done.is-clear, .khi-feedback.is-hit { animation: none; }
+  .khi-timer__bar, .khi-tile { transition: none; }
+}

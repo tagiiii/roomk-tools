@@ -181,6 +181,8 @@ function entry(tool, category, text, extra = {}) {
 const COVERED_APPS = [
   // 2026-11-25 追加（はじめとゴールのことばの組）
   'hitomoji-change',
+  // 2026-11-25 追加（文字の組と、そこから作れる言葉）
+  'kotoba-hiroi',
   'kotoba-meter',
   // 2026-11-09 追加（流す言葉の一覧）
   'kotoba-dash',
@@ -681,6 +683,41 @@ function collectEntries() {
   });
   if (dashProblems.length > 0) {
     throw new Error(`kotoba-dash data.js の構造エラー:\n  ${dashProblems.join('\n  ')}`);
+  }
+
+  // kotoba-hiroi: data.js の window.KOTOBA_HIROI_PUZZLES = [{ id, level, tiles, len, answers, gray, ng }]（文字の組と作れる言葉）。
+  //   文字の組を1つの項目として数える。答え・グレー・外す言葉が文字の組から作れること（1枚は1回まで）・文字数・
+  //   問題の中の重複・同じ文字の組の重複はここで fail-fast にする
+  const hiroiContext = { window: {} };
+  vm.createContext(hiroiContext);
+  vm.runInContext(read('apps/kotoba-hiroi/data.js'), hiroiContext, { filename: 'apps/kotoba-hiroi/data.js' });
+  const hiroi = hiroiContext.window.KOTOBA_HIROI_PUZZLES || [];
+  const hiroiProblems = [];
+  const hiroiIds = new Set();
+  const hiroiTiles = new Set();
+  if (!Array.isArray(hiroi) || hiroi.length === 0) hiroiProblems.push('問題が空');
+  (Array.isArray(hiroi) ? hiroi : []).forEach((p, index) => {
+    const at = `[${index}] ${p && p.id}`;
+    if (!p || !p.id || hiroiIds.has(p.id)) hiroiProblems.push(`${at}: id が空か重複`);
+    hiroiIds.add(p && p.id);
+    const tiles = Array.isArray(p && p.tiles) ? p.tiles : [];
+    const key = tiles.slice().sort().join('');
+    if (!key) hiroiProblems.push(`${at}: tiles が空`);
+    if (hiroiTiles.has(key)) hiroiProblems.push(`${at}: 同じ文字の組がほかの問題にもある`);
+    hiroiTiles.add(key);
+    const words = [...(p.answers || []), ...(p.gray || []), ...(p.ng || [])];
+    if (!(p.answers || []).length) hiroiProblems.push(`${at}: answers が空`);
+    if (new Set(words).size !== words.length) hiroiProblems.push(`${at}: answers・gray・ng の中に重複`);
+    words.forEach((w) => {
+      const rest = tiles.slice();
+      const chars = Array.from(String(w));
+      if (chars.length !== p.len) hiroiProblems.push(`${at}:「${w}」が${p.len}文字でない`);
+      chars.forEach((c) => { const k = rest.indexOf(c); if (k < 0) hiroiProblems.push(`${at}:「${w}」が文字の組から作れない`); else rest.splice(k, 1); });
+    });
+    rows.push(entry('kotoba-hiroi', p.level, tiles.join(''), { id: `kotoba-hiroi:${p.id}` }));
+  });
+  if (hiroiProblems.length > 0) {
+    throw new Error(`kotoba-hiroi data.js の構造エラー:\n  ${hiroiProblems.join('\n  ')}`);
   }
 
   // tsunagete-story: data.js の window.TSUNAGETE_STORY_WORDS = { when, where, who, what, why, how, next, themes }。
