@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ひともじチェンジ | あそびのたな</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c" />
+  <link rel="stylesheet" href="style.css?v=20261125a" />
+</head>
+<body data-genre="kotoba">
+  <main class="hmc-app">
+
+    <!-- ===== はじめの画面 ===== -->
+    <section class="hmc-screen" id="screen-top">
+      <section class="hmc-top card app-entry">
+        <h1 class="app-title">ひともじチェンジ</h1>
+        <p class="app-catch">1文字ずつ変えて、ゴールのことばまでつなごう</p>
+        <p class="app-entry__lead">はじめのことばの1文字を変えて、別のことばにする。それをくり返して、ゴールのことばにたどり着いたらクリア。みんなで相談しながら進めよう。</p>
+        <ul class="app-entry__notes">
+          <li>変えていいのは、1回に1文字だけ。文字の数は変わらない</li>
+          <li>「が」「ゃ」「ー」なども1文字。か→が も1回の変更</li>
+          <li>途中のことばがあるかどうかは、みんなで決めてOK</li>
+        </ul>
+        <h2 class="hmc-top__title">お題</h2>
+        <div class="hmc-level-grid" id="levelGrid" role="radiogroup" aria-label="お題の選び方"></div>
+
+        <form class="hmc-custom" id="customForm" hidden novalidate>
+          <div class="hmc-custom__row">
+            <label class="hmc-custom__field">
+              <span class="hmc-custom__label">はじめのことば</span>
+              <input class="form-input" id="customStart" type="text" autocomplete="off" maxlength="8" placeholder="さかな" />
+            </label>
+            <span class="material-symbols-rounded hmc-custom__arrow" aria-hidden="true">arrow_forward</span>
+            <label class="hmc-custom__field">
+              <span class="hmc-custom__label">ゴールのことば</span>
+              <input class="form-input" id="customGoal" type="text" autocomplete="off" maxlength="8" placeholder="たから" />
+            </label>
+          </div>
+          <p class="hmc-custom__note">ひらがなで、同じ文字の数（2〜5文字）にしてね</p>
+          <p class="hmc-custom__error" id="customError" role="alert"></p>
+        </form>
+
+        <div class="app-entry__actions">
+          <button class="btn btn-primary btn-lg" id="btnStart" type="button" disabled>
+            <span class="material-symbols-rounded">play_arrow</span>
+            スタート
+          </button>
+        </div>
+      </section>
+    </section>
+
+    <!-- ===== 遊ぶ画面 ===== -->
+    <section class="hmc-screen" id="screen-play" hidden>
+      <div class="hmc-play">
+        <div class="hmc-play__meta">
+          <span class="badge badge-primary" id="playLevel"></span>
+          <div class="hmc-play__meta-actions">
+            <button class="btn btn-ghost btn-sm" id="btnSkip" type="button">
+              <span class="material-symbols-rounded">swap_horiz</span>
+              <span id="btnSkipLabel">お題を変える</span>
+            </button>
+            <button class="btn btn-ghost btn-sm" id="btnPlayTop" type="button" aria-label="はじめの画面へ">
+              <span class="material-symbols-rounded">home</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- お題 -->
+        <div class="hmc-odai card" aria-label="お題">
+          <div class="hmc-odai__end">
+            <span class="hmc-odai__label">はじめ</span>
+            <span class="hmc-odai__word" id="odaiStart"></span>
+          </div>
+          <span class="material-symbols-rounded hmc-odai__arrow" aria-hidden="true">trending_flat</span>
+          <div class="hmc-odai__end hmc-odai__end--goal">
+            <span class="hmc-odai__label">ゴール</span>
+            <span class="hmc-odai__word" id="odaiGoal"></span>
+          </div>
+        </div>
+
+        <!-- ここまでのことば -->
+        <ol class="hmc-ladder" id="ladder" aria-label="ここまでのことば"></ol>
+
+        <!-- いまのことば -->
+        <div class="hmc-now" id="nowArea">
+          <p class="hmc-now__label" id="nowLabel">変える文字を押してね</p>
+          <div class="hmc-tiles" id="tiles" role="group" aria-label="いまのことば"></div>
+        </div>
+
+        <!-- ヒント -->
+        <div class="hmc-hint" id="hintArea" hidden>
+          <span class="material-symbols-rounded" aria-hidden="true">lightbulb</span>
+          <span id="hintText"></span>
+        </div>
+
+        <!-- 文字の表 -->
+        <div class="hmc-pad card" id="pad" hidden>
+          <p class="hmc-pad__title" id="padTitle"></p>
+          <div class="hmc-pad__grid" id="padGrid"></div>
+          <div class="hmc-pad__actions">
+            <button class="btn btn-ghost" id="btnPadClose" type="button">
+              <span class="material-symbols-rounded">close</span>
+              やめる
+            </button>
+          </div>
+        </div>
+
+        <div class="hmc-play__actions" id="playActions">
+          <button class="btn btn-ghost" id="btnUndo" type="button">
+            <span class="material-symbols-rounded">undo</span>
+            1つ戻す
+          </button>
+          <button class="btn btn-ghost" id="btnHint" type="button">
+            <span class="material-symbols-rounded">lightbulb</span>
+            ヒント
+          </button>
+        </div>
+
+        <!-- ゴール -->
+        <div class="hmc-clear card" id="clearArea" hidden>
+          <span class="material-symbols-rounded hmc-clear__icon" aria-hidden="true">celebration</span>
+          <p class="hmc-clear__title">ゴール！</p>
+          <p class="hmc-clear__sub" id="clearSub"></p>
+          <p class="hmc-clear__other" id="clearOther" hidden></p>
+          <div class="hmc-clear__actions">
+            <button class="btn btn-primary btn-lg" id="btnNext" type="button">
+              <span class="material-symbols-rounded">arrow_forward</span>
+              <span id="btnNextLabel">次のお題</span>
+            </button>
+            <button class="btn btn-ghost btn-lg" id="btnTop" type="button">
+              <span class="material-symbols-rounded">home</span>
+              はじめの画面へ
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script type="module" src="app.js?v=20261125a"></script>
+  <script src="../shared/js/stats.js?v=1" defer></script>
+  <script src="../shared/js/howto.js"></script>
+  <script>
+    RoomkHowto.init({
+      title: 'あそびかた',
+      lead: 'はじめのことばを1文字ずつ変えて、ゴールのことばまでつなぐあそび。',
+      sections: [
+        { heading: 'はじめかた', items: [
+          'お題の「2文字」「3文字」か、「自分で決める」を選ぶ',
+          '「自分で決める」のときは、はじめのことばとゴールのことばを書く',
+          '「スタート」を押す',
+        ] },
+        { heading: 'すすめかた', items: [
+          'いまのことばの、変えたい文字を押す',
+          '文字の表から、新しい文字を選ぶ。1文字だけ変わった新しいことばになる',
+          'ことばがあるかどうかは、みんなで決める。まちがえたら「1つ戻す」',
+          '困ったら「ヒント」。1回目は変える場所、2回目は次のことばの例が出る',
+        ] },
+        { heading: 'おわりかた', text: 'ゴールのことばになったらクリア。「次のお題」か「はじめの画面へ」を選ぶ。' },
+      ],
+    });
+  </script>
+</body>
+</html>

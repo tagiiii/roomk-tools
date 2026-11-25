@@ -179,6 +179,8 @@ function entry(tool, category, text, extra = {}) {
 
 // 重複検査でカバー済みのアプリ（collectEntries が entries を生成する）。
 const COVERED_APPS = [
+  // 2026-11-25 追加（はじめとゴールのことばの組）
+  'hitomoji-change',
   'kotoba-meter',
   // 2026-11-09 追加（流す言葉の一覧）
   'kotoba-dash',
@@ -391,6 +393,13 @@ function collectEntries() {
     id: `kotoba-shuffle:${index}`,
     question: item.hint || item.word,
     answer: item.word,
+  })));
+
+  const hitomoji = evalModule('apps/hitomoji-change/words.js').PUZZLES || [];
+  hitomoji.forEach((item, index) => rows.push(entry('hitomoji-change', item.chars, `${item.start}→${item.goal}`, {
+    id: `hitomoji-change:${index}`,
+    // はじめとゴールの組で1題。同じゴールでもはじめがちがえば別のお題なので、組をそのまま答えにする
+    answer: `${item.start}→${item.goal}`,
   })));
 
   const kanji = evalModule('apps/kanji-sagashi/questions.js').QUESTIONS || [];
