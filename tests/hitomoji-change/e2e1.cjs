@@ -1,5 +1,5 @@
 // ひともじチェンジ E2E その1: 1台の画面・作成・参加・待合室・順番・パス・端末なし・1つ戻す・ヒント・ゴール・次のお題・
-// だれでも（同時に押す）・途中参加・再読み込み・自分で決めるお題・進行だけのホスト・375px・退出・ルームを閉じる
+// だれでも（同時に押す）・途中参加・再読み込み・自分で決めるお題・進行だけのホスト・ことばの判定（ホストが決める）・375px・退出・ルームを閉じる
 const path = require('path');
 const fs = require('fs');
 const vm = require('vm');
@@ -76,6 +76,11 @@ const len = (room) => L.gameOf(room)?.ladder.length || 0;
   await T.waitText(host, '#waitingCount', '3人');
   check('guest sees no host tools', !(await T.visible(sora, '#hostWaitingTools')) && await T.visible(sora, '#guestWaitingNote'));
   check('order default turn', (await host.page.getAttribute('#roomOrder [data-order="turn"]', 'aria-checked')) === 'true');
+  check('judge default host', (await host.page.getAttribute('#roomJudge [data-judge="host"]', 'aria-checked')) === 'true');
+  await T.waitText(sora, '#waitingSettings', 'ことばの判定: ホストが決める');
+  // ここからしばらくは「みんなで決める」で流す（ホストが決めるは、あとでまとめて見る）
+  await host.page.click('#roomJudge [data-judge="all"]');
+  await T.waitText(sora, '#waitingSettings', 'ことばの判定: みんなで決める');
   await host.page.click('#roomLevelGrid .hmc-level[data-level="three"]');
   await T.waitText(sora, '#waitingSettings', 'お題: 3文字');
   await host.page.click('#roomLevelGrid .hmc-level[data-level="two"]');
@@ -266,6 +271,83 @@ const len = (room) => L.gameOf(room)?.ladder.length || 0;
   check('facilitator can pass', await T.visible(host, '#btnPass'));
   await host.page.click('#btnPass');
   await T.roomWhen(code, (r) => L.turnOf(r) !== L.turnOf(room));
+
+  // ── ことばの判定: ホストが決める ──
+  await host.page.click('#btnToWaiting');
+  for (const c of [host, sora, midori]) await T.waitScreen(c, 'waiting');
+  await host.page.check('#hostPlays');
+  await host.page.click('#roomLevelGrid .hmc-level[data-level="two"]');
+  await host.page.click('#roomJudge [data-judge="host"]');
+  await T.waitText(sora, '#waitingSettings', 'ことばの判定: ホストが決める');
+  await host.page.click('#btnStartGame');
+  for (const c of [host, sora, midori]) await T.waitScreen(c, 'play');
+  // そらの番まで、ホストがパスで進める
+  for (let k = 0; k < 6; k++) {
+    room = await T.roomOf(code);
+    if (L.turnOf(room) === 'そら') break;
+    await T.waitVisible(host, '#btnPass');
+    const before = L.turnOf(room);
+    await host.page.click('#btnPass');
+    await T.roomWhen(code, (r) => L.turnOf(r) !== before);
+  }
+  room = await T.roomOf(code);
+  check('judge sora turn', L.turnOf(room) === 'そら', L.turnOf(room));
+  // ゴールにならない変え方（1文字目を ぬ／ね に）
+  const pickMove = (r) => {
+    const g = L.gameOf(r);
+    const cur = Array.from(L.currentWord(g));
+    for (const ch of ['ぬ', 'ね', 'ほ']) {
+      if (cur[0] === ch) continue;
+      const w = [ch, ...cur.slice(1)].join('');
+      if (w !== g.puzzle.goal) return { pos: 0, ch, word: w };
+    }
+    return null;
+  };
+  const nJ = len(room);
+  let mv = pickMove(room);
+  await T.waitVisible(sora, '#tiles .hmc-tile[data-pos="0"]:not([disabled])');
+  await T.change(sora, mv.pos, mv.ch);
+  room = await T.roomWhen(code, (r) => !!L.pendingOf(r));
+  check('pending not committed', len(room) === nJ && L.pendingOf(room).w === mv.word && L.turnOf(room) === 'そら');
+  await T.waitVisible(host, '#judgeArea');
+  await T.waitText(host, '#judgeText', '「' + mv.word + '」');
+  check('host sees ok/no', await T.visible(host, '#btnJudgeOk') && await T.visible(host, '#btnJudgeNo'));
+  await T.waitText(sora, '#judgeText', 'ホストが見ている');
+  check('mover can retry', await T.visible(sora, '#btnJudgeRetry') && !(await T.visible(sora, '#btnJudgeOk')));
+  check('mover tiles hidden', !(await T.visible(sora, '#nowArea')) && !(await T.visible(sora, '#turnBar')));
+  await T.waitVisible(midori, '#judgeArea');
+  check('other no buttons', !(await T.visible(midori, '#btnJudgeRetry')) && !(await T.visible(midori, '#btnJudgeOk')));
+  check('host no undo/pass while pending', !(await T.visible(host, '#btnUndo')) && !(await T.visible(host, '#btnPass')));
+  await host.page.setViewportSize({ width: 375, height: 812 });
+  await sleep(300);
+  check('375 judge no overflow', (await T.overflow(host)) <= 0, await T.overflow(host));
+  await host.page.screenshot({ path: path.join(T.OUT, 'host-375-judge.png'), fullPage: true });
+  await host.page.setViewportSize({ width: 1100, height: 900 });
+  // やりなおし → 同じ人がもう一度
+  await host.page.click('#btnJudgeNo');
+  room = await T.roomWhen(code, (r) => !L.pendingOf(r));
+  check('rejected', len(room) === nJ && L.turnOf(room) === 'そら');
+  await T.waitToast(sora, 'もう一度、変える文字を選んでね');
+  await T.waitText(sora, '#turnText', 'あなたの番');
+  await T.waitHidden(midori, '#judgeArea');
+  // もう一度変えて、OK → みどりの番
+  await T.change(sora, mv.pos, mv.ch);
+  await T.roomWhen(code, (r) => !!L.pendingOf(r));
+  await T.waitVisible(host, '#btnJudgeOk');
+  await host.page.click('#btnJudgeOk');
+  room = await T.roomWhen(code, (r) => len(r) === nJ + 1);
+  check('approved', word(room) === mv.word && !L.pendingOf(room) && L.turnOf(room) === 'みどり' && L.gameOf(room).ladder[nJ].by === 'そら');
+  await T.waitHidden(sora, '#judgeArea');
+  await T.waitText(midori, '#turnText', 'あなたの番');
+  // 変えた本人の「えらびなおす」
+  mv = pickMove(room);
+  await T.change(midori, mv.pos, mv.ch);
+  await T.roomWhen(code, (r) => !!L.pendingOf(r));
+  await T.waitVisible(midori, '#btnJudgeRetry');
+  await midori.page.click('#btnJudgeRetry');
+  room = await T.roomWhen(code, (r) => !L.pendingOf(r));
+  check('self retry', len(room) === nJ + 1 && L.turnOf(room) === 'みどり');
+  await T.waitHidden(host, '#judgeArea');
 
   // ── 退出・ルームを閉じる ──
   await haru.page.click('#btnLeave');

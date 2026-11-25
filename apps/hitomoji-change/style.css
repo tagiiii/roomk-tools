@@ -287,6 +287,14 @@
 
 .hmc-hint .material-symbols-rounded { font-size: 20px; color: #B08F08; }
 
+/* ホストの判定（ルームの「ホストが決める」） */
+.hmc-judge { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 20px 18px; text-align: center; border: 2px dashed var(--color-accent); }
+.hmc-judge__text { margin: 0; font-family: 'Zen Maru Gothic', var(--font-base); font-size: 1.2rem; font-weight: 700; color: var(--color-primary); }
+.hmc-judge__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.hmc-tile--static { cursor: default; }
+.hmc-tile--static:hover { transform: none; border-color: var(--color-border); }
+.hmc-tile--static.is-changed { border-color: var(--color-accent); background: var(--color-accent-soft); color: var(--color-accent); }
+
 /* ゴール */
 .hmc-clear { text-align: center; padding: 28px 24px; border: 2px solid var(--color-accent); }
 .hmc-clear__icon { font-size: 54px; color: var(--color-accent); }
@@ -377,7 +385,7 @@
   .hmc-panel { padding: 20px 16px; }
   .hmc-roombar { gap: 4px; padding: 6px 8px; margin-top: -12px; }
   .hmc-roombar .btn { padding: 4px 8px; font-size: 13px; }
-  .hmc-turn__text { font-size: 1.05rem; }
+  .hmc-turn__text, .hmc-judge__text { font-size: 1.05rem; }
   .hmc-play__meta-actions { width: 100%; flex-wrap: nowrap; }
   .hmc-play__meta-actions .btn:not(#btnPlayTop) { flex: 1 1 0; padding-left: 8px; padding-right: 8px; }
   #btnSkip .material-symbols-rounded { display: none; }

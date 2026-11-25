@@ -7,6 +7,7 @@
 
   const STATUS = { WAITING: 'waiting', PLAYING: 'playing' };
   const ORDERS = ['turn', 'free'];          // 順番に / だれでも
+  const JUDGES = ['host', 'all'];           // ことばの判定: ホストが決める / みんなで決める
   const LEVEL_IDS = ['two', 'three', 'custom'];
   const MAX_PLAYERS = 12;                   // 遊ぶ人（端末なしの参加者をふくむ）
   const MAX_PROXIES = 4;
@@ -96,6 +97,7 @@
   const settingsOf = (room) => ({
     hostPlays: room?.settings?.hostPlays !== false,
     order: ORDERS.includes(room?.settings?.order) ? room.settings.order : 'turn',
+    judge: JUDGES.includes(room?.settings?.judge) ? room.settings.judge : 'host',
     level: LEVEL_IDS.includes(room?.settings?.level) ? room.settings.level : 'two',
   });
 
@@ -124,8 +126,12 @@
     if (!g || typeof g !== 'object' || !validPuzzle(g.puzzle)) return null;
     const ladder = Array.isArray(g.ladder) ? g.ladder.filter((x) => x && typeof x.w === 'string') : [];
     if (!ladder.length || ladder[0].w !== g.puzzle.start) return null;
-    return { ...g, ladder };
+    const pending = g.pending && typeof g.pending.w === 'string' && g.pending.n === ladder.length ? g.pending : null;
+    return { ...g, ladder, pending };
   }
+
+  // ホストの判定を待っていることば（なければ null）
+  const pendingOf = (room) => gameOf(room)?.pending || null;
 
   const currentWord = (g) => g.ladder[g.ladder.length - 1].w;
 
@@ -156,7 +162,7 @@
   // actor（ホストの名前・遊ぶ人の名前）が、いまことばを変えられるか
   function canMove(room, actor) {
     const g = gameOf(room);
-    if (!g || room.status !== STATUS.PLAYING || g.cleared || !actor) return false;
+    if (!g || room.status !== STATUS.PLAYING || g.cleared || g.pending || !actor) return false;
     const isHost = actor === room.host;
     if (settingsOf(room).order === 'free') return isHost || isParticipant(room, actor);
     const turn = turnOf(room);
@@ -166,7 +172,18 @@
     return isHost && isProxy(room, turn);
   }
 
-  // ことばを変える（pos 文字目を ch に）
+  // 変えたことばを確定する（ここまでのことばに足して、順番のときはつぎの人へ）
+  function commit(room, g, w, by) {
+    const order = settingsOf(room).order;
+    const turn = turnOf(room);
+    let ng = { ...g, ladder: [...g.ladder, { w, by }], cleared: w === g.puzzle.goal, hint: null, pending: null };
+    // 変えた人のつぎの人へ。仮に置いたあとで変えた人がいなくなっていたら、いまの番（もうそのつぎの人）のまま
+    if (order === 'turn' && turn && !ng.cleared) ng = withTurn(room, ng, isParticipant(room, by) ? nextAfter(room, by) : turn);
+    return { ...room, game: ng };
+  }
+
+  // ことばを変える（pos 文字目を ch に）。
+  // 「ホストが決める」のときは、いったん仮に置いてホストの判定を待つ（ゴールのことば・ホストが押したときは、そのまま確定）
   function move(room, actor, pos, ch) {
     const g = gameOf(room);
     if (!g || !canMove(room, actor) || !KANA_ONE_RE.test(ch)) return null;
@@ -174,19 +191,40 @@
     if (!Number.isInteger(pos) || pos < 0 || pos >= cur.length || cur[pos] === ch) return null;
     cur[pos] = ch;
     const w = cur.join('');
-    const order = settingsOf(room).order;
+    const s = settingsOf(room);
     const turn = turnOf(room);
     // 順番のときは、番の人（代わりに入れたときも番の人）の手として残す
-    const by = order === 'turn' && turn ? turn : actor;
-    let ng = { ...g, ladder: [...g.ladder, { w, by }], cleared: w === g.puzzle.goal, hint: null };
-    if (order === 'turn' && turn && !ng.cleared) ng = withTurn(room, ng, nextAfter(room, turn));
-    return { ...room, game: ng };
+    const by = s.order === 'turn' && turn ? turn : actor;
+    if (s.judge === 'host' && actor !== room.host && w !== g.puzzle.goal) {
+      return { ...room, game: { ...g, pending: { w, by, actor, n: g.ladder.length } } };
+    }
+    return commit(room, g, w, by);
+  }
+
+  // 仮に置いたことばを「OK」にする（ホストだけ）
+  function approve(room, actor) {
+    const g = gameOf(room);
+    if (!g || !g.pending || g.cleared || room.status !== STATUS.PLAYING || actor !== room.host) return null;
+    return commit(room, g, g.pending.w, g.pending.by);
+  }
+
+  // 仮に置いたことばを「やりなおし」にする（ホストと、押した本人）。番はそのまま、同じ人がもう一度選ぶ
+  function canReject(room, actor) {
+    const g = gameOf(room);
+    if (!g || !g.pending || g.cleared || room.status !== STATUS.PLAYING || !actor) return false;
+    return actor === room.host || actor === g.pending.actor;
+  }
+
+  function reject(room, actor) {
+    const g = gameOf(room);
+    if (!canReject(room, actor)) return null;
+    return { ...room, game: { ...g, pending: null } };
   }
 
   // 1つ戻す: ホスト、または最後に変えた人（つぎの手がまだのとき）
   function canUndo(room, actor) {
     const g = gameOf(room);
-    if (!g || room.status !== STATUS.PLAYING || g.cleared || g.ladder.length < 2 || !actor) return false;
+    if (!g || room.status !== STATUS.PLAYING || g.cleared || g.pending || g.ladder.length < 2 || !actor) return false;
     if (actor === room.host) return true;
     return g.ladder[g.ladder.length - 1].by === actor;
   }
@@ -204,7 +242,7 @@
   // パス: 番の人、またはホスト（だれの番でも、つぎの人へ）
   function canPass(room, actor) {
     const g = gameOf(room);
-    if (!g || room.status !== STATUS.PLAYING || g.cleared || settingsOf(room).order !== 'turn') return false;
+    if (!g || room.status !== STATUS.PLAYING || g.cleared || g.pending || settingsOf(room).order !== 'turn') return false;
     const turn = turnOf(room);
     if (!turn) return false;
     return actor === turn || actor === room.host;
@@ -235,7 +273,7 @@
   function newGame(room, puzzle, seenKey, seenIdx) {
     if (!validPuzzle(puzzle)) return null;
     const id = (Number(room.game?.id) || 0) + 1;
-    let g = { id, puzzle: { chars: puzzle.chars, start: puzzle.start, goal: puzzle.goal }, ladder: [{ w: puzzle.start, by: '' }], cleared: false, hint: null, turn: null, turnAt: 0 };
+    let g = { id, puzzle: { chars: puzzle.chars, start: puzzle.start, goal: puzzle.goal }, ladder: [{ w: puzzle.start, by: '' }], cleared: false, hint: null, pending: null, turn: null, turnAt: 0 };
     const next = { ...room, status: STATUS.PLAYING };
     if (seenKey) {
       const seen = { ...(room.seen || {}) };
@@ -291,10 +329,10 @@
   }
 
   const L = {
-    STATUS, ORDERS, LEVEL_IDS, MAX_PLAYERS, MAX_PROXIES, MIN_CHARS, MAX_CHARS, KANA_RE, KANA_ONE_RE, NAME_MAX,
+    STATUS, ORDERS, JUDGES, LEVEL_IDS, MAX_PLAYERS, MAX_PROXIES, MIN_CHARS, MAX_CHARS, KANA_RE, KANA_ONE_RE, NAME_MAX,
     chars, differsByOne, findPath, hintStep, toHiragana, readCustom, validPuzzle, validNickname,
     settingsOf, participants, isProxy, isParticipant, gameOf, currentWord, turnOf, nextAfter,
-    canMove, move, canUndo, undo, canPass, pass, hint, hintStageOf, newGame, unseenIndexes, backToWaiting, addPlayer, leave,
+    pendingOf, canMove, move, approve, canReject, reject, canUndo, undo, canPass, pass, hint, hintStageOf, newGame, unseenIndexes, backToWaiting, addPlayer, leave,
   };
   root.HMC_LOGIC = L;
   if (typeof module !== 'undefined' && module.exports) module.exports = L;
