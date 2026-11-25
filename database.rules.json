@@ -138,6 +138,12 @@
         ".write": "auth != null"
       }
     },
+    "kotobahiroi_rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
     "kotobameter_rooms": {
       "$roomId": {
         ".read": "auth != null",
