@@ -1,6 +1,6 @@
 // 好きなものマップ: 説明スライドと発表者ウィンドウの確かめ。
 // リポジトリの apps/ をそのまま配信して動かす（エミュレーターは要らない）。本番の Firebase あての通信は止める。
-// P キーで発表者ウィンドウ・両方向の同期・チャットにコピー・ノートの書きかえと「元に戻す」・14枚のノート・
+// P キーで発表者ウィンドウ・両方向の同期・チャットにコピー・ノートの書きかえと「元に戻す」・15枚のノート・
 // アプリの「？」から重ねてひらく（矢印キー・Esc・「スライドを閉じる」・見ていたページから続く）
 const { chromium } = require(process.env.PLAYWRIGHT || 'playwright');
 const http = require('http');
@@ -44,7 +44,7 @@ const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/u;
   const main = await ctx.newPage();
   main.on('pageerror', (e) => errors.push('main: ' + e.message));
   await main.goto(BASE + 'slides.html');
-  await main.waitForFunction(() => document.querySelector('#counter').textContent.includes('/ 14'));
+  await main.waitForFunction(() => document.querySelector('#counter').textContent.includes('/ 15'));
   const notes = await main.evaluate(() => SLIDES.map((s) => s.note));
   const counter = (p) => p.evaluate(() => document.querySelector('#counter').textContent.trim());
 
@@ -58,28 +58,28 @@ const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/u;
   check('presenter: connected', true);
   const pvState = () => pv.evaluate(() => ({ count: document.querySelector('#pvCount').textContent.trim(), title: document.querySelector('#pvTitle').textContent.trim(), note: document.querySelector('#pvNote').value, next: document.querySelector('#pvNextTitle').textContent.trim(), prevOff: document.querySelector('#pvPrev').disabled, nextOff: document.querySelector('#pvNext').disabled }));
   let s = await pvState();
-  check('presenter: starts at slide 1 with its note', s.count === '1 / 14' && s.note === notes[0] && s.prevOff && !s.nextOff, s);
+  check('presenter: starts at slide 1 with its note', s.count === '1 / 15' && s.note === notes[0] && s.prevOff && !s.nextOff, s);
   check('presenter: deck hidden, note shown', await pv.evaluate(() => getComputedStyle(document.querySelector('#deck')).display === 'none' && getComputedStyle(document.querySelector('#presenter')).display !== 'none'));
   await shot(pv, '31-presenter');
 
   // 2. スライドを送ると、発表者ウィンドウのノートが変わる
   await main.bringToFront();
   await main.keyboard.press('ArrowRight');
-  await pv.waitForFunction(() => document.querySelector('#pvCount').textContent.trim() === '2 / 14');
+  await pv.waitForFunction(() => document.querySelector('#pvCount').textContent.trim() === '2 / 15');
   s = await pvState();
   check('sync main → presenter', s.title === '好きなものマップ' && s.note === notes[1] && s.next.includes('次のスライド'), s);
 
   // 3. 発表者ウィンドウから送ると、スライドも変わる（ボタン・矢印キー）
   await pv.bringToFront();
   await pv.click('#pvNext');
-  await main.waitForFunction(() => document.querySelector('#counter').textContent.trim() === '3 / 14');
+  await main.waitForFunction(() => document.querySelector('#counter').textContent.trim() === '3 / 15');
   check('sync presenter → main (button)', (await pvState()).note === notes[2]);
   await pv.locator('#pvTitle').click();
   await pv.keyboard.press('ArrowRight');
-  await main.waitForFunction(() => document.querySelector('#counter').textContent.trim() === '4 / 14');
+  await main.waitForFunction(() => document.querySelector('#counter').textContent.trim() === '4 / 15');
   await pv.keyboard.press('ArrowLeft');
-  await main.waitForFunction(() => document.querySelector('#counter').textContent.trim() === '3 / 14');
-  check('sync presenter → main (arrow keys)', (await counter(main)) === '3 / 14');
+  await main.waitForFunction(() => document.querySelector('#counter').textContent.trim() === '3 / 15');
+  check('sync presenter → main (arrow keys)', (await counter(main)) === '3 / 15');
 
   // 4. チャットにコピー
   await pv.click('#pvCopy');
@@ -102,23 +102,23 @@ const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/u;
   await pv.reload();
   await pv.waitForFunction(() => document.querySelector('#pvConn').textContent.includes('接続中'));
   s = await pvState();
-  check('reload: reconnects to the current slide, edit kept', s.count === '3 / 14' && s.note === 'じぶん用に書きかえたメモ', s);
+  check('reload: reconnects to the current slide, edit kept', s.count === '3 / 15' && s.note === 'じぶん用に書きかえたメモ', s);
   await pv.click('#pvReset');
   check('reset: original note', (await pvState()).note === notes[2]);
   check('reset: saved copy removed', (await pv.evaluate(() => localStorage.getItem('smm_note_2'))) === null);
 
-  // 6. 14枚ぜんぶ: ノートがあり、絵文字がなく、発表者ウィンドウに同じ文が出る
+  // 6. 15枚ぜんぶ: ノートがあり、絵文字がなく、発表者ウィンドウに同じ文が出る
   await main.bringToFront();
-  for (let i = 0; i < 14; i++) await main.keyboard.press('ArrowLeft');
-  await pv.waitForFunction(() => document.querySelector('#pvCount').textContent.trim() === '1 / 14');
+  for (let i = 0; i < 15; i++) await main.keyboard.press('ArrowLeft');
+  await pv.waitForFunction(() => document.querySelector('#pvCount').textContent.trim() === '1 / 15');
   let allOk = true; const bad = [];
-  for (let i = 0; i < 14; i++) {
-    await pv.waitForFunction((n) => document.querySelector('#pvCount').textContent.trim() === `${n} / 14`, i + 1);
+  for (let i = 0; i < 15; i++) {
+    await pv.waitForFunction((n) => document.querySelector('#pvCount').textContent.trim() === `${n} / 15`, i + 1);
     const st = await pvState();
     if (!(st.note === notes[i] && st.note.length > 20 && !EMOJI.test(st.note) && st.title.length > 0)) { allOk = false; bad.push(i + 1); }
-    if (i < 13) await main.keyboard.press('ArrowRight');
+    if (i < 14) await main.keyboard.press('ArrowRight');
   }
-  check('all 14 notes: shown, non-empty, no emoji', allOk, bad);
+  check('all 15 notes: shown, non-empty, no emoji', allOk, bad);
   s = await pvState();
   check('last slide: next disabled and labelled', s.nextOff && s.next.includes('最後のスライドです'), s);
   check('no "kotoba tantei" leftovers', !(await pv.evaluate(() => document.body.textContent.includes('ことば探偵'))) && !(await main.evaluate(() => document.body.textContent.includes('ことば探偵'))));
@@ -133,13 +133,13 @@ const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/u;
   check('app: slides open over the page', opened === 'ok' && (await app.locator('iframe[src*="slides.html"]').count()) === 1, opened);
   // スライドの読み込みが終わってから Esc を押す（読み込み前の空のページにはキーの受け口がない）
   const frame = app.frames().find((f) => f.url().includes('slides.html'));
-  await frame.waitForFunction(() => document.querySelector('#counter') && document.querySelector('#counter').textContent.includes('/ 14'));
+  await frame.waitForFunction(() => document.querySelector('#counter') && document.querySelector('#counter').textContent.includes('/ 15'));
   await sleep(300);
-  check('app: slides inside the overlay show 14 slides', (await frame.evaluate(() => document.querySelector('#counter').textContent.trim())) === '1 / 14');
+  check('app: slides inside the overlay show 15 slides', (await frame.evaluate(() => document.querySelector('#counter').textContent.trim())) === '1 / 15');
   await shot(app, '33-app-slides-overlay');
   await app.keyboard.press('ArrowRight');
   await sleep(300);
-  check('app: arrow key moves the slides in the overlay', (await frame.evaluate(() => document.querySelector('#counter').textContent.trim())) === '2 / 14');
+  check('app: arrow key moves the slides in the overlay', (await frame.evaluate(() => document.querySelector('#counter').textContent.trim())) === '2 / 15');
   await app.keyboard.press('Escape');
   await sleep(400);
   const layerShown = () => app.evaluate(() => !!document.querySelector('.howto-slides.show'));
@@ -147,7 +147,7 @@ const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/u;
   // もう一度ひらくと、見ていたページから続く。「スライドを閉じる」でも閉じる
   await app.evaluate(() => RoomkHowto.openSlides());
   await sleep(300);
-  check('app: reopens on the same slide', (await layerShown()) && (await frame.evaluate(() => document.querySelector('#counter').textContent.trim())) === '2 / 14');
+  check('app: reopens on the same slide', (await layerShown()) && (await frame.evaluate(() => document.querySelector('#counter').textContent.trim())) === '2 / 15');
   await app.click('.howto-slides-close');
   await sleep(300);
   check('app: close button closes the slides', !(await layerShown()));
