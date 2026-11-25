@@ -30,6 +30,12 @@
         ".write": "auth != null"
       }
     },
+    "hitomojichange_rooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
     "noriairoad_rooms": {
       "$roomId": {
         ".read": "auth != null",

@@ -2,13 +2,20 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
   <title>ひともじチェンジ | あそびのたな</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c" />
-  <link rel="stylesheet" href="style.css?v=20261125a" />
+  <!-- index.html と app.js・logic.js・words.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
+  <link rel="stylesheet" href="style.css?v=20261125r" />
+  <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-database-compat.js"></script>
+  <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
+  <script src="../shared/js/room-qr.js?v=20261022"></script>
+  <script src="logic.js?v=20261125r"></script>
 </head>
 <body data-genre="kotoba">
   <main class="hmc-app">
@@ -23,28 +30,40 @@
         <ul class="app-entry__notes">
           <li>変えていいのは、1回に1文字だけ。文字の数は変わらない</li>
           <li>「が」「ゃ」「ー」なども1文字。か→が も1回の変更</li>
-          <li>途中のことばがあるかどうかは、みんなで決めてOK</li>
+          <li>ひとりひとりの端末で遊ぶときは「ルームを作る」「ルームに参加する」。1台の画面をみんなで見て遊ぶときは「1台の画面であそぶ」</li>
         </ul>
-        <h2 class="hmc-top__title">お題</h2>
-        <div class="hmc-level-grid" id="levelGrid" role="radiogroup" aria-label="お題の選び方"></div>
+        <div class="app-entry__actions hmc-entry-actions">
+          <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームを作る</button>
+          <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
+          <button type="button" class="btn btn-secondary btn-full" id="btnGoLocal">1台の画面であそぶ</button>
+        </div>
+      </section>
+    </section>
 
-        <form class="hmc-custom" id="customForm" hidden novalidate>
+    <!-- ===== 1台の画面: お題を選ぶ ===== -->
+    <section class="hmc-screen" id="screen-local" hidden>
+      <section class="hmc-panel card" aria-labelledby="hmc-local-title">
+        <button type="button" class="btn btn-ghost btn-sm hmc-back" id="btnLocalBack">トップへ戻る</button>
+        <h2 class="hmc-panel__title" id="hmc-local-title">1台の画面であそぶ</h2>
+        <p class="hmc-panel__lead">1台の画面をみんなで見てあそぶ。文字を押すのは、画面を動かす人。</p>
+        <h3 class="hmc-field-name">お題</h3>
+        <div class="hmc-level-grid" id="levelGrid" role="radiogroup" aria-label="お題の選び方"></div>
+        <div class="hmc-custom" id="customForm" hidden>
           <div class="hmc-custom__row">
             <label class="hmc-custom__field">
               <span class="hmc-custom__label">はじめのことば</span>
-              <input class="form-input" id="customStart" type="text" autocomplete="off" maxlength="8" placeholder="さかな" />
+              <input class="form-input" id="customStart" type="text" autocomplete="off" maxlength="8" placeholder="さかな" aria-describedby="customError" />
             </label>
             <span class="material-symbols-rounded hmc-custom__arrow" aria-hidden="true">arrow_forward</span>
             <label class="hmc-custom__field">
               <span class="hmc-custom__label">ゴールのことば</span>
-              <input class="form-input" id="customGoal" type="text" autocomplete="off" maxlength="8" placeholder="たから" />
+              <input class="form-input" id="customGoal" type="text" autocomplete="off" maxlength="8" placeholder="たから" aria-describedby="customError" />
             </label>
           </div>
           <p class="hmc-custom__note">ひらがなで、同じ文字の数（2〜5文字）にしてね</p>
           <p class="hmc-custom__error" id="customError" role="alert"></p>
-        </form>
-
-        <div class="app-entry__actions">
+        </div>
+        <div class="hmc-panel__actions">
           <button class="btn btn-primary btn-lg" id="btnStart" type="button" disabled>
             <span class="material-symbols-rounded">play_arrow</span>
             スタート
@@ -53,7 +72,96 @@
       </section>
     </section>
 
-    <!-- ===== 遊ぶ画面 ===== -->
+    <!-- ===== ルームを作る ===== -->
+    <section class="hmc-screen" id="screen-create" hidden>
+      <section class="hmc-panel card" aria-labelledby="hmc-create-title">
+        <button type="button" class="btn btn-ghost btn-sm hmc-back" id="btnCreateBack">トップへ戻る</button>
+        <h2 class="hmc-panel__title" id="hmc-create-title">ルームを作る</h2>
+        <label class="form-label" for="hostName">ホストの名前（8文字まで）</label>
+        <input class="form-input" id="hostName" aria-describedby="createError" maxlength="8" autocomplete="nickname" />
+        <p class="hmc-alert" id="createError" role="alert" hidden></p>
+        <button type="button" class="btn btn-primary btn-full hmc-mt" id="btnCreateRoom">ルームを作る</button>
+      </section>
+    </section>
+
+    <!-- ===== ルームに参加する ===== -->
+    <section class="hmc-screen" id="screen-join" hidden>
+      <section class="hmc-panel card" aria-labelledby="hmc-join-title">
+        <button type="button" class="btn btn-ghost btn-sm hmc-back" id="btnJoinBack">トップへ戻る</button>
+        <h2 class="hmc-panel__title" id="hmc-join-title">ルームに参加する</h2>
+        <p class="hmc-linkhint" id="joinLinkHint" hidden>リンクからひらいたので、ルームコードは入っているよ。名前を入れて「参加する」を押してね。</p>
+        <label class="form-label" for="guestName">名前（8文字まで）</label>
+        <input class="form-input" id="guestName" aria-describedby="joinError" maxlength="8" autocomplete="nickname" />
+        <label class="form-label hmc-mt" for="joinCode">ルームコード（6文字）</label>
+        <input class="form-input hmc-code-input" id="joinCode" aria-describedby="joinError" maxlength="6" autocorrect="off" autocapitalize="characters" autocomplete="off" spellcheck="false" />
+        <p class="hmc-alert" id="joinError" role="alert" hidden></p>
+        <button type="button" class="btn btn-primary btn-full hmc-mt" id="btnJoinRoom">参加する</button>
+      </section>
+    </section>
+
+    <!-- ===== ルームのバー（待合室・遊ぶ画面） ===== -->
+    <div class="hmc-roombar" id="roomBar" hidden>
+      <span class="hmc-roombar__code">ルーム <strong id="roomCodeLabel"></strong></span>
+      <button type="button" class="btn btn-ghost btn-sm" id="btnCopyCode">コードをコピー</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="btnCopyLink">リンクをコピー</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="btnShowQr">QRコードを出す</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="btnLeave">退出する</button>
+    </div>
+
+    <!-- ===== 待合室 ===== -->
+    <section class="hmc-screen" id="screen-waiting" hidden>
+      <section class="hmc-panel card">
+        <h2 class="hmc-panel__title">みんながそろうのを待っています</h2>
+        <p class="hmc-panel__lead" id="waitingCount"></p>
+        <ul class="hmc-people" id="waitingPlayers"></ul>
+        <p class="hmc-note" id="waitingSettings"></p>
+      </section>
+
+      <section class="hmc-panel card" id="hostWaitingTools" hidden>
+        <label class="hmc-check" for="hostPlays">
+          <input type="checkbox" id="hostPlays" />
+          <span>ホストもいっしょに遊ぶ</span>
+        </label>
+
+        <h3 class="hmc-field-name">変える人</h3>
+        <div class="hmc-seg" id="roomOrder" role="radiogroup" aria-label="変える人"></div>
+        <p class="hmc-note" id="roomOrderNote"></p>
+
+        <h3 class="hmc-field-name">お題</h3>
+        <div class="hmc-level-grid" id="roomLevelGrid" role="radiogroup" aria-label="お題の選び方"></div>
+        <div class="hmc-custom" id="roomCustomForm" hidden>
+          <div class="hmc-custom__row">
+            <label class="hmc-custom__field">
+              <span class="hmc-custom__label">はじめのことば</span>
+              <input class="form-input" id="roomCustomStart" type="text" autocomplete="off" maxlength="8" placeholder="さかな" aria-describedby="roomCustomError" />
+            </label>
+            <span class="material-symbols-rounded hmc-custom__arrow" aria-hidden="true">arrow_forward</span>
+            <label class="hmc-custom__field">
+              <span class="hmc-custom__label">ゴールのことば</span>
+              <input class="form-input" id="roomCustomGoal" type="text" autocomplete="off" maxlength="8" placeholder="たから" aria-describedby="roomCustomError" />
+            </label>
+          </div>
+          <p class="hmc-custom__note">ひらがなで、同じ文字の数（2〜5文字）にしてね</p>
+          <p class="hmc-custom__error" id="roomCustomError" role="alert"></p>
+        </div>
+
+        <h3 class="hmc-field-name"><label for="proxyName">端末のない人を足す（8文字まで）</label></h3>
+        <div class="hmc-proxyadd">
+          <input class="form-input" id="proxyName" aria-describedby="proxyError" maxlength="8" autocomplete="off" />
+          <button type="button" class="btn btn-secondary" id="btnAddProxy">足す</button>
+        </div>
+        <p class="hmc-note">端末のない人の番は、ホストが代わりに文字を押します。</p>
+        <p class="hmc-alert" id="proxyError" role="alert" hidden></p>
+
+        <div class="hmc-panel__actions">
+          <button type="button" class="btn btn-primary btn-lg btn-full" id="btnStartGame">はじめる</button>
+        </div>
+        <p class="hmc-note hmc-note--center" id="startNote"></p>
+      </section>
+      <p class="hmc-note hmc-note--center" id="guestWaitingNote" hidden>ホストが「はじめる」を押すのを待ってね。</p>
+    </section>
+
+    <!-- ===== 遊ぶ画面（1台の画面・ルーム共通） ===== -->
     <section class="hmc-screen" id="screen-play" hidden>
       <div class="hmc-play">
         <div class="hmc-play__meta">
@@ -63,6 +171,7 @@
               <span class="material-symbols-rounded">swap_horiz</span>
               <span id="btnSkipLabel">お題を変える</span>
             </button>
+            <button class="btn btn-ghost btn-sm" id="btnToWaiting" type="button" hidden>待合室にもどる</button>
             <button class="btn btn-ghost btn-sm" id="btnPlayTop" type="button" aria-label="はじめの画面へ">
               <span class="material-symbols-rounded">home</span>
             </button>
@@ -80,6 +189,12 @@
             <span class="hmc-odai__label">ゴール</span>
             <span class="hmc-odai__word" id="odaiGoal"></span>
           </div>
+        </div>
+
+        <!-- 番（ルーム） -->
+        <div class="hmc-turn" id="turnBar" hidden>
+          <p class="hmc-turn__text" id="turnText" role="status" aria-live="polite"></p>
+          <button class="btn btn-ghost btn-sm" id="btnPass" type="button" hidden>パス</button>
         </div>
 
         <!-- ここまでのことば -->
@@ -126,23 +241,34 @@
           <p class="hmc-clear__title">ゴール！</p>
           <p class="hmc-clear__sub" id="clearSub"></p>
           <p class="hmc-clear__other" id="clearOther" hidden></p>
-          <div class="hmc-clear__actions">
+          <div class="hmc-clear__actions" id="clearActions">
             <button class="btn btn-primary btn-lg" id="btnNext" type="button">
               <span class="material-symbols-rounded">arrow_forward</span>
               <span id="btnNextLabel">次のお題</span>
             </button>
             <button class="btn btn-ghost btn-lg" id="btnTop" type="button">
-              <span class="material-symbols-rounded">home</span>
-              はじめの画面へ
+              <span class="material-symbols-rounded" id="btnTopIcon">home</span>
+              <span id="btnTopLabel">はじめの画面へ</span>
             </button>
           </div>
+          <p class="hmc-note" id="clearWait" hidden>ホストが次のお題を出すのを待ってね。</p>
         </div>
       </div>
     </section>
 
   </main>
 
-  <script type="module" src="app.js?v=20261125a"></script>
+  <div class="hmc-overlay" id="hostOffOverlay" hidden data-roomk-blocking role="dialog" aria-modal="true" aria-labelledby="hostOffOverlay-title">
+    <div class="hmc-overlay__panel">
+      <h2 id="hostOffOverlay-title">ホストの戻りを待っています</h2>
+      <p>しばらく待っても戻らないときは退出してね。</p>
+      <button type="button" class="btn btn-secondary" id="btnOverlayLeave">退出する</button>
+    </div>
+  </div>
+
+  <script type="module" src="app.js?v=20261125r"></script>
+  <script src="../shared/js/overlay-a11y.js?v=1" defer></script>
+  <script src="../shared/js/focus-keep.js?v=1" defer></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
   <script src="../shared/js/howto.js"></script>
   <script>
@@ -151,18 +277,26 @@
       slides: 'slides.html',
       lead: 'はじめのことばを1文字ずつ変えて、ゴールのことばまでつなぐあそび。',
       sections: [
-        { heading: 'はじめかた', items: [
-          'お題の「2文字」「3文字」か、「自分で決める」を選ぶ',
+        { heading: 'ひとりひとりの端末で遊ぶとき', items: [
+          'ホストが「ルームを作る」で名前を入れる。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる。スマホやタブレットで入る人には「QRコードを出す」をカメラで読み取ってもらう',
+          '参加する人は「ルームに参加する」で名前、ルームコード（6文字）の順に入れ、「参加する」を押す。リンクからひらいたときは、ルームコードは入っているので名前だけ入れる',
+          'ホストは待合室で「変える人」（「順番に」か「だれでも」）と「お題」を選び、「はじめる」を押す。ホストが進めるだけのときは「ホストもいっしょに遊ぶ」を外す',
+          '端末のない人は「端末のない人を足す」で足すと、その人の番はホストが代わりに文字を押せる',
+          '「順番に」のときは、自分の番に文字を変える。思いつかないときは「パス」',
+          '遊んでいる途中からでも参加できる',
+        ] },
+        { heading: '1台の画面で遊ぶとき', items: [
+          '「1台の画面であそぶ」で、お題の「2文字」「3文字」か、「自分で決める」を選ぶ',
           '「自分で決める」のときは、はじめのことばとゴールのことばを書く',
           '「スタート」を押す',
         ] },
         { heading: 'すすめかた', items: [
           'いまのことばの、変えたい文字を押す',
           '文字の表から、新しい文字を選ぶ。1文字だけ変わった新しいことばになる',
-          'ことばがあるかどうかは、みんなで決める。まちがえたら「1つ戻す」',
-          '困ったら「ヒント」。1回目は変える場所、2回目は次のことばの例が出る',
+          'ことばがあるかどうかは、みんなで決める。まちがえたら「1つ戻す」（ルームでは、ホストと、最後に変えた人が押せる）',
+          '困ったら「ヒント」。1回目は変える場所、2回目は次のことばの例が出る（ルームでは、ホストが押す）',
         ] },
-        { heading: 'おわりかた', text: 'ゴールのことばになったらクリア。「次のお題」か「はじめの画面へ」を選ぶ。' },
+        { heading: 'おわりかた', text: 'ゴールのことばになったらクリア。1台の画面は「次のお題」か「はじめの画面へ」。ルームはホストが「次のお題」か「待合室にもどる」を押す。' },
       ],
     });
   </script>
