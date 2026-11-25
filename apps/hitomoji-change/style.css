@@ -101,7 +101,10 @@
   gap: 12px;
 }
 
-.hmc-play__meta-actions { display: flex; gap: 4px; }
+.hmc-play__meta { flex-wrap: wrap; }
+.hmc-play__meta-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; margin-left: auto; }
+.hmc-play__meta-actions .btn { white-space: nowrap; }
+.hmc-play__meta .badge { white-space: nowrap; }
 #btnPlayTop { padding-left: 12px; padding-right: 12px; }
 
 .hmc-play__actions {
@@ -299,6 +302,59 @@
   gap: 12px;
 }
 
+/* ── 1台の画面の設定・ルームを作る・参加する・待合室（ほかのツールと同じ大きさ） ── */
+.hmc-entry-actions { display: grid; gap: 10px; }
+.hmc-panel { width: 100%; max-width: 560px; box-sizing: border-box; padding: 24px; }
+.hmc-screen > .hmc-panel + .hmc-panel { margin-top: 16px; }
+.hmc-panel__title { font-size: 1.2rem; margin: 0 0 8px; color: var(--color-primary); }
+.hmc-panel__lead { margin: 0 0 16px; font-size: 15px; color: var(--color-muted); line-height: 1.6; }
+.hmc-panel__actions { margin-top: 20px; display: flex; justify-content: center; }
+.hmc-back { margin: -6px 0 10px -8px; }
+.hmc-mt { margin-top: 14px; }
+.hmc-field-name { font-size: .95rem; font-weight: 700; color: var(--color-primary); margin: 18px 0 8px; }
+.hmc-field-name:first-of-type { margin-top: 4px; }
+.hmc-alert { margin: 10px 0 0; color: var(--color-error); font-weight: 500; font-size: 14px; line-height: 1.6; }
+.hmc-linkhint { margin: 0 0 14px; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--color-primary-soft); font-size: 14px; line-height: 1.6; }
+.hmc-code-input { text-transform: uppercase; letter-spacing: .15em; }
+.hmc-note { font-size: 14px; color: var(--color-muted); margin: 8px 0 0; line-height: 1.6; }
+.hmc-note--center { text-align: center; }
+
+/* ルームのバー */
+.hmc-roombar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 6px; margin: -24px 0 18px; padding: 6px 12px; background: var(--color-surface); border-radius: var(--radius-card); box-shadow: var(--shadow-soft); }
+.hmc-roombar__code { margin-right: 6px; font-size: 14px; color: var(--color-muted); }
+.hmc-roombar__code strong { color: var(--color-primary); letter-spacing: .1em; font-size: 16px; }
+
+/* 待合室 */
+.hmc-people { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 6px; }
+.hmc-person { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; min-height: 44px; padding: 4px 12px; border-radius: var(--radius-sm); background: var(--color-primary-soft); }
+.hmc-person__name { font-weight: 700; overflow-wrap: anywhere; }
+.hmc-person__tag { font-size: 12px; font-weight: 700; color: var(--color-muted); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 999px; padding: 1px 8px; }
+.hmc-person__remove { margin-left: auto; }
+.hmc-check { display: flex; align-items: center; gap: 10px; min-height: 48px; margin: 0 0 4px; font-weight: 700; cursor: pointer; }
+.hmc-check input { width: 22px; height: 22px; accent-color: var(--color-accent); }
+.hmc-seg { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.hmc-seg button { min-height: 48px; padding: 6px 10px; border-radius: 12px; border: 2px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font: inherit; font-size: 16px; font-weight: 700; cursor: pointer; }
+.hmc-seg button:hover { background: var(--color-primary-soft); }
+.hmc-seg button:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 2px; }
+.hmc-seg button[aria-checked="true"] { border-color: var(--color-accent); background: var(--color-accent-soft); color: var(--color-accent); }
+.hmc-proxyadd { display: flex; gap: 8px; }
+.hmc-proxyadd .form-input { flex: 1 1 auto; min-width: 0; margin: 0; min-height: 48px; box-sizing: border-box; }
+.hmc-proxyadd .btn { flex: 0 0 auto; min-height: 48px; }
+
+/* 番（ルーム） */
+.hmc-turn { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 12px; padding: 10px 16px; border-radius: var(--radius-card); background: var(--color-surface); border: 2px solid var(--color-border); }
+.hmc-turn.is-mine { border-color: var(--color-accent); background: var(--color-accent-soft); }
+.hmc-turn__text { margin: 0; font-family: 'Zen Maru Gothic', var(--font-base); font-size: 1.2rem; font-weight: 700; color: var(--color-primary); text-align: center; }
+.hmc-tile:disabled { cursor: default; box-shadow: none; }
+.hmc-tile:disabled:hover { transform: none; border-color: var(--color-border); }
+
+/* ホストの戻りを待つ画面 */
+.hmc-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, .45); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 60; }
+.hmc-overlay__panel { background: var(--color-surface); border-radius: var(--radius-card); padding: 24px; max-width: 360px; text-align: center; display: grid; gap: 12px; }
+.hmc-overlay__panel h2 { margin: 0; font-size: 1.2rem; color: var(--color-primary); }
+.hmc-overlay__panel p { margin: 0; color: var(--color-muted); line-height: 1.6; }
+.hmc-overlay[hidden] { display: none !important; }
+
 /* ── せまい画面 ── */
 
 @media (max-width: 600px) {
@@ -318,4 +374,11 @@
   .hmc-pad__grid { gap: 4px; grid-template-columns: repeat(5, 1fr) 6px repeat(5, 1fr); }
   .hmc-key { min-height: 40px; font-size: 18px; }
   .hmc-clear__actions .btn { width: 100%; }
+  .hmc-panel { padding: 20px 16px; }
+  .hmc-roombar { gap: 4px; padding: 6px 8px; margin-top: -12px; }
+  .hmc-roombar .btn { padding: 4px 8px; font-size: 13px; }
+  .hmc-turn__text { font-size: 1.05rem; }
+  .hmc-play__meta-actions { width: 100%; flex-wrap: nowrap; }
+  .hmc-play__meta-actions .btn:not(#btnPlayTop) { flex: 1 1 0; padding-left: 8px; padding-right: 8px; }
+  #btnSkip .material-symbols-rounded { display: none; }
 }
