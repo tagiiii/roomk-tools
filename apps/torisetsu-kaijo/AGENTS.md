@@ -157,6 +157,11 @@ waiting ──はじめる──▶ play（game.out なし: あそんでいる�
 - `room-create`・`start`・`players-{N}`・`level-{easy|normal|hard}`・`slow`・`finish`・`safe`・`boom-time`・`boom-strike`・`again`
 - `finish` と結果は、その回を終わらせた書き込みを確定させた端末だけが数える（解除する人。時間切れをホストが代わりに書いたときはホスト）。「この回をやめて待合室へ」は `finish` を数えない
 
+## 説明スライド・イラスト（2026-11-26 オーナー依頼）
+
+- `slides.html`（17枚）: あれください商店のスライドを型にした（同期のチャンネル `torisetsu_kaijo_deck`・保存のキー `tkj_`）。しかけの絵は、アプリの `engine.js`・`art.js` をそのまま読んで描く（`?v=` は index.html とそろえる）。ルール・ボタンの名前を変えたら、スライドの文も合わせる
+- イラスト（`apps/assets/illustrations/torisetsu-kaijo.webp`）: 顔の付いた丸い爆弾・説明書・色のコード。4回作り、爆弾がまん中に入り説明書とコードも見える3回目にした（1回目は主役が箱型の機械になり、ラジオのように見えた）。一覧のカード・はじめの画面に出す
+
 ## テスト
 
 `tests/torisetsu-kaijo/`（README）。ルールは `engine.test.cjs`（エミュレーター不要）。ルームは隔離エミュレーター＋Playwright（auth 9471・database 9472・hub 4471・logging 4571・配信 6471）。本番の Firebase には接続しない。
@@ -172,6 +177,6 @@ waiting ──はじめる──▶ play（game.out なし: あそんでいる�
 
 ## まだ作っていないもの
 
-- 説明スライド（`slides.html`）・一覧のイラストとサムネイル（絵は fal で作るので、オーナーに確かめてから）
+- 一覧のサムネイル（画面の例。thumbnails.md）
 - 音（オーナーへの案では「はじめは切で、ホストが入れられる」）
 - 名前の商標の確認（J-PlatPat）
