@@ -6,6 +6,8 @@
 .kd-wrap { max-width: 760px; margin: 0 auto; padding: 32px 16px 80px; box-sizing: border-box; }
 /* 遊ぶ画面だけ流れる場所を広くとる。待合室・結果はほかのツールと同じくらいの幅にして、ボタンが横に長くなりすぎないようにする（2026-11-10 オーナー「ボタン幅も広い」） */
 .kd-wrap:has(#screen-q.active) { max-width: 960px; }
+/* 問題の画面の間（html.kd-playing・app.js の showScreen）は丸ボタンを出さない（下の余白はそのまま） */
+html.kd-playing .howto-fab, html.kd-playing .howto-feedback-fab { display: none; }
 .kd-screen { display: none; }
 .kd-screen.active { display: block; }
 .kd-screen > * + * { margin-top: 16px; }
