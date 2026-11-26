@@ -135,6 +135,8 @@ function showScreen(id) {
   const inRoom = (id === 'waiting' || id === 'game') && state.mode !== 'local';
   $('appBar').hidden = !inRoom;
   $('roomBar').hidden = !inRoom || !state.roomRef;
+  // あそぶ画面の間は、共通の「？」とフィードバックの丸ボタンを出さない（style.css の html.nr-playing）
+  document.documentElement.classList.toggle('nr-playing', id === 'game');
   window.scrollTo(0, 0);
   if (id === 'game') requestAnimationFrame(resize);
 }
