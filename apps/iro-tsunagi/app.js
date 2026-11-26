@@ -233,7 +233,13 @@
     const inRoom = !!state.roomRef && (id === 'waiting' || id === 'result');
     $('appBar').hidden = !inRoom;
     $('roomBar').hidden = !inRoom;
+    syncPlayingFabs();
     window.scrollTo(0, 0);
+  }
+  // あそんでいる間は、共通の「？」とフィードバックの丸ボタンを出さない（とめている間は出す）
+  function syncPlayingFabs() {
+    const playing = state.currentScreen === 'play' && !(run && run.paused);
+    document.documentElement.classList.toggle('it-playing', playing);
   }
   function setError(id, message) {
     const node = $(id);
@@ -1831,6 +1837,7 @@
     if (v) showOverlay('とめています', true);
     else hideOverlay();
     $('btnPause').textContent = v ? 'つづける' : 'とめる';
+    syncPlayingFabs();
     syncBgm();
   }
 

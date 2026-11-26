@@ -3,6 +3,8 @@
 body { background: var(--color-bg); }
 
 /* 画面の切り替え */
+/* あそぶ画面の間（html.nr-playing・app.js の showScreen）は丸ボタンを出さない（下の余白はそのまま。ステージの位置を変えない） */
+html.nr-playing .howto-fab, html.nr-playing .howto-feedback-fab { display: none; }
 .nr-screen { display: none; }
 .nr-screen.active { display: block; }
 .nr-front.active { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
