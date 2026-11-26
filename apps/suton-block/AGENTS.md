@@ -260,6 +260,7 @@ sutonblock_rooms/{roomCode}/
 - **ホスト以外も書く**: あそぶ人が自分の盤（`boards/{自分}`）とじゃま（`jama/{相手}`）を書く・その回の人も結果を出す（ホストのタブが裏に回っても止まらないように）
 - **あそんでいる間はホスト切断のオーバーレイを出さない**（上の「接続・切断・再接続」）
 - **あそんでいる間はルームバーを出さない**（盤を大きく出すため。待合室と結果では出す）
+- **あそんでいる間は「？」とフィードバックの丸ボタンを出さない**（2026-11-26 フィードバックボード「アクションゲームはプレイ中に遊び方・フィードバックを表示しないでほしい」）: あそぶ画面（`#screen-play`）の間は `html.sb-playing` を付け、`style.css` で howto.js の `.howto-fab`・`.howto-feedback-fab` を消す（下の余白はそのまま。盤の位置を変えない）（`app.js` の `syncPlayingFabs`。`showScreen` と `setPaused` で付け外す）。ひとりで「とめる」を押している間・待合室・結果・みんなにみせる画面では出す。howto.js は変えていない。カウントダウン中もあそぶ画面なので出さない
 - **終了後の自動削除なし**（公認バリアント「ふりかえり画面滞在中は削除しない」）
 - **順位を出す**（消した段の数の比較。結果画面だけで、記録はしない）
 - **途中から入った人は、その回にはあそべない**（待合室で待ち、つぎの回から）
@@ -301,7 +302,7 @@ sutonblock_rooms/{roomCode}/
 | rtdb-utils.js（`?v=20261005`） | `initFirebase`・`generateRoomCode`・`now`・`isRoomExpired`・`getHostDisconnectedAt`・`cancelRoomOnDisconnect`・`copyRoomCode`・`copyRoomLink`・`showToast` |
 | room-qr.js（`?v=20261022`） | 「QRコードを出す」（`RoomkQR.show`） |
 | stats.js（`?v=1`） | 起動回数（`open`）と、上の「利用回数」 |
-| howto.js | 「あそびかた」モーダル（`slides: 'slides.html'` で「説明スライドを見る」） |
+| howto.js | 「あそびかた」モーダル（`slides: 'slides.html'` で「説明スライドを見る」）。あそんでいる間は丸ボタンを隠す（上の「意図的な逸脱」） |
 
 ## 確かめたこと
 

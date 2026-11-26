@@ -373,7 +373,14 @@ function showScreen(id) {
   const inRoom = !!state.roomRef && (id === 'waiting' || id === 'result');
   $('appBar').hidden = !inRoom;
   $('roomBar').hidden = !inRoom;
+  syncPlayingFabs();
   window.scrollTo(0, 0);
+}
+
+// あそんでいる間は、共通の「？」とフィードバックの丸ボタンを出さない（とめている間は出す）
+function syncPlayingFabs() {
+  const playing = state.currentScreen === 'play' && !(state.run && state.run.paused);
+  document.documentElement.classList.toggle('sb-playing', playing);
 }
 
 function setError(id, message) {
@@ -1601,6 +1608,7 @@ function setPaused(on) {
   stopRepeat();
   $('pauseCover').hidden = !on;
   $('btnPause').hidden = on;
+  syncPlayingFabs();
   syncBgm();
 }
 

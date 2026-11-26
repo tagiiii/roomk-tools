@@ -33,7 +33,9 @@ const { check, sleep, text, visible, waitScreen, waitFor, key, fitsHeight, overf
   let noted = false;
   for (let i = 0; i < 150 && !noted; i++) { await key(P, 'Space'); noted = await visible(P, '#playNote'); }
   check('S9 いっぱいになったら、からにしてつづける', noted && (await text(P, '#playNote')).includes('からにしたよ'));
-  await P.page.click('.howto-fab');
+  check('S9a あそんでいる間は「？」とフィードバックの丸ボタンを出さない（2026-11-26）', !(await visible(P, '.howto-fab')) && !(await visible(P, '.howto-feedback-fab')) && (await P.page.$$('.howto-fab')).length === 1);
+  // 丸ボタンは出していないが、あそびかたが開いたときのふるまいは見ておく（要素を直接押す）
+  await P.page.$eval('.howto-fab', (b) => b.click());
   await sleep(200);
   const before = await P.page.$eval('#board', (c) => c.toDataURL());
   await key(P, 'ArrowLeft', 4);
@@ -46,6 +48,7 @@ const { check, sleep, text, visible, waitScreen, waitFor, key, fitsHeight, overf
   check('S12a ひとりのときは「とめる」が出る', await visible(P, '#btnPause') && !(await visible(P, '#pauseCover')));
   await P.page.click('#btnPause');
   check('S12b 「とめる」で「とめています」と「つづける」が出て、「とめる」はかくれる', await visible(P, '#pauseCover') && (await text(P, '#pauseCover')).includes('とめています') && !(await visible(P, '#btnPause')));
+  check('S12b2 とめている間は「？」とフィードバックの丸ボタンが出る（2026-11-26）', await visible(P, '.howto-fab') && await visible(P, '.howto-feedback-fab'));
   await sleep(200);
   const pBoard = await P.page.$eval('#board', (c) => c.toDataURL());
   const pTimer = await text(P, '#playTimer');
@@ -56,6 +59,7 @@ const { check, sleep, text, visible, waitScreen, waitFor, key, fitsHeight, overf
   check('S12c とめている間は、キー・ボタンで動かず、落ちるのも時間も止まる', (await P.page.$eval('#board', (c) => c.toDataURL())) === pBoard && (await text(P, '#playTimer')) === pTimer);
   await P.page.click('#btnResume');
   check('S12d 「つづける」で、とめる前の続きから', !(await visible(P, '#pauseCover')) && await visible(P, '#btnPause'));
+  check('S12d2 つづけると丸ボタンをまた出さない（2026-11-26）', !(await visible(P, '.howto-fab')) && !(await visible(P, '.howto-feedback-fab')));
   check('S12e つづけたら時間が進む', await waitFor(async () => (await text(P, '#playTimer')) !== pTimer, 2500));
   await key(P, 'p');
   check('S12f P でとめる', await visible(P, '#pauseCover'));
@@ -69,6 +73,7 @@ const { check, sleep, text, visible, waitScreen, waitFor, key, fitsHeight, overf
   check('S13b ひとりの結果にも、全部消した回数', (await text(P, '#resultBody')).includes('全部消した 0回'), await text(P, '#resultBody'));
   check('S14 solo-finish を数える', (await stats(P, 'solo-finish')) === 1);
   check('S15 ひとりの結果は「もう一回」「トップへ戻る」', await visible(P, '#btnAgain') && await visible(P, '#btnResultTop') && !(await visible(P, '#resultWait')));
+  check('S15b 結果の画面では丸ボタンが出る（2026-11-26）', await visible(P, '.howto-fab') && await visible(P, '.howto-feedback-fab'));
   await P.page.evaluate(() => { Date.now = window.__realNow; });
   // おしまいを選ぶと、いっぱいで結果へ
   await P.page.click('#btnResultTop');
