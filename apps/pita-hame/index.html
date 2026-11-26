@@ -29,6 +29,8 @@
     /* ── 画面切り替え ── */
     .ph-screen { display: none; }
     .ph-screen.is-active { display: block; }
+    /* パズルの画面の間（html.ph-playing・showScreen）は丸ボタンを出さない（下の余白はそのまま） */
+    html.ph-playing .howto-fab, html.ph-playing .howto-feedback-fab { display: none; }
 
     /* hidden 属性が display 指定より弱くならないよう明示（.btn / .ph-cover 等は display を持つ）*/
     [hidden] { display: none !important; }
@@ -998,6 +1000,8 @@
     document.querySelectorAll('.ph-screen').forEach((s) => s.classList.remove('is-active'));
     el('screen-' + id).classList.add('is-active');
     state.screen = id;
+    // パズルの画面の間は、共通の「？」とフィードバックの丸ボタンを出さない（CSS の html.ph-playing）
+    document.documentElement.classList.toggle('ph-playing', id === 'puzzle');
     if (ENTRY_SCREENS.includes(id)) resetRoomEntry();
   }
 
