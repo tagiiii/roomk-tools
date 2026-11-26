@@ -312,6 +312,7 @@ const goSolo = async (c, course, track) => {
     const stage = await p.evaluate(() => document.getElementById('pb-stage').getBoundingClientRect().height);
     check(name + ': しるしの落ちる場所が見える', stage >= 120, stage);
     check(name + ': 遊んでいる間は「？」が出ない', await p.evaluate(() => { const f = document.querySelector('.howto-fab'); return !f || getComputedStyle(f).display === 'none'; }));
+    check(name + ': 遊んでいる間はフィードバックの丸ボタンも出ない（2026-11-26）', await p.evaluate(() => { const f = document.querySelector('.howto-feedback-fab'); return !!f && getComputedStyle(f).display === 'none'; }));
     await p.evaluate(() => new Promise((done) => {
       const notes = window.__pb.notes().slice(0, 12);
       const pads = document.querySelectorAll('#pb-pads .pb-pad');
