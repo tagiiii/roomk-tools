@@ -1,0 +1,326 @@
+/* とりせつ解除班 接頭辞 tk- */
+
+body { background: var(--color-bg); }
+/* 解除する人の画面だけ、暗い作業台の地にする（爆弾と手元の明かりを目立たせる） */
+body.tk-dark, html.tk-dark-page { background: #26211D; }
+/* 解除している間は、右下の丸ボタン（「？」とフィードバック）を出さない（下の余白はそのまま） */
+html.tk-playing .howto-fab, html.tk-playing .howto-feedback-fab { display: none; }
+
+/* 画面の切り替え */
+.tk-screen { display: none; }
+.tk-screen.active { display: block; }
+.tk-front.active { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
+.tk-panel { width: 100%; max-width: 440px; background: var(--color-surface); border-radius: var(--radius-card); padding: 32px 28px; border: 1px solid var(--color-border); }
+.tk-panel__title { font-size: 30px; color: var(--color-primary); margin: 8px 0 12px; }
+.tk-panel__title--sub { font-size: 24px; }
+/* 絵の面がまだないので、ツール名の上に余白をとる（絵を足したら外す） */
+body .tk-panel.app-entry > .app-title:first-child { margin-top: 28px; }
+.tk-panel__lead { color: var(--color-text); line-height: 1.7; margin: 0 0 16px; }
+.tk-panel__notes { margin: 0 0 24px; padding-left: 1.2em; color: var(--color-muted); line-height: 1.8; }
+.tk-panel__actions { display: grid; gap: 12px; }
+.tk-alert { margin: 12px 0 0; color: var(--color-error); font-weight: 500; }
+.tk-back { margin: -8px 0 4px -8px; }
+.tk-hint { margin: 0 0 16px; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--color-accent-soft); color: var(--color-primary); line-height: 1.6; font-size: 14px; }
+.tk-code-input { text-transform: uppercase; letter-spacing: 0.2em; font-weight: 700; }
+
+/* 弱いボタン（テキストリンク風） */
+.tk-quiet {
+  display: inline-flex; align-items: center; gap: 4px;
+  min-height: 44px; padding: 8px 10px; border: none; background: none;
+  color: var(--color-accent); font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+.tk-quiet:hover { background: rgba(138, 74, 16, 0.08); }
+.tk-quiet:disabled { color: var(--color-muted); opacity: 0.55; cursor: not-allowed; background: none; }
+.tk-quiet--center { justify-self: center; align-self: center; }
+
+/* バー */
+.tk-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 12px 20px; background: var(--color-primary); color: #fff; }
+.tk-bar__title { font-size: 18px; margin: 0; margin-right: auto; }
+.tk-bar__me { margin: 0; font-size: 14px; }
+.tk-bar__badge { margin: 0; padding: 2px 10px; border-radius: 999px; background: var(--color-accent); font-size: 13px; font-weight: 700; }
+.tk-roombar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 6px; padding: 6px 12px; background: var(--color-surface); border-bottom: 1px solid var(--color-border); }
+.tk-roombar__code { margin-right: 6px; font-size: 14px; color: var(--color-muted); }
+.tk-roombar__code strong { color: var(--color-primary); letter-spacing: 0.1em; font-size: 16px; }
+.is-watch .tk-roombar .btn { display: none; }
+.is-watch .tk-roombar #btnLeave { display: inline-flex; }
+
+/* ホストの戻りを待つ */
+.tk-overlay-page { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 60; }
+.tk-overlay-page__panel { background: var(--color-surface); border-radius: var(--radius-card); padding: 24px; max-width: 360px; text-align: center; display: grid; gap: 12px; }
+.tk-overlay-page__panel h2 { margin: 0; font-size: 20px; color: var(--color-primary); }
+.tk-overlay-page__panel p { margin: 0; color: var(--color-muted); line-height: 1.6; }
+
+/* 待合室 */
+.tk-main { max-width: 760px; margin: 0 auto; padding: 20px 16px 64px; }
+.tk-phase { display: grid; gap: 16px; }
+.tk-h2 { font-size: 18px; color: var(--color-primary); margin: 0 0 12px; }
+.tk-h2__count { margin-left: 8px; font-size: 14px; color: var(--color-muted); font-weight: 500; }
+.tk-note { margin: 10px 0 0; color: var(--color-muted); font-size: 14px; line-height: 1.6; }
+.tk-wait { margin: 0; color: var(--color-muted); text-align: center; }
+.tk-setview { margin: 0; font-weight: 500; line-height: 1.7; }
+.tk-people { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.tk-person { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 8px; background: var(--color-bg); min-height: 44px; }
+.tk-person .material-symbols-rounded { color: var(--color-muted); font-size: 20px; }
+.tk-person__name { font-weight: 500; }
+.tk-person__act { margin-left: auto; min-height: 36px; }
+.tk-chip { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--color-accent); color: #fff; white-space: nowrap; font-weight: 500; }
+.tk-chip--muted { background: var(--color-border); color: var(--color-text); }
+.tk-chip--you { background: transparent; color: var(--color-muted); border: 1px solid var(--color-border); }
+.tk-joininfo { background: var(--color-surface); border: 2px solid var(--color-accent); border-radius: var(--radius-box); padding: 20px; text-align: center; }
+.tk-joininfo__label { margin: 0 0 6px; font-size: 13px; font-weight: 500; color: var(--color-accent); letter-spacing: 0.08em; }
+.tk-joininfo__text { margin: 0; }
+.tk-joininfo__code { margin: 6px 0 0; font-size: 40px; font-weight: 700; letter-spacing: 0.15em; color: var(--color-primary); }
+.tk-check { display: flex; align-items: center; gap: 10px; min-height: 44px; margin-top: 10px; cursor: pointer; font-weight: 500; }
+.tk-check input { width: 20px; height: 20px; accent-color: var(--color-accent); flex: none; }
+.tk-field__label { margin: 0 0 8px; font-size: 15px; font-weight: 700; color: var(--color-primary); }
+.tk-seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.tk-seg__btn { min-height: 48px; padding: 6px 14px; border: 2px solid var(--color-border); border-radius: var(--radius-btn); background: var(--color-surface); color: var(--color-text); font: inherit; font-weight: 700; cursor: pointer; }
+.tk-seg__btn.is-on { border-color: var(--color-accent); background: var(--color-accent-soft); color: var(--color-accent); }
+.tk-more { margin-top: 14px; border-top: 1px solid var(--color-border); }
+.tk-more summary, .tk-hostmenu summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: var(--color-accent); font-weight: 500; }
+.tk-more__body { padding-bottom: 4px; }
+
+/* ホストがたまに使う操作 */
+.tk-hostmenu { margin-top: 16px; border-top: 1px solid var(--color-border); }
+.tk-hostmenu[hidden] { display: none; }
+.tk-hostmenu__body { display: grid; gap: 10px; padding: 4px 0 8px; }
+.tk-dark .tk-hostmenu { border-top-color: #4A423A; }
+.tk-dark .tk-hostmenu summary { color: #F0D9B8; }
+.is-watch .tk-hostmenu { display: none; }
+
+/* ── 解除の画面 ── */
+.tk-game { display: grid; gap: 12px; }
+.tk-game.is-shake, .tk-board.is-shake { animation: tk-shake 0.4s; }
+@keyframes tk-shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-9px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-6px); } 80% { transform: translateX(4px); } }
+
+/* 上の帯: 役・のこり時間・まちがいのランプ・解除できた数 */
+.tk-hud { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; padding: 10px 16px; border-radius: 12px; background: #1B1714; color: #F6ECD8; }
+.tk-hud p { margin: 0; }
+.tk-hud__role { font-size: 14px; font-weight: 500; margin-right: auto !important; }
+.tk-hud__time, .tk-board__time, .tk-strip__time { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; font-weight: 700; color: #FF5A4F; letter-spacing: 0.04em; }
+.tk-hud__time { font-size: 30px; line-height: 1; min-width: 4.2ch; text-align: right; }
+.tk-hud__time.is-slow, .tk-board__time.is-slow, .tk-strip__time.is-slow { font-family: inherit; color: #F6ECD8; letter-spacing: 0; }
+.tk-hud__time.is-slow { font-size: 16px; }
+.tk-hud__solved { font-size: 14px; font-weight: 700; }
+.tk-hud__lamps, .tk-board__lamps, .tk-strip__lamps { display: inline-flex; gap: 6px; align-items: center; }
+.tk-lampx { width: 16px; height: 16px; border-radius: 50%; background: #5B5148; border: 2px solid #0E0C0A; }
+.tk-lampx.is-on { background: #FF4B3E; box-shadow: 0 0 8px rgba(255, 75, 62, 0.9); }
+.is-hurry { animation: tk-hurry 1s ease-in-out infinite; }
+@keyframes tk-hurry { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+
+/* 導火線に火がついた知らせ */
+.tk-fusebar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 14px; padding: 8px 14px; border-radius: 12px; background: #FFE9C7; border: 2px solid #C2410C; color: #7A2E05; font-weight: 700; }
+
+/* 解除する人: 爆弾の台 */
+.tk-stage { border-radius: 18px; padding: 10px 8px 14px; background: radial-gradient(ellipse at 35% 20%, #5A4E43 0%, #2E2722 55%, #1B1714 100%); overflow: hidden; }
+.tk-scene { position: relative; height: 470px; perspective: 1500px; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+.tk-scene:active { cursor: grabbing; }
+.tk-cube { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform-style: preserve-3d; }
+.tk-face { position: absolute; left: 0; top: 0; box-sizing: border-box; backface-visibility: hidden; -webkit-backface-visibility: hidden; background: #4A5961; border: 3px solid #1C2327; border-radius: 12px; overflow: hidden; }
+.tk-face::after { content: ''; position: absolute; inset: 0; background: #000; opacity: var(--shade, 0); pointer-events: none; }
+.tk-face--front, .tk-face--back { width: 540px; height: 250px; margin: -125px 0 0 -270px; }
+.tk-face--front { transform: translateZ(100px); }
+.tk-face--back { transform: rotateY(180deg) translateZ(100px); }
+.tk-face--right, .tk-face--left { width: 200px; height: 250px; margin: -125px 0 0 -100px; }
+.tk-face--right { transform: rotateY(90deg) translateZ(270px); }
+.tk-face--left { transform: rotateY(-90deg) translateZ(270px); }
+.tk-face--top, .tk-face--bottom { width: 540px; height: 200px; margin: -100px 0 0 -270px; }
+.tk-face--top { transform: rotateX(90deg) translateZ(125px); }
+.tk-face--bottom { transform: rotateX(-90deg) translateZ(125px); }
+
+.tk-strip { height: 50px; display: flex; align-items: center; justify-content: space-between; padding: 0 18px; }
+.tk-strip__time { font-size: 30px; padding: 2px 12px; border-radius: 6px; background: #0E0C0A; border: 2px solid #1C2327; min-width: 5ch; text-align: center; }
+.tk-strip__time.is-slow { font-size: 15px; }
+.tk-strip__label { color: #C9D2D6; font-size: 14px; font-weight: 700; letter-spacing: 0.2em; }
+.tk-slots { display: flex; gap: 12px; padding: 0 15px; }
+.tk-slot { width: 160px; height: 180px; padding: 0; border: 2px solid #1C2327; border-radius: 8px; background: #E9E2D3; cursor: pointer; overflow: hidden; font: inherit; color: inherit; position: relative; }
+.tk-slot:disabled { background: #5F6E76; cursor: default; }
+.tk-slot:focus-visible, .tk-cluebtn:focus-visible { outline: 4px solid #FFD27A; outline-offset: -4px; }
+.tk-cluebtn { position: absolute; inset: 0; border: 0; background: none; padding: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; font: inherit; color: inherit; }
+
+.tk-turn { display: flex; justify-content: center; gap: 8px; margin-top: 4px; }
+.tk-turn__btn { width: 56px; height: 48px; border: 2px solid #7B6D5E; border-radius: var(--radius-btn); background: #3A322B; color: #F6ECD8; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.tk-turn__btn:hover { background: #4A4037; }
+.tk-stage__hint { margin: 10px 8px 0; text-align: center; color: #D8CBB7; font-size: 14px; line-height: 1.6; }
+
+/* 近くで見る欄 */
+.tk-zoom { border-radius: 18px; padding: 12px 12px 20px; background: radial-gradient(ellipse at 35% 10%, #5A4E43 0%, #2E2722 60%, #1B1714 100%); }
+.tk-zoom__head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.tk-zoom__head .btn { background: #F6ECD8; }
+.tk-zoom__title { margin: 0; color: #F6ECD8; font-weight: 700; }
+.tk-zoom__body { display: flex; justify-content: center; }
+.tk-zoom__body > .tk-mod, .tk-zoom__body > .tk-clue { background: #E9E2D3; border: 3px solid #1C2327; border-radius: 14px; }
+.tk-zoom__body > .is-enter { animation: tk-zoomin 0.18s ease-out; }
+@keyframes tk-zoomin { from { transform: scale(0.82); opacity: 0.4; } to { transform: scale(1); opacity: 1; } }
+
+/* しかけ（em で組む。箱の面では 8px、近くで見る欄では大きく） */
+.tk-mod { font-size: 8px; width: 20em; height: 22.5em; box-sizing: border-box; display: flex; flex-direction: column; position: relative; color: #2A2520; text-align: center; pointer-events: none; }
+.tk-mod--big { font-size: min(17px, calc((100vw - 62px) / 20)); height: auto; min-height: 22.5em; padding-bottom: 1em; pointer-events: auto; }
+.tk-mod__head { height: 2.8em; display: flex; align-items: center; justify-content: space-between; padding: 0 0.8em; border-bottom: 0.15em solid #B9AE9C; }
+.tk-mod__name { font-size: 1.25em; font-weight: 700; }
+.tk-led { width: 1.3em; height: 1.3em; border-radius: 50%; background: #8C8478; border: 0.2em solid #2A2520; }
+.tk-led.is-on { background: #35C46B; box-shadow: 0 0 0.6em rgba(53, 196, 107, 0.9); }
+.tk-mod__body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.6em; padding: 0.6em 0.5em 0; }
+.tk-mod__label { margin: 0; font-size: max(14px, 0.9em); font-weight: 700; }
+.tk-mod__label--calm { color: #5C5146; font-weight: 500; }
+.tk-mod:not(.tk-mod--big) .tk-mod__label { font-size: 1.1em; }
+.tk-mod__done { position: absolute; left: 50%; top: 55%; transform: translate(-50%, -50%) rotate(-8deg); padding: 0.1em 0.7em; border: 0.2em solid #1F6E3C; border-radius: 0.4em; background: rgba(255, 255, 255, 0.92); color: #1F6E3C; font-size: 2.2em; font-weight: 700; letter-spacing: 0.15em; pointer-events: none; }
+.tk-mod svg { display: block; width: 100%; height: 100%; }
+
+.tk-cord { width: 19em; height: 14.4em; }
+.tk-cutrow { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; width: 100%; }
+.tk-cutrow .tk-mod__label { width: 100%; }
+.tk-cut { min-width: 54px; min-height: 48px; padding: 4px 6px; border: 2px solid #2A2520; border-radius: var(--radius-btn); background: #fff; color: #2A2520; font: inherit; cursor: pointer; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.2; }
+.tk-cut b { font-size: 18px; }
+.tk-cut span { font-size: 13px; }
+.tk-cut:disabled, .tk-knob:disabled, .tk-pad__btn:disabled, .tk-switch:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.tk-glyphs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.4em; width: 100%; }
+.tk-glyph { display: flex; flex-direction: column; align-items: center; gap: 0.6em; }
+.tk-glyph__pic { width: 3.9em; height: 3.9em; padding: 0.3em; box-sizing: border-box; background: #fff; border: 0.15em solid #2A2520; border-radius: 0.5em; color: #2A2520; }
+.tk-switch { width: 2.8em; height: 5.2em; padding: 0; border: 0.2em solid #2A2520; border-radius: 1.4em; background: #8C8478; position: relative; display: block; cursor: pointer; font: inherit; color: #fff; box-sizing: border-box; }
+.tk-switch__knob { position: absolute; left: 0.2em; right: 0.2em; bottom: 0.2em; height: 2em; border-radius: 1em; background: #F3EFE6; border: 0.15em solid #2A2520; box-sizing: border-box; transition: bottom 0.12s; }
+.tk-switch.is-up { background: #C2410C; }
+.tk-switch.is-up .tk-switch__knob { bottom: 2.6em; }
+.tk-switch__text { position: absolute; left: 0; right: 0; top: 100%; margin-top: 0.3em; color: #2A2520; font-size: max(14px, 0.9em); font-weight: 700; }
+.tk-mod--big .tk-glyphs { padding-bottom: 1.8em; }
+.tk-mod--big .tk-switch { min-width: 44px; }
+.tk-check-btn { min-height: 56px; min-width: 60%; }
+
+.tk-lamps { display: flex; justify-content: center; gap: 1.2em; }
+.tk-lampcell { display: inline-flex; flex-direction: column; align-items: center; gap: 0.2em; }
+.tk-lamp { display: block; width: 2.2em; height: 2.2em; border-radius: 50%; border: 0.2em solid #2A2520; box-shadow: inset 0 -0.3em 0.4em rgba(0, 0, 0, 0.25), inset 0 0.3em 0.3em rgba(255, 255, 255, 0.5); }
+.tk-lampcell__name { font-size: max(13px, 0.8em); font-weight: 700; }
+.tk-dial { width: 12em; height: 12em; }
+.tk-mod--big .tk-dial { width: 11em; height: 11em; }
+.tk-dialrow { display: flex; gap: 8px; justify-content: center; }
+.tk-dialrow .btn { gap: 4px; }
+
+.tk-token { width: 8.5em; height: 8.5em; }
+.tk-mod--big .tk-token { width: 6.500em; height: 6.500em; }
+.tk-dots { display: flex; gap: 0.8em; justify-content: center; }
+.tk-dot { width: 1.3em; height: 1.3em; border-radius: 50%; background: #B9AE9C; border: 0.15em solid #2A2520; box-sizing: border-box; }
+.tk-dot.is-on { background: #35C46B; }
+.tk-pad { display: grid; grid-template-columns: repeat(3, 56px); grid-template-rows: repeat(3, 48px); gap: 4px; justify-content: center; }
+.tk-pad__btn { border: 2px solid #2A2520; border-radius: var(--radius-btn); background: #fff; color: #2A2520; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.tk-pad__btn--U { grid-area: 1 / 2; }
+.tk-pad__btn--L { grid-area: 2 / 1; }
+.tk-pad__btn--R { grid-area: 2 / 3; }
+.tk-pad__btn--D { grid-area: 3 / 2; }
+
+.tk-flame { width: 5em; height: 6em; }
+.tk-rope { width: 16em; height: 1em; border: 0.15em solid #2A2520; border-radius: 0.5em; background: #B9AE9C; overflow: hidden; }
+.tk-rope__fill { display: block; height: 100%; background: #C2410C; }
+.tk-knobs { display: flex; gap: 0.8em; justify-content: center; }
+.tk-knob { width: 3.6em; height: 3.6em; display: inline-flex; align-items: center; justify-content: center; border: 0.2em solid #2A2520; border-radius: 50%; background: #fff; color: #2A2520; font: inherit; font-size: 1em; font-weight: 700; box-sizing: border-box; }
+button.tk-knob { width: 64px; height: 56px; border-width: 2px; border-radius: var(--radius-btn); font-size: 24px; cursor: pointer; }
+.tk-mod:not(.tk-mod--big) .tk-knob { font-size: 1.6em; width: 2.2em; height: 2.2em; }
+
+/* 手がかり */
+.tk-clue { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: #2A2520; pointer-events: none; }
+.tk-clue--big { pointer-events: auto; min-width: min(320px, calc(100vw - 62px)); min-height: 260px; padding: 20px; box-sizing: border-box; }
+.tk-clue__text { margin: 0; font-size: 18px; font-weight: 700; }
+.tk-seal { width: 96px; height: 96px; border-radius: 50%; border: 5px solid #fff; box-shadow: 0 0 0 3px #1C2327; }
+.tk-clue--big .tk-seal { width: 130px; height: 130px; }
+.tk-serial { padding: 8px 14px; border-radius: 6px; background: #C9D2D6; border: 3px solid #1C2327; font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 26px; font-weight: 700; letter-spacing: 0.06em; white-space: nowrap; }
+.tk-clue--big .tk-serial { font-size: 40px; }
+.tk-screws { display: flex; gap: 30px; justify-content: center; }
+.tk-screw { width: 46px; height: 46px; display: block; }
+.tk-screw svg { display: block; width: 100%; height: 100%; }
+.tk-clue--big .tk-screws { gap: 12px; }
+.tk-lid { width: 230px; height: 120px; border-radius: 10px; background: #5F6E76; border: 4px solid #1C2327; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
+.tk-lid.is-open { background: #E9E2D3; }
+.tk-lid__handle { width: 70px; height: 16px; border-radius: 8px; background: #C9D2D6; border: 3px solid #1C2327; }
+.tk-lid__mark { width: 84px; height: 84px; display: block; }
+.tk-lid__mark svg { display: block; width: 100%; height: 100%; }
+.tk-clue--big .tk-lid { width: min(280px, 100%); height: 150px; }
+
+/* 説明書 */
+.tk-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.tk-tab { min-height: 48px; padding: 6px 14px; border: 2px solid var(--color-border); border-radius: var(--radius-btn); background: var(--color-surface); color: var(--color-text); font: inherit; font-weight: 700; cursor: pointer; }
+.tk-tab.is-on { border-color: var(--color-accent); background: var(--color-accent-soft); color: var(--color-accent); }
+.tk-page { background: var(--color-surface); border-radius: var(--radius-card); box-shadow: var(--shadow-soft, var(--shadow-sm)); padding: 18px 16px; }
+.tk-page__title { margin: 0 0 10px; font-size: 20px; color: var(--color-primary); }
+.tk-page__note { margin: 0 0 10px; padding: 8px 12px; border-radius: var(--radius-sm); background: var(--color-primary-soft); font-size: 14px; line-height: 1.6; }
+.tk-lines { list-style: none; margin: 0; padding: 0; }
+.tk-line { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid var(--color-border); line-height: 1.6; }
+.tk-line:first-child { border-top: 0; }
+.tk-line__main { flex: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; min-width: 0; }
+.tk-line__text { font-size: 16px; }
+.tk-line__a { font-size: 15px; color: var(--color-muted); font-weight: 500; }
+.tk-line__b { font-size: 18px; font-weight: 700; color: var(--color-primary); }
+.tk-line__pic { width: 48px; height: 48px; flex: none; padding: 4px; box-sizing: border-box; border: 2px solid var(--color-text); border-radius: 8px; color: var(--color-text); background: #fff; }
+.tk-line__pic svg { display: block; width: 100%; height: 100%; }
+.tk-line--note { background: var(--color-accent-soft); border-radius: var(--radius-sm); padding: 8px 12px; border-top: 0; margin-top: 8px; }
+.tk-line--note .tk-line__text { font-weight: 500; }
+.tk-line__send { flex: none; width: 48px; height: 48px; border: 0; border-radius: 50%; background: none; color: var(--color-accent); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.tk-line__send:hover { background: rgba(138, 74, 16, 0.1); }
+
+/* みんなの画面 */
+.tk-board { border-radius: 18px; padding: 28px 16px 32px; background: #1B1714; color: #F6ECD8; text-align: center; display: grid; gap: 14px; justify-items: center; }
+.tk-board[hidden] { display: none; }
+.tk-board p { margin: 0; }
+.tk-board__who { font-size: 22px; font-weight: 700; }
+.tk-board__time { font-size: 120px; line-height: 1; }
+.tk-board__time.is-slow { font-size: 40px; }
+.tk-board__lamps .tk-lampx { width: 34px; height: 34px; border-width: 3px; }
+.tk-board__lamps { gap: 14px; }
+.tk-board__solved { font-size: 26px; font-weight: 700; }
+.tk-board__readers { font-size: 16px; color: #D8CBB7; }
+.is-watch .tk-main { max-width: 1040px; }
+
+/* ひとこと */
+.tk-says { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.tk-says:empty { display: none; }
+.tk-say { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; padding: 8px 14px; border-radius: 12px; background: var(--color-surface); border: 2px solid var(--color-accent); line-height: 1.5; }
+.tk-say__from { font-size: 14px; color: var(--color-accent); font-weight: 700; }
+.tk-say__text { font-size: 18px; font-weight: 700; color: var(--color-primary); }
+.tk-saybox { background: var(--color-surface); border-radius: var(--radius-card); padding: 12px 14px; }
+.tk-saybox__title { margin: 0 0 8px; font-size: 14px; font-weight: 700; color: var(--color-muted); }
+.tk-saybox__list { display: flex; flex-wrap: wrap; gap: 6px; }
+.tk-saybtn { min-height: 48px; padding: 6px 12px; border: 2px solid var(--color-border); border-radius: var(--radius-btn); background: var(--color-surface); color: var(--color-text); font: inherit; font-weight: 500; cursor: pointer; }
+.tk-saybtn:hover { border-color: var(--color-accent); }
+
+/* 結果 */
+.tk-result { border-radius: var(--radius-card); padding: 20px 18px; text-align: center; background: var(--color-surface); border: 3px solid var(--color-accent); }
+.tk-result.is-safe { border-color: var(--color-success); }
+.tk-result__title { margin: 0 0 8px; font-size: 32px; color: var(--color-primary); }
+.tk-result.is-safe .tk-result__title { color: var(--color-success); }
+.tk-result__text { margin: 0 0 10px; line-height: 1.7; }
+.tk-result__next { margin: 0 0 12px; color: var(--color-muted); font-weight: 500; }
+.tk-result__actions { display: grid; gap: 6px; max-width: 440px; margin: 0 auto; }
+
+/* 知らせ（まちがい・解除） */
+.tk-flash { position: fixed; left: 50%; top: 18%; transform: translateX(-50%); z-index: 70; margin: 0; padding: 10px 26px; border-radius: 999px; font-family: 'Zen Maru Gothic', sans-serif; font-size: 28px; font-weight: 700; color: #fff; white-space: nowrap; pointer-events: none; box-shadow: var(--shadow-md); }
+.tk-flash.is-bad { background: #B91C1C; }
+.tk-flash.is-good { background: #1F6E3C; }
+
+/* 爆発（マンガ調。音・強い点滅なし） */
+.tk-boom { position: fixed; inset: 0; z-index: 80; display: flex; align-items: center; justify-content: center; background: rgba(27, 23, 20, 0.6); pointer-events: none; }
+.tk-boom[hidden] { display: none; }
+.tk-boom__art { position: absolute; width: min(92vmin, 620px); height: min(92vmin, 620px); animation: tk-burst 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both; }
+.tk-boom__art svg { display: block; width: 100%; height: 100%; }
+.tk-boom__text { position: relative; font-family: 'Zen Maru Gothic', sans-serif; font-weight: 700; font-size: min(15vmin, 96px); color: #B91C1C; -webkit-text-stroke: 0.04em #2A2520; paint-order: stroke fill; animation: tk-burst 0.5s 0.08s cubic-bezier(0.2, 1.4, 0.4, 1) both; transform-origin: center; white-space: nowrap; }
+@keyframes tk-burst { from { transform: scale(0.2) rotate(-12deg); opacity: 0; } to { transform: scale(1) rotate(-4deg); opacity: 1; } }
+.tk-boom.is-calm .tk-boom__art, .tk-boom.is-calm .tk-boom__text { animation: none; transform: rotate(-4deg); }
+
+@media (prefers-reduced-motion: reduce) {
+  .is-hurry, .tk-game.is-shake, .tk-board.is-shake, .tk-zoom__body > .is-enter { animation: none; }
+  .tk-switch__knob { transition: none; }
+}
+
+@media (max-width: 600px) {
+  .tk-bar { padding: 10px 16px; }
+  .tk-roombar { gap: 4px; padding: 6px 8px; }
+  .tk-roombar .btn { padding: 4px 8px; font-size: 13px; min-height: 36px; }
+  .tk-main { padding: 14px 12px 64px; }
+  .tk-hud { padding: 8px 12px; }
+  .tk-hud__time { font-size: 26px; }
+  .tk-board__time { font-size: 72px; }
+  .tk-board__who { font-size: 18px; }
+  .tk-board__solved { font-size: 20px; }
+  .tk-line__b { font-size: 17px; }
+  .tk-result__title { font-size: 28px; }
+  .tk-flash { font-size: 22px; }
+}

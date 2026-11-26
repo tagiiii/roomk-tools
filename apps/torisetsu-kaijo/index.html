@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>とりせつ解除班 | あそびのたな</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
+  <!-- index.html と app.js・engine.js・art.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
+  <link rel="stylesheet" href="style.css?v=20261126a">
+  <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-database-compat.js"></script>
+  <script src="../shared/js/rtdb-utils.js?v=20261005"></script>
+  <script src="../shared/js/room-qr.js?v=20261022"></script>
+  <script src="engine.js?v=20261126a"></script>
+  <script src="art.js?v=20261126a"></script>
+</head>
+<body data-genre="atekko">
+
+  <!-- トップ -->
+  <section class="tk-screen tk-front active" id="screen-top">
+    <div class="tk-panel app-entry">
+      <h1 class="tk-panel__title app-title">とりせつ解除班</h1>
+      <p class="app-catch">説明書を読んで、声で伝えて、爆弾を止める</p>
+      <p class="tk-panel__lead app-entry__lead">1人だけが爆弾を見て、ほかの人は説明書を読む（2〜6人）。どんなしかけか声で伝え合って、時間のうちにぜんぶ解除しよう。</p>
+      <ul class="tk-panel__notes app-entry__notes">
+        <li>解除する人は、爆弾を回していろんな面を見られる。説明書は見られない</li>
+        <li>説明書を読む人は、爆弾を見られない。しかけの様子を聞いて、止め方を伝える</li>
+        <li>まちがい3回か、時間が0で爆発。1回ごとに、解除する人を交代する</li>
+      </ul>
+      <div class="tk-panel__actions app-entry__actions">
+        <button type="button" class="btn btn-primary btn-full" id="btnGoCreate">ルームを作る</button>
+        <button type="button" class="btn btn-secondary btn-full" id="btnGoJoin">ルームに参加する</button>
+        <button type="button" class="tk-quiet tk-quiet--center" id="btnGoWatch">みんなにみせる画面をひらく</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ルームを作る -->
+  <section class="tk-screen tk-front" id="screen-create">
+    <div class="tk-panel">
+      <button type="button" class="tk-quiet tk-back" id="btnCreateBack">トップへ戻る</button>
+      <h2 class="tk-panel__title tk-panel__title--sub">ルームを作る</h2>
+      <label class="form-label" for="hostName">ホストの名前（8文字まで）</label>
+      <input class="form-input" id="hostName" maxlength="8" autocomplete="nickname">
+      <p class="tk-alert" id="createError" hidden role="alert"></p>
+      <button type="button" class="btn btn-primary btn-full mt-md" id="btnCreateRoom">ルームを作る</button>
+    </div>
+  </section>
+
+  <!-- ルームに参加する -->
+  <section class="tk-screen tk-front" id="screen-join">
+    <div class="tk-panel">
+      <button type="button" class="tk-quiet tk-back" id="btnJoinBack">トップへ戻る</button>
+      <h2 class="tk-panel__title tk-panel__title--sub">ルームに参加する</h2>
+      <p class="tk-hint" id="joinLinkHint" hidden>リンクから開いたので、ルームコードは入っているよ。名前を入れて「参加する」を押してね。</p>
+      <label class="form-label" for="guestName">名前（8文字まで）</label>
+      <input class="form-input" id="guestName" maxlength="8" autocomplete="nickname">
+      <label class="form-label mt-md" for="joinCode">ルームコード（6文字）</label>
+      <input class="form-input tk-code-input" id="joinCode" maxlength="6" autocorrect="off" autocapitalize="characters" autocomplete="off" spellcheck="false">
+      <p class="tk-alert" id="joinError" hidden role="alert"></p>
+      <button type="button" class="btn btn-primary btn-full mt-md" id="btnJoinRoom">参加する</button>
+    </div>
+  </section>
+
+  <!-- みんなにみせる画面をひらく -->
+  <section class="tk-screen tk-front" id="screen-watch-join">
+    <div class="tk-panel">
+      <button type="button" class="tk-quiet tk-back" id="btnWatchBack">トップへ戻る</button>
+      <h2 class="tk-panel__title tk-panel__title--sub">みんなにみせる画面をひらく</h2>
+      <p class="tk-hint">画面共有でみんなに見せるための画面です。のこり時間・まちがいの数・解除できた数だけが出ます。ルームには入らず、見るだけです。</p>
+      <label class="form-label" for="watchCode">ルームコード（6文字）</label>
+      <input class="form-input tk-code-input" id="watchCode" maxlength="6" autocorrect="off" autocapitalize="characters" autocomplete="off" spellcheck="false">
+      <p class="tk-alert" id="watchError" hidden role="alert"></p>
+      <button type="button" class="btn btn-primary btn-full mt-md" id="btnWatchOpen">画面をひらく</button>
+    </div>
+  </section>
+
+  <!-- ルームの画面（待合室・解除・みんなにみせる画面） -->
+  <header class="tk-bar" id="appBar" hidden>
+    <h1 class="tk-bar__title">とりせつ解除班</h1>
+    <p class="tk-bar__badge" id="watchBadge" hidden>みんなにみせる画面</p>
+    <p class="tk-bar__me" id="barMe" hidden></p>
+  </header>
+  <div class="tk-roombar" id="roomBar" hidden>
+    <span class="tk-roombar__code">ルーム <strong id="roomCodeLabel"></strong></span>
+    <button type="button" class="btn btn-ghost btn-sm" id="btnCopyCode">コードをコピー</button>
+    <button type="button" class="btn btn-ghost btn-sm" id="btnCopyLink">リンクをコピー</button>
+    <button type="button" class="btn btn-ghost btn-sm" id="btnShowQr">QRコードを出す</button>
+    <button type="button" class="btn btn-ghost btn-sm" id="btnOpenWatch" hidden>みんなにみせる画面</button>
+    <button type="button" class="btn btn-ghost btn-sm" id="btnLeave">退出する</button>
+  </div>
+
+  <!-- 待合室 -->
+  <section class="tk-screen" id="screen-waiting">
+    <div class="tk-main tk-phase">
+      <div id="lobbyJoin" class="tk-joininfo" hidden>
+        <p class="tk-joininfo__label">参加のしかた</p>
+        <p class="tk-joininfo__text">「ルームに参加する」で、名前とルームコードを入れてね</p>
+        <p id="lobbyJoinCode" class="tk-joininfo__code"></p>
+      </div>
+
+      <div class="card">
+        <h2 class="tk-h2">遊ぶ人（2〜6人）<span class="tk-h2__count" id="peopleCount"></span></h2>
+        <ul id="lobbyPeople" class="tk-people"></ul>
+        <label id="roBox" class="tk-check" hidden>
+          <input type="checkbox" id="roSelf">
+          <span>解除する人にならない（説明書を読むだけ）</span>
+        </label>
+        <label id="hostPlaysBox" class="tk-check" hidden>
+          <input type="checkbox" id="hostPlays">
+          <span>ホストも遊ぶ（外すと、ホストは進行だけ）</span>
+        </label>
+        <p id="seatNote" class="tk-note" hidden></p>
+        <p class="tk-note">解除する人は、1回ごとに交代するよ。自分の端末で入った人だけが遊べる。</p>
+      </div>
+
+      <div class="card">
+        <h2 class="tk-h2">設定</h2>
+        <div id="lobbySet" class="tk-set" hidden>
+          <div class="tk-field">
+            <p class="tk-field__label" id="lblLevel">むずかしさ</p>
+            <div class="tk-seg" id="levelSeg" role="group" aria-labelledby="lblLevel"></div>
+            <p class="tk-note" id="levelNote"></p>
+          </div>
+          <details class="tk-more">
+            <summary>くわしい設定</summary>
+            <div class="tk-more__body">
+              <label class="tk-check">
+                <input type="checkbox" id="setSlow">
+                <span>ゆっくり（時間をはからない）</span>
+              </label>
+              <p class="tk-note">時間で爆発しなくなり、導火線も出ない。まちがい3回で爆発するのは同じ。</p>
+              <label class="tk-check">
+                <input type="checkbox" id="setSplit">
+                <span>説明書を分けて配る</span>
+              </label>
+              <p class="tk-note">読む人が2人以上のとき、説明書のページを分けて持つ。外すと、みんなが全部のページを読める。</p>
+            </div>
+          </details>
+        </div>
+        <p id="lobbySetView" class="tk-setview" hidden></p>
+      </div>
+
+      <button id="btnStartGame" type="button" class="btn btn-primary btn-full btn-lg" hidden>はじめる</button>
+      <p id="lobbyWait" class="tk-wait" hidden>ホストがはじめるのを待っているよ</p>
+    </div>
+  </section>
+
+  <!-- 解除 -->
+  <section class="tk-screen" id="screen-game">
+    <div class="tk-main tk-game" id="gameMain">
+      <div class="tk-result" id="resultBox" hidden></div>
+
+      <div class="tk-hud" id="hud" hidden>
+        <p class="tk-hud__role" id="hudRole"></p>
+        <p class="tk-hud__time" id="hudTime" aria-label="のこり時間"></p>
+        <p class="tk-hud__lamps" id="hudLamps"></p>
+        <p class="tk-hud__solved" id="hudSolved"></p>
+      </div>
+      <div class="tk-fusebar" id="fuseBar" hidden role="status">
+        <span class="tk-fusebar__text" id="fuseText"></span>
+        <button type="button" class="btn btn-secondary" id="btnFuseGo" hidden>導火線を見る</button>
+      </div>
+
+      <!-- 解除する人 -->
+      <div id="viewDef" hidden>
+        <div class="tk-stage" id="stage">
+          <div class="tk-scene" id="scene"><div class="tk-cube" id="cube"></div></div>
+          <div class="tk-turn" role="group" aria-label="爆弾を回す">
+            <button type="button" class="tk-turn__btn" id="btnTurnL" aria-label="左へ回す"><span class="material-symbols-rounded" aria-hidden="true">arrow_back</span></button>
+            <button type="button" class="tk-turn__btn" id="btnTurnU" aria-label="上へ回す"><span class="material-symbols-rounded" aria-hidden="true">arrow_upward</span></button>
+            <button type="button" class="tk-turn__btn" id="btnTurnD" aria-label="下へ回す"><span class="material-symbols-rounded" aria-hidden="true">arrow_downward</span></button>
+            <button type="button" class="tk-turn__btn" id="btnTurnR" aria-label="右へ回す"><span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span></button>
+          </div>
+          <p class="tk-stage__hint">ドラッグか、やじるしのボタンで回す。しかけや手がかりを押すと、近くで見られる</p>
+        </div>
+        <div class="tk-zoom" id="zoom" hidden>
+          <div class="tk-zoom__head">
+            <button type="button" class="btn btn-secondary btn-sm" id="btnZoomBack">もどる</button>
+            <p class="tk-zoom__title" id="zoomTitle"></p>
+          </div>
+          <div class="tk-zoom__body" id="zoomBody"></div>
+        </div>
+      </div>
+
+      <!-- 説明書を読む人 -->
+      <div id="viewRead" hidden>
+        <div class="tk-tabs" id="tabs" role="tablist" aria-label="説明書のページ"></div>
+        <div class="tk-page" id="page"></div>
+      </div>
+
+      <!-- みんなの画面（進行だけのホスト・みんなにみせる画面・この回は見る人） -->
+      <div id="viewBoard" class="tk-board" hidden>
+        <p class="tk-board__who" id="boardWho"></p>
+        <p class="tk-board__time" id="boardTime" aria-label="のこり時間"></p>
+        <p class="tk-board__lamps" id="boardLamps"></p>
+        <p class="tk-board__solved" id="boardSolved"></p>
+        <p class="tk-board__readers" id="boardReaders"></p>
+      </div>
+
+      <ul class="tk-says" id="says" aria-live="polite"></ul>
+      <div class="tk-saybox" id="sayBox" hidden>
+        <p class="tk-saybox__title">ひとこと</p>
+        <div class="tk-saybox__list" id="sayList"></div>
+      </div>
+
+      <details id="hostMenu" class="tk-hostmenu" hidden>
+        <summary>そのほかの操作</summary>
+        <div class="tk-hostmenu__body">
+          <button type="button" class="btn btn-secondary btn-full" id="btnLobby">この回をやめて待合室へ</button>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- みんなにみせる画面のおわり -->
+  <section class="tk-screen tk-front" id="screen-watch-end">
+    <div class="tk-panel">
+      <h2 class="tk-panel__title tk-panel__title--sub" id="watchEndTitle">このルームは終わりました</h2>
+      <p class="tk-panel__lead">遊んでくれてありがとう。</p>
+      <button type="button" class="btn btn-secondary btn-full" id="btnWatchEndTop">トップへ戻る</button>
+    </div>
+  </section>
+
+  <p class="tk-flash" id="flash" role="status" hidden></p>
+  <div class="tk-boom" id="boom" hidden aria-hidden="true"><span class="tk-boom__art" id="boomArt"></span><span class="tk-boom__text">ドカーン！</span></div>
+
+  <div class="tk-overlay-page" id="hostOffOverlay" hidden data-roomk-blocking role="dialog" aria-modal="true" aria-labelledby="hostOffOverlay-title">
+    <div class="tk-overlay-page__panel">
+      <h2 id="hostOffOverlay-title">ホストの戻りを待っています</h2>
+      <p id="hostOffText">時間は止まっているよ。しばらく待っても戻らないときは退出してね。</p>
+      <button type="button" class="btn btn-secondary" id="btnOverlayLeave">退出する</button>
+    </div>
+  </div>
+
+  <script type="module" src="app.js?v=20261126a"></script>
+  <script src="../shared/js/overlay-a11y.js?v=1" defer></script>
+  <script src="../shared/js/focus-keep.js?v=1" defer></script>
+  <script src="../shared/js/stats.js?v=1" defer></script>
+  <script src="../shared/js/howto.js"></script>
+  <script>
+    RoomkHowto.init({
+      title: 'あそびかた',
+      lead: '1人だけが爆弾を見て、ほかの人は説明書を読む協力ゲーム（2〜6人）。声で伝え合って、時間のうちにしかけをぜんぶ解除する。',
+      sections: [
+        { heading: 'はじめかた', items: [
+          'ホストが「ルームを作る」で名前を入れる。ルームコードは「コードをコピー」、参加用のリンクは「リンクをコピー」でチャットに送れる。スマホやタブレットで入る人には「QRコードを出す」をカメラで読み取ってもらう',
+          '参加する人は「ルームに参加する」で名前、ルームコード（6文字）の順に入れ、「参加する」を押す。リンクから開いたときは、ルームコードは入っているので名前だけ入れる',
+          'ホストが「むずかしさ」を選んで「はじめる」を押す。解除する人は1回ごとに交代する。なりたくない人は、待合室で「解除する人にならない（説明書を読むだけ）」に印を付ける',
+          '画面共有には、ホストの画面か「みんなにみせる画面」を出す（のこり時間・まちがいの数・解除できた数だけが出る）',
+        ] },
+        { heading: '解除する人', items: [
+          '自分の画面にだけ爆弾が出る。ドラッグか、やじるしのボタンで回して、表・裏・側面・上・底を見る',
+          'しかけや手がかりを押すと、近くで見られる。「もどる」で全体にもどる',
+          'しかけの様子（色・数・形など）を声で伝えて、読む人に止め方を聞く。聞いたとおりに操作する',
+          '本体の手がかり（左のシール・右の番号・上のねじ・底のふたの中の印）も聞かれるので、回して探す',
+        ] },
+        { heading: '説明書を読む人', items: [
+          '自分の画面に説明書が出る。上の札でページを切りかえる。爆弾は見られない',
+          'しかけの様子を聞いて、合う行をさがし、止め方を伝える',
+          '「説明書を分けて配る」のときは、人によって持っているページがちがう。だれが持っているか声をかけ合う',
+          '行の右のボタンを押すと、その行をみんなの画面に出せる',
+        ] },
+        { heading: '爆発とおわり', items: [
+          'まちがえるとランプが1つ点き、時間のへりかたが速くなる。まちがい3回か、時間が0で爆発する',
+          '「ふつう」「むずかしい」では、ときどき導火線に火がつく。20秒のうちに止めないと、まちがい1回になる',
+          'しかけをぜんぶ解除できたら成功。ホストが「もう一回」を押すと、解除する人を交代して次の爆弾になる',
+          '声を出さずに伝えたいときは、下の「ひとこと」のボタンを押す',
+        ] },
+      ],
+    });
+  </script>
+</body>
+</html>
