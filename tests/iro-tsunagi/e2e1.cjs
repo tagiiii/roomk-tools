@@ -138,14 +138,18 @@ function plan(seed, colors, n) {
   check('T16 とめている間は落ちず、キーでも動かない', (await st(page)).piece.y === ys && (await st(page)).piece.x === 4);
   await page.click('#btnResume');
   check('T17 「つづける」でもどる', !(await st(page)).paused && (await page.isHidden('#overlay')));
-  await page.click('.howto-fab');
+  check('T17b あそんでいる間は「？」とフィードバックの丸ボタンを出さない（2026-11-26）', !(await page.isVisible('.howto-fab')) && !(await page.isVisible('.howto-feedback-fab')));
+  // 丸ボタンは出していないが、あそびかたが開いたときのふるまいは見ておく（要素を直接押す）
+  await page.$eval('.howto-fab', (b) => b.click());
   check('T18 あそびかたを開くと、とまる', await waitFor(async () => (await st(page)).paused));
+  check('T18b とまったら丸ボタンが出る（2026-11-26）', await page.isVisible('.howto-fab') && await page.isVisible('.howto-feedback-fab'));
   await page.keyboard.press('Escape');
   await page.click('#btnResume').catch(() => {});
   await waitFor(async () => !(await st(page)).paused);
   await page.click('#btnQuit');
   check('T19 「おわる」で結果', await page.isVisible('#screen-result'));
   const body0 = await page.textContent('#resultBody');
+  check('T19b 結果では丸ボタンが出る（2026-11-26）', await page.isVisible('.howto-fab') && await page.isVisible('.howto-feedback-fab'));
   check('T20 結果に全部消した・からにした', body0.includes('全部消した0回') && body0.includes('からにした0回'), body0);
   await page.close();
 
@@ -259,8 +263,9 @@ function plan(seed, colors, n) {
   await sleep(200);
   check('T42 操作ボタンが5つ出る（一気に落とすはない）', (await page.$$eval('.it-pad__btn', (b) => b.filter((x) => x.offsetParent).length)) === 5 && !(await page.$('[data-act="drop"]')));
   const padBottom = await page.$eval('.it-pad', (el) => el.getBoundingClientRect().bottom);
-  const fabTop = await page.$eval('.howto-fab', (el) => el.getBoundingClientRect().top);
-  check('T43 盤と操作ボタンが1画面に収まり、右下の丸ボタンより上で終わる', padBottom <= fabTop, { padBottom, fabTop });
+  // あそんでいる間は丸ボタンを出さない（2026-11-26）が、盤の位置は変えていないので、丸ボタンがあった所より上で終わることを見る
+  const fabTop = await page.evaluate(() => window.innerHeight - 64); // 丸ボタンの上の端（下から16px・高さ48px）
+  check('T43 盤と操作ボタンが1画面に収まり、右下の丸ボタンの所より上で終わる', padBottom <= fabTop, { padBottom, fabTop });
   check('T44 あそぶ画面が横にはみ出さない', (await page.evaluate(() => document.documentElement.scrollWidth)) <= 375);
   await page.dispatchEvent('[data-act="left"]', 'pointerdown');
   await page.dispatchEvent('[data-act="left"]', 'pointerup');

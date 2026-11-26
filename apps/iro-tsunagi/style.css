@@ -40,6 +40,8 @@
 .it-quiet--center { display: flex; margin: 8px auto 0; }
 
 /* あそぶ画面（並びはすとんブロックと同じ: 上のバー → 盤と右の欄 → 操作ボタン → キーボードの説明） */
+/* あそんでいる間（html.it-playing・app.js の syncPlayingFabs）は丸ボタンを出さない（下の余白はそのまま。盤の位置を変えない） */
+html.it-playing .howto-fab, html.it-playing .howto-feedback-fab { display: none; }
 .it-bar { width: 100%; max-width: 960px; margin: -8px auto 8px; display: flex; align-items: center; gap: 12px; min-height: 48px; }
 .it-bar__title { font-weight: 700; color: var(--color-primary); white-space: nowrap; }
 .it-bar .it-quiet { white-space: nowrap; margin: 0 0 0 auto; }
