@@ -85,7 +85,7 @@ body { background: var(--color-bg); }
 
 /* ── 遊ぶ画面 ── */
 body.pb-playing { overflow: hidden; }
-body.pb-playing .howto-fab { display: none; }
+body.pb-playing .howto-fab, body.pb-playing .howto-feedback-fab { display: none; }
 .pb-play {
   position: fixed;
   inset: 0;
