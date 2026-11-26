@@ -229,6 +229,8 @@ function showScreen(id) {
   state.currentScreen = id;
   $('roomBar').hidden = !state.roomRef;
   document.querySelector('.kd-wrap').classList.toggle('is-top', id === 'top');
+  // 問題の画面の間は、共通の「？」とフィードバックの丸ボタンを出さない（style.css の html.kd-playing）
+  document.documentElement.classList.toggle('kd-playing', id === 'q');
 }
 function setError(id, message) {
   const node = $(id);

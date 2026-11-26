@@ -43,6 +43,7 @@ const { check, sleep, roomOf, rest } = L;
 
   await host.page.click('#btnStart');
   await L.waitVisible(yu, '#screen-q');
+  check('fab: hidden on question screen (2026-11-26)', !(await L.visible(yu, '.howto-fab')) && !(await L.visible(yu, '.howto-feedback-fab')) && !(await L.visible(host, '.howto-fab')) && !(await L.visible(host, '.howto-feedback-fab')));
   check('stats: start/players-2', (await L.waitStats(host, 'start', 1)) && (await L.waitStats(host, 'players-2', 1)));
   await L.waitText(yu, '#qCount', '3', 3000).catch(() => {});
   check('q1: countdown 3-2-1', /^[123]$/.test((await L.text(yu, '#qCount')) || ''), await L.text(yu, '#qCount'));
@@ -129,6 +130,7 @@ const { check, sleep, roomOf, rest } = L;
 
   // 結果: 多い順・0この人は並べない・順位の数字なし
   await L.waitVisible(yu, '#screen-result', 10000);
+  check('fab: shown again on result (2026-11-26)', await L.visible(yu, '.howto-fab') && await L.visible(yu, '.howto-feedback-fab'));
   const people = await yu.page.evaluate(() => [...document.querySelectorAll('#resPeople li')].map((n) => n.textContent));
   check('result: people sorted, no zero', people.length === 3 && people[0].startsWith('ホスト2') && people.every((p) => !/0 こ/.test(p)), people);
   check('result: no rank numbers', !/位/.test(await L.text(yu, '#resPeopleBox')));

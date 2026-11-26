@@ -95,6 +95,8 @@ body { background: var(--color-bg); }
 /* あそぶ画面 */
 /* 右下の丸ボタンの分の余白（80px）は共通の howto.js がページの最後にとるので、その分を引いて画面の高さちょうどにする */
 .sb-playwrap { min-height: calc(100vh - 80px); display: flex; flex-direction: column; align-items: center; padding: 0 16px 16px; }
+/* あそんでいる間（html.sb-playing・app.js の syncPlayingFabs）は丸ボタンを出さない（下の余白はそのまま。盤の位置を変えない） */
+html.sb-playing .howto-fab, html.sb-playing .howto-feedback-fab { display: none; }
 .sb-bar { width: 100%; max-width: 960px; display: flex; align-items: center; gap: 12px; min-height: 56px; }
 .sb-bar__title { font-weight: 700; color: var(--color-primary); white-space: nowrap; }
 .sb-bar .sb-quiet { white-space: nowrap; }

@@ -23,6 +23,7 @@ const { check, sleep, until, st } = L;
     await host.page.waitForFunction(() => document.querySelectorAll('#lobbyPeople li').length === 2);
     check('待合室に番号つきで2人', (await L.text(host, '#lobbyPeople')).includes('1ホスト') && (await L.text(host, '#lobbyPeople')).includes('2ゲスト'), await L.text(host, '#lobbyPeople'));
     check('参加者は待つ表示', await L.visible(guest, '#lobbyWait') && !(await L.visible(guest, '#btnStartGame')));
+    check('待合室では「？」とフィードバックの丸ボタンが出る（2026-11-26）', await L.visible(guest, '.howto-fab') && await L.visible(guest, '.howto-feedback-fab'));
     // ステージを選ぶ
     await host.page.click('#lobbySet .nr-seg__btn:nth-child(2)');
     room = await L.roomWhen(code, (r) => r.set.stage === 1);
@@ -37,6 +38,7 @@ const { check, sleep, until, st } = L;
     await host.page.click('#btnStartGame');
     await L.waitScreen(host, 'game');
     await L.waitScreen(guest, 'game');
+    check('あそぶ画面では「？」とフィードバックの丸ボタンを出さない（2026-11-26）', !(await L.visible(host, '.howto-fab')) && !(await L.visible(host, '.howto-feedback-fab')) && !(await L.visible(guest, '.howto-fab')) && !(await L.visible(guest, '.howto-feedback-fab')));
     room = await L.roomWhen(code, (r) => r.status === 'play' && r.game && r.live && r.live[r.game.id] && r.live[r.game.id].p && r.live[r.game.id].p[1] && r.live[r.game.id].p[2] && r.live[r.game.id].w);
     const gid = room.game.id;
     check('ステージの決まり（2人・ステージ1）', room.game.n === 2 && room.game.stage === 0 && room.game.seats.join() === 'ホスト,ゲスト', room.game);
