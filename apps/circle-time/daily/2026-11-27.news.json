@@ -1,0 +1,32 @@
+{
+  "date": "2026-11-27",
+  "items": [
+    {
+      "title": "竹島水族館、イカの水槽づくりに挑戦",
+      "text": "愛知県蒲郡市の竹島水族館が、アオリイカなどのイカをいつでも見られる水槽を作るため、12月1日からクラウドファンディングを始めます。目標は700万円です。イカは水の変化に弱く、これまでは短い間しか展示できませんでした。",
+      "ask": "水族館でじっくり見たい生きものは？",
+      "source": "竹島水族館",
+      "url": "https://www.takesuideepsea.com/news-1/d8c7faae-0a93-40e0-b50f-4a5e96049985",
+      "on": "11月26日",
+      "img": { "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Sepioteuthis_lessoniana_%28Suma_Aqualife_Park%29.jpg/960px-Sepioteuthis_lessoniana_%28Suma_Aqualife_Park%29.jpg", "credit": "http://opencage.info/", "license": "CC BY-SA 2.5" }
+    },
+    {
+      "title": "伊勢シーパラダイスで生きものの鳴き声展",
+      "text": "三重県伊勢市の伊勢シーパラダイスで、12月4日から生きものの鳴き声を聞ける特別展が始まります。アザラシやアシカ、モルモットなど7種類の声を、ボタンを押して聞けます。スタッフの声マネとの聞きくらべもあります。",
+      "ask": "鳴き声を聞いてみたい動物はいる？",
+      "source": "伊勢シーパラダイス",
+      "url": "https://ise-seaparadise.com/4202/",
+      "on": "11月26日",
+      "img": { "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Phoca_largha1.jpg/960px-Phoca_largha1.jpg", "credit": "KENPEI", "license": "CC BY-SA 3.0" }
+    },
+    {
+      "title": "東山動植物園でツシマヤマネコ「ゆり」公開",
+      "text": "名古屋市の東山動植物園で、11月25日からツシマヤマネコの「ゆり」の公開が始まりました。ゆりは8歳のメスで、去年横浜のズーラシアから来ました。これまではお客さんの前に出ていませんでした。",
+      "ask": "ネコのなかまで好きな動物は？",
+      "source": "東山動植物園",
+      "url": "https://www.higashiyama.city.nagoya.jp/news/2026/11/post-1583.html",
+      "on": "11月25日",
+      "img": { "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/Prionailurus_bengalensis_euptilurus_tsushima_cat.jpg/960px-Prionailurus_bengalensis_euptilurus_tsushima_cat.jpg", "credit": "A machun", "license": "CC BY-SA 4.0" }
+    }
+  ]
+}
