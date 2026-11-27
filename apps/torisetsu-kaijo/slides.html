@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>説明スライド | とりせつ解除班 | あそびのたな</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,500,1,0" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#434343; --ink-soft:#6B6B6B; --paper:#FAFAFA; --white:#FFFFFF;
+    --line:#E6E6E6; --muted:#9A9A9A;
+    --teal:#00A77F; --coral:#E06666; --blue:#3C78D8; --blue-soft:#6D9EEB;
+    --red:#E0574F; --neutral:#C2B69E; --trap:#3A3A3A;
+    --acc:var(--teal); --acc-tint:#E3F4EF;
+    --font:"Zen Kaku Gothic New", -apple-system, "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; }
+  body{ font-family:var(--font); color:var(--ink); background:#E9ECEF; overflow:hidden; -webkit-font-smoothing:antialiased; }
+  .material-symbols-rounded{ font-family:"Material Symbols Rounded"; line-height:1; }
+  ruby rt{ font-size:.42em; font-weight:700; color:var(--acc); letter-spacing:0; transform:translateY(2px); }
+
+  /* accent themes（スライドごとに切替） */
+  .accent-teal { --acc:var(--teal); --acc-tint:#E2F4EF; }
+  .accent-coral{ --acc:var(--coral);--acc-tint:#FBEBEB; }
+  .accent-blue { --acc:var(--blue); --acc-tint:#E7EEFB; }
+
+  /* ===================== 発表（デッキ） ===================== */
+  #deck{ position:fixed; inset:0; }
+  #stage{
+    position:absolute; top:50%; left:50%; width:1280px; height:720px;
+    transform-origin:center center; background:var(--paper);
+    border-radius:18px; box-shadow:0 28px 70px rgba(0,0,0,.35); overflow:hidden;
+  }
+  .slide{
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    padding:56px 72px 76px; opacity:0; visibility:hidden;
+    transition:opacity .3s ease, transform .3s ease; transform:translateY(10px);
+  }
+  .slide.active{ opacity:1; visibility:visible; transform:none; }
+
+  /* セクションヘッダー（日本語＋小さな英語キャプション） */
+  .sec{ display:flex; align-items:baseline; gap:14px; }
+  .sec__jp{ font-size:30px; font-weight:900; color:var(--ink); letter-spacing:.01em; }
+  .sec__en{ font-size:18px; font-weight:700; color:var(--acc); letter-spacing:.12em; }
+  .sec__num{ display:inline-flex; align-items:center; justify-content:center; min-width:30px; height:30px; padding:0 8px;
+    border-radius:8px; background:var(--acc); color:#fff; font-size:18px; font-weight:900; margin-right:2px; }
+
+  .headline{ font-size:46px; font-weight:900; color:var(--ink); line-height:1.32; margin-top:22px; letter-spacing:.005em; }
+  .headline .hl{ color:var(--acc); }
+  .headline .ul{ background:linear-gradient(transparent 62%, var(--acc-tint) 62%); padding:0 2px; }
+  .body{ margin-top:30px; flex:1; min-height:0; }
+
+  /* 役割カード／チーム */
+  .cols{ display:grid; grid-template-columns:1fr 1fr; gap:24px; height:100%; }
+  .panel{ background:var(--white); border:1.5px solid var(--line); border-radius:18px; padding:26px 28px; display:flex; flex-direction:column; gap:14px; }
+  .panel--red{ border-color:#F0CFCB; background:linear-gradient(180deg,#FDF1F0,#fff); }
+  .panel--blue{ border-color:#CBDAF4; background:linear-gradient(180deg,#EEF3FD,#fff); }
+  .team-head{ display:flex; align-items:center; gap:14px; }
+  .team-ic{ width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; }
+  .team-ic .material-symbols-rounded{ font-size:34px; }
+  .red-bg{ background:var(--red); } .blue-bg{ background:var(--blue); } .teal-bg{ background:var(--teal); } .coral-bg{ background:var(--coral); } .gray-bg{ background:var(--neutral); } .trap-bg{ background:var(--trap); }
+  .team-name{ font-size:28px; font-weight:900; color:var(--ink); }
+  .role-row{ display:flex; gap:12px; align-items:flex-start; }
+  .role-row .material-symbols-rounded{ font-size:26px; color:var(--acc); flex:none; margin-top:3px; }
+  .role-row b{ font-size:23px; font-weight:900; color:var(--ink); }
+  .role-row .d{ font-size:19px; color:var(--ink-soft); display:block; margin-top:2px; line-height:1.5; }
+
+  /* 箇条書き行 */
+  .rows{ display:flex; flex-direction:column; gap:16px; }
+  .row{ display:flex; gap:18px; align-items:flex-start; background:var(--white); border:1.5px solid var(--line); border-radius:16px; padding:20px 24px; }
+  .row__ic{ flex:none; width:48px; height:48px; border-radius:12px; background:var(--acc-tint); color:var(--acc); display:flex; align-items:center; justify-content:center; }
+  .row__ic .material-symbols-rounded{ font-size:28px; }
+  .row__t{ font-size:25px; font-weight:900; color:var(--ink); line-height:1.4; }
+  .row__d{ font-size:20px; color:var(--ink-soft); margin-top:3px; line-height:1.5; }
+
+  /* 5×5 盤面 */
+  .board-wrap{ display:flex; gap:34px; align-items:center; height:100%; }
+  .board{ display:grid; grid-template-columns:repeat(5,1fr); gap:9px; flex:none; }
+  .cell{ width:104px; height:62px; border-radius:9px; background:#FFFDF7; border:1.5px solid #E7E0CE;
+    display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:700; color:#5A5142;
+    box-shadow:0 1px 0 rgba(0,0,0,.04); }
+  .cell.blue{ background:#E7EEFB; border-color:#9FBCEF; color:var(--blue); }
+  .cell.red{ background:#FBE7E5; border-color:#EDA8A2; color:var(--red); }
+  .cell.neutral{ background:#F0EADD; border-color:#D8CBB0; color:#8A7B5C; }
+  .cell.trap{ background:#3A3A3A; border-color:#222; color:#fff; }
+  .cell.trap .material-symbols-rounded{ font-size:26px; }
+  .board-legend{ flex:1; display:flex; flex-direction:column; gap:14px; }
+  .leg{ display:flex; gap:13px; align-items:center; }
+  .leg__sw{ width:34px; height:34px; border-radius:8px; flex:none; border:1.5px solid rgba(0,0,0,.08); }
+  .leg__t{ font-size:21px; font-weight:700; color:var(--ink); }
+  .leg__t span{ font-size:17px; font-weight:500; color:var(--ink-soft); }
+
+  /* ヒント例カード */
+  .hint-demo{ display:flex; flex-direction:column; gap:22px; align-items:flex-start; }
+  .hint-card{ display:inline-flex; align-items:center; gap:0; border-radius:18px; overflow:hidden; box-shadow:0 8px 22px rgba(0,0,0,.1); }
+  .hint-card .word{ background:var(--white); border:2.5px solid var(--acc); border-right:none; padding:22px 40px; font-size:42px; font-weight:900; color:var(--ink); border-radius:18px 0 0 18px; }
+  .hint-card .num{ background:var(--acc); color:#fff; padding:22px 34px; font-size:42px; font-weight:900; min-width:96px; text-align:center; }
+  .hint-mean{ font-size:24px; color:var(--ink-soft); line-height:1.6; }
+  .hint-mean b{ color:var(--acc); font-weight:900; }
+
+  /* 画面の例（ツール一覧と同じ画面例の絵）と、その横の説明 */
+  .shot-wrap{ display:flex; gap:34px; align-items:center; height:100%; }
+  .shot{ flex:none; height:100%; max-height:400px; aspect-ratio:1 / 1; border-radius:16px; border:1.5px solid var(--line); box-shadow:0 8px 22px rgba(0,0,0,.1); object-fit:cover; }
+  .shot-wrap .rows{ flex:1; }
+
+  /* コメントの言葉の札 */
+  .says{ display:flex; flex-wrap:wrap; gap:12px; margin-bottom:22px; }
+  .say{ background:var(--white); border:2px solid var(--acc); border-radius:999px; padding:10px 22px; font-size:24px; font-weight:700; color:var(--ink); }
+
+  /* 品物の例（アプリの絵をそのまま使う） */
+  .item{ background:var(--white); border:1.5px solid var(--line); border-radius:18px; padding:18px 18px 16px; display:flex; flex-direction:column; align-items:center; gap:8px; width:250px; }
+  .item__art{ width:120px; height:120px; } .item__art svg{ display:block; width:100%; height:100%; overflow:visible; }
+  .item--big{ width:300px; flex:none; } .item--big .item__art{ width:170px; height:170px; }
+  .item__name{ font-size:24px; font-weight:900; color:var(--ink); text-align:center; }
+  .item__cue{ display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:6px; font-size:18px; font-weight:700; color:var(--ink-soft); }
+  .tag{ display:inline-flex; align-items:center; gap:4px; background:var(--acc-tint); color:var(--ink); border-radius:999px; padding:4px 12px; font-size:18px; font-weight:700; }
+  .tag svg{ width:18px; height:18px; color:var(--acc); }
+  .demo{ display:flex; gap:34px; align-items:center; height:100%; } .demo__side{ flex:1; }
+  .demo-row{ display:flex; gap:28px; justify-content:center; }
+  .demo-cap{ margin-top:26px; text-align:center; font-size:24px; font-weight:700; color:var(--ink-soft); }
+  .row__d:empty{ display:none; }
+  .shot{ object-fit:contain; background:var(--white); }
+
+  /* しかけの絵（アプリの絵をそのまま使う） */
+  .item--wide{ width:290px; } .item--wide .item__art{ width:230px; height:150px; display:flex; align-items:center; justify-content:center; }
+  .item__art svg{ overflow:hidden; }
+  .glyphs{ display:flex; gap:10px; justify-content:center; }
+  .glyph{ width:50px; height:50px; padding:5px; border:2.5px solid var(--ink); border-radius:10px; background:var(--white); color:var(--ink); display:block; }
+  .glyph svg{ display:block; width:100%; height:100%; }
+  .glyphs--big{ flex-direction:column; gap:16px; flex:none; } .glyphs--big .glyph{ width:104px; height:104px; padding:12px; border-radius:18px; }
+  .demo-row{ gap:20px; align-items:stretch; }
+
+  /* Q&A */
+  .qa{ display:flex; flex-direction:column; gap:16px; }
+  .qa__item{ background:var(--white); border:1.5px solid var(--line); border-radius:16px; padding:18px 24px; }
+  .qa__q{ display:flex; gap:13px; align-items:flex-start; font-size:23px; font-weight:900; color:var(--ink); }
+  .qa__a{ display:flex; gap:13px; align-items:flex-start; font-size:21px; color:var(--ink-soft); margin-top:8px; line-height:1.5; }
+  .qa__badge{ flex:none; width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:900; font-size:19px; }
+  .qa__badge.q{ background:var(--blue); } .qa__badge.a{ background:var(--coral); }
+
+  /* タイトルスライド */
+  .title-slide{ align-items:center; justify-content:center; text-align:center; padding-bottom:76px; }
+  .title-ic{ width:118px; height:118px; border-radius:32px; background:var(--teal); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 16px 34px rgba(0,167,127,.32); }
+  .title-ic .material-symbols-rounded{ font-size:72px; }
+  .title-jp{ font-size:74px; font-weight:900; color:var(--ink); margin-top:24px; letter-spacing:.02em; }
+  .title-en{ font-size:22px; font-weight:700; color:var(--teal); letter-spacing:.34em; margin-top:6px; text-transform:lowercase; }
+  .title-tag{ font-size:26px; font-weight:700; color:var(--ink-soft); margin-top:22px; }
+  .title-meta{ display:flex; gap:12px; margin-top:26px; }
+  .title-meta .m{ display:inline-flex; align-items:center; gap:7px; background:var(--white); border:1.5px solid var(--line); border-radius:999px; padding:9px 18px; font-size:18px; font-weight:700; color:var(--ink); }
+  .title-meta .material-symbols-rounded{ font-size:20px; color:var(--teal); }
+
+  /* セクション区切り（divider） */
+  .divider{ align-items:center; justify-content:center; text-align:center; padding-bottom:76px; background:var(--acc-tint); }
+  .divider .d-ic{ width:104px; height:104px; border-radius:50%; background:var(--acc); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 14px 30px rgba(0,0,0,.14); }
+  .divider .d-ic .material-symbols-rounded{ font-size:62px; }
+  .divider .d-jp{ font-size:72px; font-weight:900; color:var(--ink); margin-top:26px; letter-spacing:.03em; }
+  .divider .d-en{ font-size:21px; font-weight:700; color:var(--acc); letter-spacing:.28em; margin-top:8px; text-transform:lowercase; }
+  .divider .d-sub{ font-size:24px; font-weight:700; color:var(--ink-soft); margin-top:20px; }
+  /* 強調（ゲームスタート等） */
+  .divider.solid{ background:var(--acc); }
+  .divider.solid .d-ic{ background:rgba(255,255,255,.16); }
+  .divider.solid .d-jp,.divider.solid .d-sub{ color:#fff; }
+  .divider.solid .d-en{ color:rgba(255,255,255,.85); }
+
+  /* フッター */
+  .footer{ position:absolute; left:0; right:0; bottom:0; height:56px; display:flex; align-items:center; justify-content:space-between;
+    padding:0 30px; background:rgba(255,255,255,.7); border-top:1px solid var(--line); }
+  .brand{ display:flex; align-items:center; gap:9px; font-weight:900; color:var(--ink); font-size:19px; }
+  .brand .material-symbols-rounded{ color:var(--teal); font-size:24px; }
+  .dots{ display:flex; gap:7px; flex-wrap:wrap; max-width:620px; justify-content:center; }
+  .dot{ width:9px; height:9px; border-radius:50%; background:var(--line); transition:.2s; }
+  .dot.on{ background:var(--teal); transform:scale(1.3); }
+  .counter{ font-size:18px; font-weight:900; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .divider .footer,.divider.solid .footer{ background:rgba(255,255,255,.55); }
+
+  /* ナビ矢印 */
+  .nav{ position:absolute; top:50%; transform:translateY(-50%); z-index:5; width:54px; height:54px; border-radius:50%; border:none; cursor:pointer;
+    background:rgba(67,67,67,.1); color:var(--ink); display:flex; align-items:center; justify-content:center; transition:.2s; opacity:0; }
+  #stage:hover .nav{ opacity:.5; } .nav:hover{ opacity:1 !important; background:rgba(67,67,67,.2); }
+  .nav .material-symbols-rounded{ font-size:32px; } .nav.prev{ left:16px; } .nav.next{ right:16px; }
+
+  /* ツールバー */
+  .toolbar{ position:fixed; top:14px; right:16px; z-index:50; display:flex; gap:8px; opacity:.16; transition:.2s; }
+  .toolbar:hover{ opacity:1; }
+  .tbtn{ display:inline-flex; align-items:center; gap:7px; cursor:pointer; background:rgba(255,255,255,.95); color:var(--ink); border:1px solid var(--line);
+    border-radius:999px; padding:9px 15px; font-family:var(--font); font-weight:700; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,.18); }
+  .tbtn:hover{ background:#fff; } .tbtn .material-symbols-rounded{ font-size:19px; color:var(--teal); }
+  .hint-help{ position:fixed; bottom:12px; left:16px; z-index:50; color:rgba(255,255,255,.5); font-size:13px; }
+  .hint-help kbd{ background:rgba(0,0,0,.18); border-radius:5px; padding:1px 7px; font-family:var(--font); }
+  .no-gap .hint-help{ display:none; } /* 下にすき間がないとフッターに重なる */
+
+  /* ===================== 発表者ビュー ===================== */
+  body.presenter{ background:#EEF1F4; overflow:auto; }
+  #presenter{ max-width:680px; margin:0 auto; padding:18px 20px 40px; }
+  .pv-warn{ background:#FBEBEB; border:1px solid #EFC4C4; color:#B3463F; border-radius:12px; padding:12px 16px; font-size:14px; font-weight:700; display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+  .pv-warn .material-symbols-rounded{ font-size:22px; }
+  .pv-count{ font-size:14px; font-weight:900; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .pv-title{ font-size:26px; font-weight:900; color:var(--ink); line-height:1.3; margin-top:4px; }
+  .pv-lead{ font-size:15px; color:var(--teal); font-weight:700; margin-top:4px; letter-spacing:.04em; }
+  .pv-card{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:18px; margin-top:18px; box-shadow:0 4px 14px rgba(0,0,0,.05); }
+  .pv-card h3{ font-size:14px; font-weight:900; color:var(--teal); display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+  .pv-card h3 .material-symbols-rounded{ font-size:18px; }
+  #pvNote{ width:100%; min-height:175px; resize:vertical; border:1px solid var(--line); border-radius:12px; padding:14px 16px; font-family:var(--font); font-size:17px; line-height:1.7; color:var(--ink); background:#FBFCFD; }
+  #pvNote:focus{ outline:none; border-color:var(--teal); box-shadow:0 0 0 3px rgba(0,167,127,.15); }
+  .pv-actions{ display:flex; gap:10px; margin-top:14px; align-items:center; }
+  .pv-copy{ flex:1; cursor:pointer; border:none; border-radius:12px; padding:15px; font-family:var(--font); font-size:18px; font-weight:900; color:#fff; background:var(--teal); display:flex; align-items:center; justify-content:center; gap:10px; box-shadow:0 6px 16px rgba(0,167,127,.28); transition:.15s; }
+  .pv-copy:active{ transform:translateY(1px); } .pv-copy.done{ background:#1F8F6E; }
+  .pv-copy .material-symbols-rounded{ font-size:22px; }
+  .pv-reset{ cursor:pointer; border:1px solid var(--line); background:#fff; color:var(--muted); border-radius:12px; padding:15px 16px; font-family:var(--font); font-weight:700; font-size:14px; }
+  .pv-reset:hover{ background:#F5F7F9; }
+  .pv-nav{ display:flex; gap:10px; margin-top:18px; }
+  .pv-nav button{ flex:1; cursor:pointer; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:12px; padding:14px; font-family:var(--font); font-weight:900; font-size:16px; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .pv-nav button:hover{ background:#F5F7F9; } .pv-nav button:disabled{ opacity:.4; cursor:default; }
+  .pv-nav .material-symbols-rounded{ font-size:20px; }
+  .pv-next{ margin-top:16px; font-size:14px; color:var(--muted); padding:0 4px; } .pv-next b{ color:var(--ink); }
+  .pv-conn{ margin-top:14px; font-size:12px; color:var(--muted); text-align:center; }
+</style>
+</head>
+<body>
+
+<div id="deck">
+  <div id="stage">
+    <button class="nav prev" id="navPrev" aria-label="前へ"><span class="material-symbols-rounded">chevron_left</span></button>
+    <button class="nav next" id="navNext" aria-label="次へ"><span class="material-symbols-rounded">chevron_right</span></button>
+    <div id="slides"></div>
+    <div class="footer">
+      <div class="brand"><span class="material-symbols-rounded">bomb</span>とりせつ解除班</div>
+      <div class="dots" id="dots"></div>
+      <div class="counter" id="counter">1 / 1</div>
+    </div>
+  </div>
+</div>
+
+<div class="toolbar" id="toolbar">
+  <button class="tbtn" id="btnPresenter"><span class="material-symbols-rounded">co_present</span>発表者ノート</button>
+  <button class="tbtn" id="btnFull"><span class="material-symbols-rounded">fullscreen</span>全画面</button>
+</div>
+<div class="hint-help">操作: <kbd>←</kbd> <kbd>→</kbd> めくる ・ <kbd>F</kbd> 全画面 ・ <kbd>P</kbd> 発表者ノート</div>
+
+<div id="presenter" style="display:none">
+  <div class="pv-warn"><span class="material-symbols-rounded">visibility_off</span>この画面は<strong>共有しないで</strong>ください（あなた専用のメモ）</div>
+  <div class="pv-count" id="pvCount">1 / 1</div>
+  <div class="pv-title" id="pvTitle"></div>
+  <div class="pv-lead" id="pvLead"></div>
+  <div class="pv-card">
+    <h3><span class="material-symbols-rounded">chat</span>Metalife チャット用メッセージ</h3>
+    <textarea id="pvNote" spellcheck="false"></textarea>
+    <div class="pv-actions">
+      <button class="pv-copy" id="pvCopy"><span class="material-symbols-rounded">content_copy</span>チャットにコピー</button>
+      <button class="pv-reset" id="pvReset">元に戻す</button>
+    </div>
+  </div>
+  <div class="pv-nav">
+    <button id="pvPrev"><span class="material-symbols-rounded">chevron_left</span>前のスライド</button>
+    <button id="pvNext">次のスライド<span class="material-symbols-rounded">chevron_right</span></button>
+  </div>
+  <div class="pv-next" id="pvNextTitle"></div>
+  <div class="pv-conn" id="pvConn">スライド画面と接続中…</div>
+</div>
+
+<script src="engine.js?v=20261126b"></script>
+<script src="art.js?v=20261126b"></script>
+<script>
+const E = KaijoEngine, A = KaijoArt;
+const row = (icon, title, desc) => `<div class="row"><div class="row__ic"><span class="material-symbols-rounded">${icon}</span></div><div><div class="row__t">${title}</div><div class="row__d">${desc}</div></div></div>`;
+const rows = (...items) => `<div class="rows">${items.map((x) => row(x[0], x[1], x[2])).join('')}</div>`;
+const role = (icon, title, desc) => `<div class="role-row"><span class="material-symbols-rounded">${icon}</span><div><b>${title}</b><span class="d">${desc}</span></div></div>`;
+const qa = (q, a) => `<div class="qa__item"><div class="qa__q"><span class="qa__badge q">Q</span>${q}</div><div class="qa__a"><span class="qa__badge a">A</span>${a}</div></div>`;
+
+// しかけの絵（アプリの art.js の決まった絵をそのまま使う）
+const piece = (art, name, cue, wide) => `<div class="item${wide ? ' item--wide' : ''}"><div class="item__art">${art}</div><div class="item__name">${name}</div>${cue ? `<div class="item__cue">${cue}</div>` : ''}</div>`;
+const CORD = { colors: ['y', 'k', 'r', 'b', 'w'], dest: [2, 0, 4, 1, 3] };
+const glyphBox = (g) => `<span class="glyph">${A.glyph(g)}</span>`;
+
+const SLIDES = [
+  /* 1 */ { type:'divider', accent:'teal', icon:'waving_hand', jp:'チェックイン', en:'check-in',
+    sub:'今の気分を、ひとことどうぞ',
+    note:'まずはチェックインから！\n今の気分や、最近あったことを、ひとことチャットか声で教えてね\n（とりせつ解除班の説明は、このあとすぐ！）' },
+
+  /* 2 */ { type:'title', note:'今日は『とりせつ解除班』。\n1人だけが爆弾を見て、ほかの人は説明書を読む、協力のゲームだよ。\n声で伝え合って、時間のうちに爆弾を止めよう。' },
+
+  /* 3 */ { type:'content', accent:'teal', section:'どんなあそび？', sectionEn:'summary',
+    headline:'<span class="hl">見る人</span>と<span class="hl">読む人</span>に分かれて、<br>爆弾を止めよう',
+    body: rows(
+      ['visibility', '爆弾を見られるのは、1人だけ', 'その人が「解除する人」。爆弾には、しかけがいくつも付いている'],
+      ['menu_book', 'ほかの人は、説明書を読む', 'しかけの止め方は、説明書にだけ書いてある'],
+      ['record_voice_over', '声で伝え合って、しかけを全部止める', '時間が0になるか、3回まちがえると爆発する'],
+    ),
+    note:'『とりせつ解除班』は、みんなで協力して爆弾を止めるゲームだよ。\n爆弾を見られるのは、1人だけ。その人が「解除する人」。\nほかの人は、説明書を読む人。しかけの止め方は、説明書にだけ書いてあるよ。\nだから、解除する人は見えているものを声で伝えて、読む人は止め方を声で伝える。\n時間が0になるか、3回まちがえると爆発するよ。' },
+
+  /* 4 */ { type:'content', accent:'blue', section:'役わり', sectionEn:'roles',
+    headline:'<span class="hl">解除する人</span>は1人。1回ごとに交代する',
+    body:`<div class="cols">
+      <div class="panel panel--red">
+        <div class="team-head"><div class="team-ic coral-bg"><span class="material-symbols-rounded">build</span></div><div class="team-name">解除する人</div></div>
+        ${role('view_in_ar', '自分の画面にだけ、爆弾が出る', '回して、表・裏・側面・上・底を見られる')}
+        ${role('record_voice_over', 'しかけの様子を、声で伝える', '色・数・形など、見えたままを言う')}
+        ${role('touch_app', '聞いたとおりに操作する', '説明書は見られない')}
+      </div>
+      <div class="panel panel--blue">
+        <div class="team-head"><div class="team-ic teal-bg"><span class="material-symbols-rounded">menu_book</span></div><div class="team-name">説明書を読む人</div></div>
+        ${role('menu_book', '自分の画面に、説明書が出る', '爆弾は見られない')}
+        ${role('hearing', 'しかけの様子を聞いて、合う行をさがす', 'わからないときは、聞き返そう')}
+        ${role('campaign', '止め方を、声で伝える', '行を画面に出して伝えることもできる')}
+      </div>
+    </div>`,
+    note:'役わりは2つ。\n「解除する人」は1人だけ。自分の画面にだけ爆弾が出るよ。しかけの様子を声で伝えて、聞いたとおりに操作する。\nほかの人は「説明書を読む人」。自分の画面に説明書が出るよ。しかけの様子を聞いて、合う行をさがして、止め方を伝える。\n解除する人は、1回ごとに交代するよ。画面の上に、自分の役わりが出ているから見てね。' },
+
+  /* 5 */ { type:'content', accent:'coral', section:'あそびかた', sectionEn:'how to play', num:'1',
+    headline:'解除する人: 爆弾を<span class="hl">回して</span>、よく見よう',
+    body: rows(
+      ['3d_rotation', 'ドラッグか、やじるしのボタンで回す', '表と裏に、しかけが付いている'],
+      ['zoom_in', 'しかけを押すと、近くで見られる', '操作は、近くで見ているときにする。「もどる」で全体にもどる'],
+      ['search', '本体の手がかりも4つある', '左のシールの色・右の番号・上のねじの数・底のふたの中の印'],
+    ),
+    note:'解除する人は、まず爆弾を回してみよう。\nドラッグか、やじるしのボタンで回せるよ。表と裏に、しかけが付いている。\nしかけを押すと、近くで見られる。操作は、近くで見ているときにするよ。「もどる」で全体にもどる。\nそれから、本体に手がかりが4つあるよ。左の側面のシールの色、右の側面の番号、上のねじの数、底のふたの中の印。\n読む人に聞かれたら、回して探してね。' },
+
+  /* 6 */ { type:'content', accent:'teal', section:'あそびかた', sectionEn:'how to play', num:'2',
+    headline:'しかけは<span class="hl">4種類</span>。爆弾は毎回変わる',
+    body:`<div class="demo-row">
+      ${piece(A.cord(CORD, [], E.NUMS, E.LETTERS), 'コード', '1本だけ切る', true)}
+      ${piece(`<div class="glyphs">${[3, 7, 10, 11].map(glyphBox).join('')}</div>`, '記号スイッチ', '上か下にする', true)}
+      ${piece(A.dial(3), 'ダイヤル', '数字に合わせる')}
+      ${piece(A.shape('triangle', 'y'), 'やじるし', '4回、順に押す')}
+    </div><p class="demo-cap">どれも、止め方は説明書にだけ書いてある</p>`,
+    note:'しかけは4種類あるよ。\n「コード」は、5本のうち1本だけ切る。\n「記号スイッチ」は、4つのスイッチを上か下にする。\n「ダイヤル」は、決まった数字に合わせる。\n「やじるし」は、やじるしのボタンを4回、決まった順に押す。\nどれが付いているか、どこに付いているかは、毎回変わるよ。止め方は、説明書にだけ書いてある。' },
+
+  /* 7 */ { type:'content', accent:'blue', section:'あそびかた', sectionEn:'how to play', num:'3',
+    headline:'見えたものを、<span class="hl">言葉</span>で伝えよう',
+    body:`<div class="demo"><div class="glyphs glyphs--big">${[0, 3, 5].map(glyphBox).join('')}</div><div class="demo__side">${rows(
+      ['help', '記号には、名前がない', '「うずまきに点」「山が2つ」のように、形を言葉にする'],
+      ['palette', '色・数・ならび方も伝える', '「左から赤、青、青のランプ」「黄色のコードが②から出ている」'],
+      ['forum', 'わからなかったら、聞き返す', '読む人から「シールは何色？」と聞いてもいい'],
+    )}</div></div>`,
+    note:'このゲームでいちばん大事なのは、見えたものを言葉で伝えること。\nたとえば、記号には名前がないよ。「うずまきに点がある」「山が2つ」みたいに、形を言葉にしてみよう。\n色や数、ならび方も伝えてね。「左から赤、青、青のランプ」とか。\nわからなかったら、聞き返してだいじょうぶ。読む人から「シールは何色？」と聞いてもいいよ。' },
+
+  /* 8 */ { type:'content', accent:'coral', section:'あそびかた', sectionEn:'how to play', num:'4',
+    headline:'読む人: 説明書から、<span class="hl">合う行</span>をさがす',
+    body: rows(
+      ['tab', '上の札で、ページを切りかえる', '「コード」「ダイヤル」など、しかけごとにページがある'],
+      ['rule', '聞いた様子に合う行を読む', 'たとえば「シールが赤 ・ 最後の数字が 1・3・5・7・9 →『ア』につながるコードを切る」'],
+      ['groups', '読む人が2人以上なら、ページを分けて持つ', '「そのページ、だれが持ってる？」と声をかけ合おう'],
+    ),
+    note:'読む人は、説明書から合う行をさがすよ。\n上の札でページを切りかえる。「コード」「ダイヤル」みたいに、しかけごとにページがあるよ。\n解除する人から聞いた様子に合う行を見つけて、止め方を伝えてね。\n読む人が2人以上のときは、ページを分けて持っているよ。自分が持っていないページもある。「そのページ、だれが持ってる？」と声をかけ合おう。' },
+
+  /* 9 */ { type:'content', accent:'teal', section:'気をつけること', sectionEn:'watch out',
+    headline:'まちがい<span class="hl">3回</span>か、時間が<span class="hl">0</span>で爆発',
+    body: rows(
+      ['error', 'まちがえると、ランプが1つ点く', 'そのたびに、時間のへりかたが速くなる'],
+      ['local_fire_department', 'ときどき、導火線に火がつく', '20秒のうちに、正しいつまみを押す。まにあわないと、まちがい1回'],
+      ['sentiment_satisfied', '爆発しても、すぐにもう一回できる', 'あわてたときほど、ゆっくり伝えよう'],
+    ),
+    note:'気をつけることだよ。\nまちがえると、ランプが1つ点く。そのたびに、時間のへりかたが速くなるよ。\n3回まちがえるか、時間が0になると、爆発する。\nそれから、ときどき導火線に火がつくよ。20秒のうちに、正しいつまみを押してね。止め方は、説明書の「導火線」のページにあるよ。\n爆発しても、すぐにもう一回できる。あわてたときほど、ゆっくり伝えよう。' },
+
+  /* 10 */ { type:'content', accent:'blue', section:'声を出さないとき', sectionEn:'without voice',
+    headline:'<span class="hl">ボタン</span>でも伝えられる',
+    body:`<div class="says">${['もう一回言って', 'ちょっと待って', 'わかった', 'そのページ持ってるよ', '見つけた', 'ちがうかも'].map((t) => `<span class="say">${t}</span>`).join('')}</div>${rows(
+      ['chat_bubble', '「ひとこと」のボタンを押すと、みんなの画面に出る', 'ひとり5秒に1回まで'],
+      ['campaign', '読む人は、説明書の行の右のボタンで、その行をみんなの画面に出せる', '読み上げなくても、止め方を伝えられる'],
+    )}`,
+    note:'声を出さないときは、ボタンでも伝えられるよ。\n画面の下の「ひとこと」に、「もう一回言って」「ちょっと待って」「わかった」「そのページ持ってるよ」などのボタンがある。押すと、みんなの画面に出るよ。\n説明書を読む人は、行の右のボタンを押すと、その行をみんなの画面に出せる。読み上げなくても、止め方を伝えられるよ。' },
+
+  /* 11 */ { type:'content', accent:'coral', section:'おわり', sectionEn:'finish',
+    headline:'しかけを全部止めたら、<span class="hl">解除成功</span>',
+    body: rows(
+      ['verified', '全部のしかけを解除できたら、成功', 'のこり時間と、まちがいの数が出る'],
+      ['replay', 'ホストが「もう一回」を押すと、次の爆弾', '解除する人は、次の人に交代する'],
+      ['menu_book', '解除する人になりたくないときは、「読むだけ」', '待合室で「解除する人にならない（説明書を読むだけ）」に印を付ける'],
+    ),
+    note:'しかけを全部止めたら、解除成功！ のこり時間と、まちがいの数が出るよ。\nホストが「もう一回」を押すと、次の爆弾になる。解除する人は、次の人に交代するよ。\n解除する人になりたくないときは、待合室で「解除する人にならない（説明書を読むだけ）」に印を付けてね。' },
+
+  /* 12 */ { type:'content', accent:'teal', section:'Q&A', sectionEn:'question & answer',
+    headline:'よくある質問',
+    body:`<div class="qa">
+      ${qa('説明書を、解除する人に見せてもいい？', '見せないで、言葉で伝えよう。爆弾の画面も、ほかの人には見せないよ。')}
+      ${qa('とちゅうから入ったら？', 'その回は見る番。ホストが「もう一回」を押すと、役わりがもらえるよ。')}
+      ${qa('自分の端末がない人は？', 'みんなの画面の、のこり時間を見ながら、声でいっしょに考えてね。')}
+    </div>`,
+    note:'よくある質問だよ\nQ. 説明書を、解除する人に見せてもいい？→ A. 見せないで、言葉で伝えよう。爆弾の画面も、ほかの人には見せないよ。\nQ. とちゅうから入ったら？→ A. その回は見る番。ホストが「もう一回」を押すと、役わりがもらえるよ。\nQ. 自分の端末がない人は？→ A. みんなの画面の、のこり時間を見ながら、声でいっしょに考えてね。' },
+
+  /* 13 */ { type:'divider', accent:'blue', icon:'live_help', jp:'質問タイム', en:'any questions?',
+    sub:'気になることはある？',
+    note:'ここまでで、質問がある人はいるかな？\nマイクON か チャットで教えてね！' },
+
+  /* 14 */ { type:'divider', accent:'coral', icon:'how_to_reg', jp:'参加確認', en:"let's check",
+    sub:'チャットで教えてね',
+    note:'やってみたい人〜？\n「①参加」「②見学」「③その他」を、チャットで教えてね！' },
+
+  /* 15 */ { type:'divider', accent:'teal', solid:true, icon:'rocket_launch', jp:'＼ ゲームスタート ／', en:'game start',
+    sub:'まずは、ルームに入ろう',
+    note:'それでは、とりせつ解除班 スタート！\n「ルームに参加する」を押して、名前とルームコードを入れてね。\nチャットのリンクから開いた人は、名前だけ入れればOKだよ。' },
+
+  /* 16 */ { type:'divider', accent:'coral', icon:'record_voice_over', jp:'伝えて、止めよう', en:'talk and defuse',
+    sub:'画面の上の、自分の役わりを見てね',
+    note:'はじまったよ。\nまずは、画面の上を見てね。「解除する人」か「説明書を読む人」か、出ているよ。\n解除する人は、爆弾を回して、見えたものを伝えてね。読む人は、説明書をひらいて待とう。' },
+
+  /* 17 */ { type:'divider', accent:'teal', solid:true, icon:'celebration', jp:'おしまい', en:'finish',
+    sub:'おつかれさま！',
+    note:'おしまい！ おつかれさま。\nどのしかけが、伝えるのがむずかしかった？ うまく伝わった言い方はあった？\nさいごに、ひとことずつ感想を教えてね。' },
+];
+
+/* ===== ウィンドウ間同期 ===== */
+const channel = ('BroadcastChannel' in window) ? new BroadcastChannel('torisetsu_kaijo_deck') : null;
+function send(msg){ if(channel) channel.postMessage(msg); try{ localStorage.setItem('tkj_msg', JSON.stringify({...msg,_t:Date.now()})); }catch(e){} }
+function onMsg(h){ if(channel) channel.onmessage=(e)=>h(e.data); window.addEventListener('storage',(e)=>{ if(e.key==='tkj_msg'&&e.newValue){ try{ h(JSON.parse(e.newValue)); }catch(err){} } }); }
+const isPresenter = new URLSearchParams(location.search).get('view')==='presenter';
+
+/* ===== レンダリング ===== */
+function slideHTML(s){
+  const acc = s.accent ? `accent-${s.accent}` : 'accent-teal';
+  if(s.type==='title'){
+    return `<section class="slide title-slide accent-teal">
+      <div class="title-ic"><span class="material-symbols-rounded">bomb</span></div>
+      <div class="title-jp">とりせつ解除班</div>
+      <div class="title-en">torisetsu kaijo-han</div>
+      <div class="title-tag">〜 説明書を読んで、声で伝えて、爆弾を止めよう 〜</div>
+      <div class="title-meta">
+        <span class="m"><span class="material-symbols-rounded">group</span>2〜6人</span>
+        <span class="m"><span class="material-symbols-rounded">schedule</span>1回4〜5分</span>
+        <span class="m"><span class="material-symbols-rounded">devices</span>それぞれの端末で</span>
+      </div></section>`;
+  }
+  if(s.type==='divider'){
+    return `<section class="slide divider ${acc}${s.solid?' solid':''}">
+      <div class="d-ic"><span class="material-symbols-rounded">${s.icon}</span></div>
+      <div class="d-jp">${s.jp}</div>
+      <div class="d-en">${s.en}</div>
+      ${s.sub?`<div class="d-sub">${s.sub}</div>`:''}</section>`;
+  }
+  // content
+  return `<section class="slide ${acc}">
+    <div class="sec">${s.num?`<span class="sec__num">${s.num}</span>`:''}<span class="sec__jp">${s.section}</span><span class="sec__en">${s.sectionEn}</span></div>
+    <h1 class="headline">${s.headline}</h1>
+    <div class="body">${s.body||''}</div></section>`;
+}
+
+if(!isPresenter){
+  const slidesEl=document.getElementById('slides'), dotsEl=document.getElementById('dots'), counterEl=document.getElementById('counter');
+  let idx=0;
+  SLIDES.forEach((s)=>{ slidesEl.insertAdjacentHTML('beforeend', slideHTML(s)); const d=document.createElement('span'); d.className='dot'; dotsEl.appendChild(d); });
+  const slideEls=[...slidesEl.children], dotEls=[...dotsEl.children];
+  function render(){
+    slideEls.forEach((el,i)=>el.classList.toggle('active',i===idx));
+    dotEls.forEach((el,i)=>el.classList.toggle('on',i===idx));
+    counterEl.textContent=`${idx+1} / ${SLIDES.length}`;
+    document.getElementById('navPrev').style.visibility=idx===0?'hidden':'visible';
+    document.getElementById('navNext').style.visibility=idx===SLIDES.length-1?'hidden':'visible';
+  }
+  function goTo(n,b=true){ n=Math.max(0,Math.min(SLIDES.length-1,n)); if(n!==idx){ idx=n; render(); } if(b) send({t:'idx',i:idx}); }
+  const next=()=>goTo(idx+1), prev=()=>goTo(idx-1);
+  document.getElementById('navNext').onclick=next; document.getElementById('navPrev').onclick=prev;
+  document.addEventListener('keydown',(e)=>{
+    if(['ArrowRight','PageDown',' '].includes(e.key)){ e.preventDefault(); next(); }
+    else if(['ArrowLeft','PageUp'].includes(e.key)){ e.preventDefault(); prev(); }
+    else if(e.key==='Home'){ e.preventDefault(); goTo(0); }
+    else if(e.key==='End'){ e.preventDefault(); goTo(SLIDES.length-1); }
+    else if(e.key==='f'||e.key==='F'){ toggleFull(); }
+    else if(e.key==='p'||e.key==='P'){ openPresenter(); }
+  });
+  const stage=document.getElementById('stage');
+  function fit(){ const sc=Math.min(window.innerWidth/1280, window.innerHeight/720); stage.style.transform=`translate(-50%,-50%) scale(${sc})`; document.body.classList.toggle('no-gap', window.innerHeight-720*sc<40); }
+  window.addEventListener('resize',fit); document.addEventListener('fullscreenchange',fit);
+  function toggleFull(){ if(!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); }
+  document.getElementById('btnFull').onclick=toggleFull;
+  function openPresenter(){ const url=new URL(location.href); url.searchParams.set('view','presenter'); url.hash=''; const w=window.open(url.toString(),'tkj_presenter','width=620,height=800'); if(!w) alert('発表者ノートのウィンドウがブロックされました。\nブラウザのポップアップを許可してから、もう一度お試しください。'); }
+  document.getElementById('btnPresenter').onclick=openPresenter;
+  onMsg((m)=>{ if(m.t==='goto') goTo(m.i,false); else if(m.t==='hello') send({t:'idx',i:idx}); });
+  fit(); render();
+}
+
+if(isPresenter){
+  document.title = '発表者ノート | とりせつ解除班 | あそびのたな';
+  document.body.classList.add('presenter');
+  document.getElementById('deck').style.display='none';
+  document.getElementById('toolbar').style.display='none';
+  document.querySelector('.hint-help').style.display='none';
+  document.getElementById('presenter').style.display='block';
+  const $=(id)=>document.getElementById(id);
+  const elCount=$('pvCount'), elTitle=$('pvTitle'), elLead=$('pvLead'), elNote=$('pvNote'), elNext=$('pvNextTitle'), elConn=$('pvConn');
+  const btnCopy=$('pvCopy'), btnReset=$('pvReset'), btnPrev=$('pvPrev'), btnNext=$('pvNext');
+  let cur=0; const KEY=(i)=>'tkj_note_'+i;
+  function label(s){
+    if(s.type==='title') return 'とりせつ解除班（タイトル）';
+    if(s.type==='divider') return s.jp.replace(/[＼／]/g,'').trim()+'（区切り）';
+    return `${s.section}${s.num?' '+s.num:''} ／ ${s.sectionEn}`;
+  }
+  function plain(html){ const d=document.createElement('div'); d.innerHTML=html||''; d.querySelectorAll('rt').forEach(r=>r.remove()); return (d.textContent||'').replace(/\s+/g,' ').trim(); }
+  function titleOf(s){
+    if(s.type==='title') return 'とりせつ解除班';
+    if(s.type==='divider') return s.jp;
+    return plain(s.headline);
+  }
+  function show(i){
+    cur=Math.max(0,Math.min(SLIDES.length-1,i));
+    const s=SLIDES[cur];
+    elCount.textContent=`${cur+1} / ${SLIDES.length}`;
+    elTitle.textContent=titleOf(s);
+    elLead.textContent=label(s);
+    const saved=localStorage.getItem(KEY(cur));
+    elNote.value=(saved!==null)?saved:s.note;
+    btnCopy.classList.remove('done');
+    btnCopy.innerHTML='<span class="material-symbols-rounded">content_copy</span>チャットにコピー';
+    elNext.innerHTML=cur<SLIDES.length-1?`次のスライド → <b>${titleOf(SLIDES[cur+1])}</b>`:'<b>最後のスライドです</b>';
+    btnPrev.disabled=cur===0; btnNext.disabled=cur===SLIDES.length-1;
+  }
+  elNote.addEventListener('input',()=>{ try{ localStorage.setItem(KEY(cur),elNote.value); }catch(e){} });
+  async function copyText(t){ try{ await navigator.clipboard.writeText(t); return true; }catch(e){ try{ const ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.focus(); ta.select(); const ok=document.execCommand('copy'); ta.remove(); return ok; }catch(e2){ return false; } } }
+  btnCopy.onclick=async()=>{
+    const ok=await copyText(elNote.value);
+    if(!ok){ elNote.focus(); elNote.select(); }
+    btnCopy.innerHTML=ok?'<span class="material-symbols-rounded">check</span>コピーしました！':'<span class="material-symbols-rounded">keyboard_command_key</span>選択したのでコピーしてください';
+    btnCopy.classList.toggle('done',ok);
+    setTimeout(()=>{ btnCopy.classList.remove('done'); btnCopy.innerHTML='<span class="material-symbols-rounded">content_copy</span>チャットにコピー'; },2200);
+  };
+  btnReset.onclick=()=>{ localStorage.removeItem(KEY(cur)); elNote.value=SLIDES[cur].note; };
+  function goto(i){ show(i); send({t:'goto',i:cur}); }
+  btnPrev.onclick=()=>goto(cur-1); btnNext.onclick=()=>goto(cur+1);
+  document.addEventListener('keydown',(e)=>{ if(e.target===elNote) return; if(e.key==='ArrowRight'||e.key===' '){ e.preventDefault(); goto(cur+1); } else if(e.key==='ArrowLeft'){ e.preventDefault(); goto(cur-1); } });
+  onMsg((m)=>{ if(m.t==='idx'){ elConn.textContent='スライド画面と接続中 ✓'; show(m.i); } });
+  show(0); send({t:'hello'}); setTimeout(()=>send({t:'hello'}),400);
+}
+</script>
+</body>
+</html>
