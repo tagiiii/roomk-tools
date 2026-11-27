@@ -212,4 +212,22 @@ t('名前の検査', () => {
   assert.strictEqual(L.validNickname('あおい'), '');
 });
 
+t('順番のシャッフル: 遊ぶ人だけを並べかえ・ちがう並び・はじめる順に使う・あとから来た人はうしろ', () => {
+  const r = room();
+  const before = L.playingNames(r);
+  const s1 = L.shuffleSeats(r, 5);
+  assert.ok(s1);
+  const after = L.playingNames(s1);
+  assert.deepStrictEqual(after.slice().sort(), before.slice().sort());
+  assert.notDeepStrictEqual(after, before);
+  assert.deepStrictEqual(L.shuffleSeats(r, 5).seats, s1.seats);
+  const g = started(s1).game;
+  assert.deepStrictEqual(g.order, after);
+  const late = Object.assign({}, s1, { proxies: { 'きいろ': { joinedAt: 9 } } });
+  assert.strictEqual(L.playingNames(late)[3], 'きいろ');
+  assert.strictEqual(L.shuffleSeats(Object.assign({}, r, { status: L.STATUS.PLAYING }), 1), null);
+  const two = room({ players: { 'ホスト': r.players['ホスト'], 'あお': r.players['あお'] } });
+  for (let seed = 0; seed < 10; seed++) assert.deepStrictEqual(L.playingNames(L.shuffleSeats(two, seed)), ['あお', 'ホスト']);
+});
+
 console.log(pass + ' passed');
