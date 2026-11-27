@@ -161,6 +161,7 @@ waiting ──はじめる──▶ play（game.out なし: あそんでいる�
 
 - `slides.html`（17枚）: あれください商店のスライドを型にした（同期のチャンネル `torisetsu_kaijo_deck`・保存のキー `tkj_`）。しかけの絵は、アプリの `engine.js`・`art.js` をそのまま読んで描く（`?v=` は index.html とそろえる）。ルール・ボタンの名前を変えたら、スライドの文も合わせる
 - イラスト（`apps/assets/illustrations/torisetsu-kaijo.webp`）: 顔の付いた丸い爆弾・説明書・色のコード。4回作り、爆弾がまん中に入り説明書とコードも見える3回目にした（1回目は主役が箱型の機械になり、ラジオのように見えた）。一覧のカード・はじめの画面に出す
+- サムネイル（`apps/assets/thumbnails/torisetsu-kaijo.png`・2026-11-27 オーナー依頼）: 解除する人の画面（のこり時間・コードを1つ解除した爆弾・回すボタン）。撮り方は `tests/torisetsu-kaijo/shot.cjs`（通信しない）、記録は `docs/development/thumbnails.md`。爆弾の見た目・上の行・しかけの絵を変えたら撮りなおす
 
 ## テスト
 
@@ -177,6 +178,5 @@ waiting ──はじめる──▶ play（game.out なし: あそんでいる�
 
 ## まだ作っていないもの
 
-- 一覧のサムネイル（画面の例。thumbnails.md）
 - 音（オーナーへの案では「はじめは切で、ホストが入れられる」）
 - 名前の商標の確認（J-PlatPat）
