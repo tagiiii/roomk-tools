@@ -74,6 +74,22 @@ const { check, sleep } = H;
     await H.waitText(host, '#proxyError', 'もういるよ');
     check('端末のない人も同じ名前は不可', true);
 
+    /* ── 順番をシャッフル ── */
+    console.log('# 順番をシャッフル');
+    const ORDER0 = 'めくる順番：ホスト → あお → きいろ';
+    check('めくる順番: 参加した順', (await H.text(guest, '#waitingOrder')) === ORDER0, await H.text(guest, '#waitingOrder'));
+    check('ゲストにシャッフルのボタンは出ない', !(await H.visible(guest, '#btnShuffleOrder')));
+    await host.page.click('#btnShuffleOrder');
+    await guest.page.waitForFunction((o) => (document.querySelector('#waitingOrder')?.textContent || '') !== o, ORDER0, { timeout: 8000 });
+    const seats = (await H.roomOf(code)).seats || {};
+    const byDb = Object.keys(seats).sort((a, b) => seats[a] - seats[b]);
+    const shown = await H.text(guest, '#waitingOrder');
+    check('シャッフル: ゲストの画面も DB の順', shown === 'めくる順番：' + byDb.join(' → ') && byDb.length === 3, [shown, seats]);
+    check('シャッフル: ホストの画面も同じ', (await H.text(host, '#waitingOrder')) === shown);
+    await H.rest('PATCH', H.ROOMS + '/' + code, { seats: null });
+    await H.waitText(guest, '#waitingOrder', ORDER0);
+    check('seats を消すと参加した順にもどる', true);
+
     /* ── はじめる ── */
     console.log('# はじめる');
     await host.page.click('#btnStartGame');

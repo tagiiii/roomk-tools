@@ -1102,6 +1102,7 @@
     L.proxyNames(room).forEach((name) => {
       addRow(name, host ? ['端末なし'] : [], host ? () => removeProxy(name) : null);
     });
+    $('waitingOrder').textContent = playing.length >= 2 ? 'めくる順番：' + playing.join(' → ') : '';
     $('waitingSettings').textContent = 'むずかしさ ' + level.label + '（' + level.note + '）';
 
     $('hostWaitingTools').hidden = !host;
@@ -1113,6 +1114,7 @@
       box.disabled = room.hostPlays === false && full;
       buildSeg($('roomLevel'), D.levels, () => level.id, setLevel);
       $('roomLevelNote').textContent = level.note;
+      $('btnShuffleOrder').disabled = playing.length < 2;
       $('btnAddProxy').disabled = full || L.proxyNames(room).length >= L.MAX_PROXIES;
       $('btnStartGame').disabled = playing.length < L.MIN_PLAYERS;
       $('startNote').textContent = playing.length < L.MIN_PLAYERS
@@ -1332,6 +1334,11 @@
     if (!ok && net.room) renderRoom(net.room);
   }
 
+  async function shuffleOrder() {
+    const seed = L.randomSeed();
+    await hostTransaction((room) => L.shuffleSeats(room, seed) || undefined, '順番を変えられませんでした。もう一度ためしてね');
+  }
+
   async function addProxy() {
     const name = $('proxyName').value.trim();
     const error = L.validNickname(name);
@@ -1470,6 +1477,7 @@
   $('btnLeave').addEventListener('click', leaveRoom);
   $('btnOverlayLeave').addEventListener('click', leaveRoom);
   $('hostPlays').addEventListener('change', (event) => setHostPlays(event.currentTarget.checked));
+  $('btnShuffleOrder').addEventListener('click', shuffleOrder);
   $('btnAddProxy').addEventListener('click', addProxy);
   submitOnEnter($('proxyName'), addProxy);
   $('btnStartGame').addEventListener('click', () => startRoomGame(false));

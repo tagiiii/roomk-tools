@@ -81,10 +81,27 @@
     return byJoined(Object.entries((room && room.proxies) || {}));
   }
 
-  // 遊ぶ人（ホストは「ホストもいっしょに遊ぶ」のときだけ）。端末なしの参加者もふくめて参加順
+  // 遊ぶ人（ホストは「ホストもいっしょに遊ぶ」のときだけ）。端末なしの参加者もふくめて参加順。
+  // ホストが待合室で順番をシャッフルしたら（seats）、その順。あとから入った人は参加順でうしろに
   function playingNames(room) {
     const players = Object.entries((room && room.players) || {}).filter((e) => !(e[1] && e[1].isHost) || room.hostPlays !== false);
-    return byJoined(players.concat(Object.entries((room && room.proxies) || {})));
+    const names = byJoined(players.concat(Object.entries((room && room.proxies) || {})));
+    const seats = room && room.seats && typeof room.seats === 'object' ? room.seats : null;
+    if (!seats) return names;
+    const seat = (name) => (Number.isFinite(seats[name]) ? seats[name] : Number.MAX_SAFE_INTEGER);
+    return names.map((name, i) => [name, i]).sort((a, b) => seat(a[0]) - seat(b[0]) || a[1] - b[1]).map((e) => e[0]);
+  }
+
+  // 遊ぶ人の順番をシャッフルする（待合室だけ）。seats に {名前: 何番め} を持つ
+  function shuffleSeats(room, seed) {
+    if (!room || room.status === STATUS.PLAYING) return null;
+    const names = playingNames(room);
+    if (names.length < 2) return null;
+    // 押したのに同じ並びのままにならないよう、ちがう並びが出るまで引きなおす
+    const rng = seededRandom(seed);
+    let order = shuffled(names, rng);
+    for (let k = 0; k < 20 && order.every((name, i) => name === names[i]); k++) order = shuffled(names, rng);
+    return Object.assign({}, room, { seats: Object.fromEntries(order.map((name, i) => [name, i])) });
   }
 
   function gameOf(room) {
@@ -211,7 +228,7 @@
     const game = {
       id: id,
       level: level.id,           // 「はじめる」の時点のむずかしさで固定
-      order: names,              // 参加した順（ホストが遊ぶときはホストが最初）
+      order: names,              // 参加した順（ホストが遊ぶときはホストが最初）。待合室でシャッフルしたらその順
       uids: Object.fromEntries(real.map((name) => [name, room.players[name].uid])),
       joined: Object.fromEntries(real.map((name) => [name, Number(room.players[name].joinedAt) || 0])),
       proxy: Object.keys(proxies).length ? Object.fromEntries(Object.keys(proxies).map((name) => [name, true])) : null,
@@ -294,7 +311,7 @@
   const api = {
     MAX_PLAYERS, MIN_PLAYERS, MAX_PROXIES, NAME_MAX, STATUS,
     validNickname, randomSeed, seededRandom, asList, makeDeck,
-    memberNames, proxyNames, playingNames, gameOf, orderOf, isProxy, present, ownsName,
+    memberNames, proxyNames, playingNames, shuffleSeats, gameOf, orderOf, isProxy, present, ownsName,
     deckOf, gotOf, pairsOf, turnOf, actorOf, openOf, revealOf, flipNoOf, canAct, nextTurn, resultOf,
     startGame, flip, skipAbsent, passTurn, backToWaiting,
   };
