@@ -2,7 +2,7 @@
    ・ルーム: Realtime Database。遊ぶ2〜6人のうち1人が「解除する人」、ほかは「説明書を読む人」
    ・爆弾は、解除する人の端末にだけ出す（番号 seed から、どの端末でも同じ爆弾を作れるが、読む人の画面には描かない）
    ・説明書は、読む人の端末にだけ出す。進行だけのホスト・みんなにみせる画面（?watch=）には、のこり時間・まちがいの数・解除できた数だけ
-   ルール（しかけ・説明書・時間）は engine.js、絵は art.js。音は鳴らさない。
+   ルール（しかけ・説明書・時間）は engine.js、絵は art.js。効果音は、はじめは切（各自が入にする。この端末だけ）。
 
    あそんでいる間の書き込み: しかけの操作と、時間で起きること（導火線・時間切れ）は、解除する人が game への transaction で書く。
    解除する人がいないときの時間切れだけ、ホストが3秒おくれて代わりに書く。ひとことは say/ に1件ずつ足す。 */
@@ -61,6 +61,8 @@ const state = {
   zoomKey: '',
   zoomFresh: false,
   fuseKey: '',
+  clockKey: '',        // さいごに音を鳴らした時計の表示（回の番号:表示）
+  litKey: '',          // さいごに見た導火線の火（回の番号:何回目）
   lidOpen: false,
   slotKeys: {},
   chapter: null,       // 読む人がひらいているページ
@@ -1058,6 +1060,7 @@ function act(a) {
   const key = a.s + ':' + a.k + ':' + (a.v ?? '');
   if (key === state.strikeKey && Date.now() - state.strikeAt < STRIKE_GUARD_MS) return;
   state.lastAct = key;
+  playSfx(a.k === 'cut' ? 'cut' : 'press');
   const now = roomNow(live.room);
   commitGame(live.game, (G) => E.act(live.game.bomb, G, a, now))
     .catch((error) => writeFailed(error, '押せなかったよ。もう一度ためしてね'));
@@ -1091,6 +1094,112 @@ function sendSay(payload) {
   state.sayAt = Date.now();
   state.roomRef.child('say').push({ f: state.nickname, g: live.game.id, at: serverTimestamp(), ...payload })
     .catch((error) => writeFailed(error));
+}
+
+/* ── 効果音（2026-11-27 オーナー依頼「音もつくってください」）──
+   はじめは「切」。待合室と解除の画面の「効果音」で、各自が「入」にする（みんなにみせる画面でも入にできる。オーナー選択）。
+   この端末だけで鳴り、設定は端末に残す（localStorage torisetsukaijo:sfx。ルームには書かない）。音は Web Audio の合成音だけ（ファイルは読まない）。
+   まちがい・爆発でも鳴らす（オーナー選択。だれのまちがいかは、音でも出さない）。大きさは小さめで固定（SFX_GAIN） */
+const SFX_KEY = 'torisetsukaijo:sfx';
+const SFX_GAIN = 0.2;
+const sfx = { on: false, ac: null, out: null, noise: null, log: [] };
+try { sfx.on = localStorage.getItem(SFX_KEY) === '1'; } catch (e) { /* 使えなければ切のまま */ }
+
+function ensureAudio() {
+  if (!sfx.on) return;
+  try {
+    if (!sfx.ac) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      sfx.ac = new AC({ latencyHint: 'interactive' });
+      sfx.out = sfx.ac.createGain();
+      sfx.out.gain.value = SFX_GAIN;
+      sfx.out.connect(sfx.ac.destination);
+    }
+    if (sfx.ac.state !== 'running') sfx.ac.resume().catch(() => {});
+  } catch (e) { /* 鳴らせなくても遊べる */ }
+}
+
+// 短い音を1つ（when は今からの秒。to があれば、その高さへすべらせる）
+function tone(freq, when, level, decay, type = 'sine', to = 0) {
+  const ac = sfx.ac;
+  const t = ac.currentTime + when;
+  const o = ac.createOscillator();
+  const gn = ac.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(freq, t);
+  if (to) o.frequency.exponentialRampToValueAtTime(to, t + decay);
+  gn.gain.setValueAtTime(0.0001, t);
+  gn.gain.exponentialRampToValueAtTime(level, t + 0.005);
+  gn.gain.exponentialRampToValueAtTime(0.0001, t + decay);
+  o.connect(gn).connect(sfx.out);
+  o.start(t);
+  o.stop(t + decay + 0.02);
+}
+
+// ざらっとした音を1つ（コードを切る・火・爆発。from から to へ、通す高さをすべらせる）
+function hiss(when, level, decay, kind, from, to = 0) {
+  const ac = sfx.ac;
+  if (!sfx.noise) {
+    sfx.noise = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
+    const d = sfx.noise.getChannelData(0);
+    for (let i = 0; i < d.length; i += 1) d[i] = Math.random() * 2 - 1;
+  }
+  const t = ac.currentTime + when;
+  const src = ac.createBufferSource();
+  const f = ac.createBiquadFilter();
+  const gn = ac.createGain();
+  src.buffer = sfx.noise;
+  f.type = kind;
+  f.frequency.setValueAtTime(from, t);
+  if (to) f.frequency.exponentialRampToValueAtTime(to, t + decay);
+  gn.gain.setValueAtTime(0.0001, t);
+  gn.gain.exponentialRampToValueAtTime(level, t + 0.008);
+  gn.gain.exponentialRampToValueAtTime(0.0001, t + decay);
+  src.connect(f).connect(gn).connect(sfx.out);
+  src.start(t, Math.random() * 0.5);
+  src.stop(t + decay + 0.02);
+}
+
+const arp = (notes, gap, level, decay) => notes.forEach((f, i) => { tone(f, i * gap, level, decay); tone(f * 2, i * gap, level * 0.2, decay * 0.6, 'triangle'); });
+// 音の名前ごとの合成音
+const SYNTH = {
+  tick: () => tone(1000, 0, 0.1, 0.03, 'triangle'),                                        // 時計（1秒ごと）
+  hurry: () => { tone(1320, 0, 0.16, 0.04, 'triangle'); tone(1320, 0.12, 0.1, 0.03, 'triangle'); },  // のこり30秒から
+  press: () => tone(520, 0, 0.16, 0.05, 'triangle', 420),                                  // スイッチ・ダイヤル・やじるし・たしかめる
+  cut: () => { hiss(0, 0.4, 0.05, 'highpass', 3000); tone(300, 0, 0.14, 0.06, 'triangle', 180); },    // コードを切る
+  solved: () => arp([659, 880, 1175], 0.07, 0.32, 0.25),                                   // しかけを解除
+  fuse: () => { hiss(0, 0.3, 0.45, 'bandpass', 900, 4200); tone(880, 0.05, 0.2, 0.1, 'triangle'); tone(880, 0.22, 0.2, 0.1, 'triangle'); },  // 導火線に火がついた
+  fuseok: () => { hiss(0, 0.3, 0.3, 'bandpass', 3800, 500); tone(660, 0.1, 0.2, 0.18); },  // 導火線を止めた
+  strike: () => { tone(150, 0, 0.45, 0.24, 'triangle', 100); tone(150, 0, 0.1, 0.2, 'square', 100); },  // まちがい（低く短い）
+  boom: () => { hiss(0, 0.5, 0.7, 'lowpass', 900, 120); tone(90, 0, 0.5, 0.6, 'sine', 42); },          // 爆発（やわらかい「ぼふん」）
+  safe: () => { arp([523, 659, 784], 0.11, 0.34, 0.3); tone(1047, 0.33, 0.4, 0.6); tone(1568, 0.33, 0.12, 0.5, 'triangle'); },  // 解除成功
+};
+
+// 音を1つ鳴らす
+function playSfx(name) {
+  if (!sfx.on || !sfx.ac || sfx.ac.state !== 'running' || !SYNTH[name]) return;
+  try {
+    SYNTH[name]();
+    sfx.log.push(name);
+    if (sfx.log.length > 200) sfx.log.shift();
+  } catch (e) { /* 鳴らせなくても遊べる */ }
+}
+
+function renderSfxSegs() {
+  document.querySelectorAll('[data-sfx-seg]').forEach((box) => seg(box, [['off', '切'], ['on', '入']], sfx.on ? 'on' : 'off', (v) => setSfx(v === 'on')));
+}
+
+function setSfx(on) {
+  if (sfx.on === on) return;
+  sfx.on = on;
+  try { localStorage.setItem(SFX_KEY, on ? '1' : '0'); } catch (e) { /* 残せなくてもよい */ }
+  renderSfxSegs();
+  if (on) {
+    ensureAudio();
+    // 入にしたら、どんな音か1回だけ聞かせる
+    setTimeout(() => playSfx('solved'), 60);
+  }
 }
 
 /* ── 画面の更新 ── */
@@ -1284,18 +1393,20 @@ function renderGame() {
   if (game.G.out && !seen.out) {
     if (game.G.out === 'boom') showBoom();
     else flash('解除成功！', true);
+    playSfx(game.G.out === 'boom' ? 'boom' : 'safe');
   } else if (game.G.x > seen.x) {
     state.strikeAt = Date.now();
     state.strikeKey = state.lastAct;
     flash('まちがい！', false);
+    playSfx('strike');
     if (!CALM.matches) {
       const target = view === 'board' ? $('viewBoard') : $('gameMain');
       target.classList.remove('is-shake');
       void target.offsetWidth;
       target.classList.add('is-shake');
     }
-  } else if (solved > seen.ok) flash('しかけを解除！', true);
-  else if (game.G.fz > seen.fz) flash('導火線を止めた', true);
+  } else if (solved > seen.ok) { flash('しかけを解除！', true); playSfx('solved'); }
+  else if (game.G.fz > seen.fz) { flash('導火線を止めた', true); playSfx('fuseok'); }
   state.seen = { x: game.G.x, ok: solved, fz: game.G.fz, out: game.G.out };
 
   const total = E.regularSlots(game.bomb).length;
@@ -1330,6 +1441,13 @@ function tickClock() {
   const left = E.leftMs(game.G, now);
   const text = clockText(left);
   const hurry = left !== null && left <= 30000 && !game.G.out;
+  // 時計の音（表示の秒が変わったとき。同じ回の中だけ・終わったら鳴らさない・ホストが切れて止まっている間は変わらないので鳴らない）
+  const clockKey = game.id + ':' + text;
+  if (state.clockKey !== clockKey) {
+    const same = state.clockKey.startsWith(game.id + ':');
+    state.clockKey = clockKey;
+    if (same && left !== null && left > 0 && !game.G.out) playSfx(hurry ? 'hurry' : 'tick');
+  }
   ['hudTime', 'boardTime', 'bombTime'].forEach((id) => {
     const node = $(id);
     if (!node) return;
@@ -1340,6 +1458,12 @@ function tickClock() {
   const me = selfSeat(game);
   const f = E.fuseInfo(game.bomb, game.G, now);
   $('fuseBar').hidden = !f;
+  // 導火線に火がついた音（ついてすぐのときだけ。途中でひらいた画面では鳴らさない）
+  const litKey = f ? game.id + ':' + f.k : '';
+  if (state.litKey !== litKey) {
+    state.litKey = litKey;
+    if (f && f.left > E.FUSE_WINDOW - 2500) playSfx('fuse');
+  }
   if (f) {
     const secs = Math.ceil(f.left / 1000);
     const t = '導火線に火がついた！ あと' + secs + '秒';
@@ -2124,5 +2248,9 @@ if (watchParam !== null) {
   resumeFromSession();
 }
 
+// 効果音: 切りかえを描き、「入」のときは、はじめの操作で鳴らせるようにする（ブラウザの決まりで、押したあとでないと鳴らせない）
+renderSfxSegs();
+['pointerdown', 'keydown'].forEach((type) => document.addEventListener(type, ensureAudio, { capture: true, passive: true }));
+
 // E2E・手元の確認用（本番でも害のない読み取りだけ）
-window.__tk = { state, cube, gameOf };
+window.__tk = { state, cube, gameOf, sfx };

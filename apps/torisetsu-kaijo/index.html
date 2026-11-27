@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
   <link rel="stylesheet" href="../shared/css/design-system.css?v=20261106c">
   <!-- index.html と app.js・engine.js・art.js・style.css はセットで変わるので、変えたら ?v= をそろえて上げる -->
-  <link rel="stylesheet" href="style.css?v=20261126b">
+  <link rel="stylesheet" href="style.css?v=20261127">
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/13.3.0/firebase-database-compat.js"></script>
@@ -146,6 +146,13 @@
         <p id="lobbySetView" class="tk-setview" hidden></p>
       </div>
 
+      <!-- 効果音（この端末だけ。はじめは切。ルームには書かない） -->
+      <div class="card">
+        <h2 class="tk-h2" id="lblSfxLobby">効果音</h2>
+        <div class="tk-seg" data-sfx-seg role="group" aria-labelledby="lblSfxLobby"></div>
+        <p class="tk-note">この端末だけで鳴る。時計の音と、しかけを押す・解除できた・まちがえた・爆発したときに、短い音が鳴る。</p>
+      </div>
+
       <button id="btnStartGame" type="button" class="btn btn-primary btn-full btn-lg" hidden>はじめる</button>
       <p id="lobbyWait" class="tk-wait" hidden>ホストがはじめるのを待っているよ</p>
     </div>
@@ -209,6 +216,11 @@
         <div class="tk-saybox__list" id="sayList"></div>
       </div>
 
+      <div class="tk-sfxrow">
+        <span class="tk-sfxrow__label" id="lblSfxGame">効果音</span>
+        <div class="tk-seg tk-seg--sm" data-sfx-seg role="group" aria-labelledby="lblSfxGame"></div>
+      </div>
+
       <details id="hostMenu" class="tk-hostmenu" hidden>
         <summary>そのほかの操作</summary>
         <div class="tk-hostmenu__body">
@@ -238,7 +250,7 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20261126b"></script>
+  <script type="module" src="app.js?v=20261127"></script>
   <script src="../shared/js/overlay-a11y.js?v=1" defer></script>
   <script src="../shared/js/focus-keep.js?v=1" defer></script>
   <script src="../shared/js/stats.js?v=1" defer></script>
@@ -272,6 +284,7 @@
           '「ふつう」「むずかしい」では、ときどき導火線に火がつく。20秒のうちに止めないと、まちがい1回になる',
           'しかけをぜんぶ解除できたら成功。ホストが「もう一回」を押すと、解除する人を交代して次の爆弾になる',
           '声を出さずに伝えたいときは、下の「ひとこと」のボタンを押す',
+          '音は、はじめは鳴らない。鳴らしたい人は、待合室か解除の画面の「効果音」を「入」にする（その端末だけで鳴る）',
         ] },
       ],
     });
