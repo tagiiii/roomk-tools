@@ -77,6 +77,13 @@ body .tk-panel.app-entry > .app-title:first-child { margin-top: 28px; }
 .tk-seg { display: flex; flex-wrap: wrap; gap: 6px; }
 .tk-seg__btn { min-height: 48px; padding: 6px 14px; border: 2px solid var(--color-border); border-radius: var(--radius-btn); background: var(--color-surface); color: var(--color-text); font: inherit; font-weight: 700; cursor: pointer; }
 .tk-seg__btn.is-on { border-color: var(--color-accent); background: var(--color-accent-soft); color: var(--color-accent); }
+/* 効果音の切りかえ（解除の画面では、下に小さく） */
+.tk-seg--sm .tk-seg__btn { min-height: 36px; padding: 4px 14px; font-size: 14px; }
+.tk-sfxrow { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+.tk-sfxrow__label { font-size: 14px; font-weight: 500; color: var(--color-muted); }
+.tk-dark .tk-sfxrow__label { color: #D8C8AE; }
+.tk-dark .tk-seg--sm .tk-seg__btn { background: #332C26; border-color: #5A5046; color: #F6ECD8; }
+.tk-dark .tk-seg--sm .tk-seg__btn.is-on { background: #4A3F33; border-color: #F0D9B8; color: #FFE9C4; }
 .tk-more { margin-top: 14px; border-top: 1px solid var(--color-border); }
 .tk-more summary, .tk-hostmenu summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: var(--color-accent); font-weight: 500; }
 .tk-more__body { padding-bottom: 4px; }
